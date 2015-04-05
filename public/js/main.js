@@ -1,3 +1,4 @@
+
 $(function() {
 
   var Character = require('./character');
@@ -12,6 +13,7 @@ $(function() {
 
   var renderer = new THREE.WebGLRenderer({antialias: true});
 	renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0xffffff);
 	document.body.appendChild(renderer.domElement);
 
   var scene = new Physijs.Scene();
@@ -22,7 +24,7 @@ $(function() {
     scene.simulate(undefined, 1);
   });
 
-  var camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 1, 20000);
+  var camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 1, 1000);
   camera.target = {x: 0, y: 0, z: 0};
   scene.add(camera);
 
@@ -33,9 +35,10 @@ $(function() {
   mainLight.castShadow = true;
   scene.add(mainLight);
 
-  var startedShatter = false;
   io.eventHandler = function(event, data) {
-    // ok ok check tony-ronald for how to use
+    if (['spit', 'handshake'].indexOf(event) !== -1) {
+      jobfairState.ronaldPerformedAction(event);
+    }
   };
 
   /*
@@ -43,9 +46,9 @@ $(function() {
    */
 
   var active = {ronalds: false, lighting: false, camera: false, jobfair: false, weighing: false};
-  var history = {};
 
   var jobfairState = {};
+  var weighingState = {};
 
   var cameraFollowState = {
     target: null,
@@ -56,10 +59,10 @@ $(function() {
     offset: {x: 0, y: 0, z: 0}
   };
 
-  var kevinRonald = new Character({x: 0, y: 5, z: 0}, 20);
+  var kevinRonald = new Character({x: 7, y: -30, z: 100}, 20);
   kevinRonald.addTo(scene);
 
-  var dylanRonald = new Character({x: 30, y: 5, z: 0}, 20);
+  var dylanRonald = new Character({x: 30, y: -30, z: 100}, 20);
   dylanRonald.addTo(scene);
   var ronalds = [kevinRonald, dylanRonald];
 
@@ -67,7 +70,7 @@ $(function() {
    * * * * * STARTIN AND RENDERIN * * * * *
    */
 
-  start();
+  setTimeout(start, 2000);
   function start() {
     if (!TEST_MODE) {
       io.begin(kevinRonald, dylanRonald, camera);
@@ -85,29 +88,20 @@ $(function() {
       if (ev.which === 32) { // spacebar
         resetRonaldPositions();
       }
-      else if (ev.which === 97)  { // left
-        moveCameraPosition(-1, 0, 0);
-        if (cameraFollowState.offset) {
-          cameraFollowState.offset.x += -1;
-        }
+      else if (ev.which === 97)  { // a
+        if (io.mode === io.JOBFAIR) kevinRonald.move(-1, 0, 0);
       }
-      else if (ev.which === 119)  { // up
-        moveCameraPosition(0, 0, 1);
-        if (cameraFollowState.offset) {
-          cameraFollowState.offset.y += 1;
-        }
+      else if (ev.which === 119)  { // w
+        if (io.mode === io.JOBFAIR) kevinRonald.move(0, 0, -1);
       }
-      else if (ev.which === 100)  { // right
-        moveCameraPosition(1, 0, 0);
-        if (cameraFollowState.offset) {
-          cameraFollowState.offset.x += 1;
-        }
+      else if (ev.which === 100)  { // d
+        if (io.mode === io.JOBFAIR) kevinRonald.move(1, 0, 0);
       }
-      else if (ev.which === 115)  { // down
-        moveCameraPosition(0, 0, -1);
-        if (cameraFollowState.offset) {
-          cameraFollowState.offset.y += -1;
-        }
+      else if (ev.which === 115)  { // s
+        if (io.mode === io.JOBFAIR) kevinRonald.move(0, 0, 1);
+      }
+      else if (ev.which === 122) { // z
+        jobfairState.ronaldPerformedAction('spit');
       }
       else if (ev.which === 113) { // q
         moveCameraPosition(0, 1, 0);
@@ -136,6 +130,9 @@ $(function() {
     if (active.jobfair) {
       jobfairState.render();
     }
+    if (active.weighing) {
+      weighingState.render();
+    }
 
     if (cameraFollowState.target) {
       camera.position.copy(cameraFollowState.target).add(cameraFollowState.offset);
@@ -163,35 +160,65 @@ $(function() {
       0.4 // low restitution
     );
 
-    jobfairState.ground_geometry = new THREE.PlaneGeometry(100, 100);
+    jobfairState.ground_geometry = new THREE.PlaneGeometry(140, 2000);
     calculateGeometryThings(jobfairState.ground_geometry);
 
     jobfairState.ground = new Physijs.BoxMesh(jobfairState.ground_geometry, jobfairState.ground_material, 0);
     jobfairState.ground.rotation.x = -Math.PI / 2;
-    jobfairState.ground.position.z = -50;
+    jobfairState.ground.position.z = -1000;
     jobfairState.ground.position.y = 0;
     jobfairState.ground.__dirtyPosition = true;
     scene.add(jobfairState.ground);
 
-    setCameraPosition(0, 40, 10);
+    cameraFollowState.target = kevinRonald.torso.mesh.position;
+    cameraFollowState.offset = {x: 0, y: 60, z: 150};
 
     jobfairState.booths = recruiterManager.createBooths(scene);
-    jobfairState.currentBooth = 0;
 
-    function moveRonaldToBooth(boothNumber, callback) {
-      var booth = jobfairState.booths[boothNumber];
-      kevinRonald.position.z = booth.recruiter.skinnedMesh.position.z + 8;
-      callback();
+    var hasReachedBooths = false;
+    var waitingForNextBooth = false;
+
+    function setCurrentBooth(index) {
+      console.log('current booth: ' + index);
+      jobfairState.currentBooth = index;
+      io.mode = io.INTERVIEW;
     }
 
+    jobfairState.ronaldPerformedAction = function(action) {
+      // here would want to do UI and shit yum
+      console.log('ronald performed: ' + action);
+      if (recruiterManager.actionIsSuccessful(action, this.currentBooth)) {
+
+      } else {
+
+      }
+
+      if (this.currentBooth !== recruiterManager.recruiterCount - 1) {
+        io.mode = io.JOBFAIR;
+        waitingForNextBooth = true;
+      }
+      else {
+        this.transitionToWeighing();
+      }
+    };
+
+    jobfairState.transitionToWeighing = function() {
+      active.jobfair = false;
+      enterWeighingState();
+    };
+
     jobfairState.render = function() {
-      var currentBooth = recruiterManager.boothIndexForZ(kevinRonald.position.z);
-      if (currentBooth !== jobfairState.currentBooth) {
-        // lets react to that change in booth eh?
-        jobfairState.currentBooth = currentBooth;
-        moveRonaldToBooth(currentBooth, function() {
-          io.mode = io.INTERVIEW;
-        });
+      if (!hasReachedBooths) {
+        if (kevinRonald.position.z <= -recruiterManager.closeToRecruiterDistance) {
+          hasReachedBooths = true;
+          setCurrentBooth(0);
+        }
+      }
+      else if (waitingForNextBooth) {
+        var currentBooth = recruiterManager.boothIndexForZ(kevinRonald.position.z);
+        if (currentBooth > this.currentBooth) {
+          setCurrentBooth(currentBooth);
+        }
       }
     };
 
@@ -231,7 +258,9 @@ $(function() {
     dylanRonald.moveTo(80, 8, -140);
     dylanRonald.rotate(0, -Math.PI/4, 0);
 
-    ronalds = [kevinRonald, dylanRonald];
+    weighingState.render = function() {
+
+    };
   }
 
   /*
@@ -309,7 +338,7 @@ $(function() {
   }
 
   function middlePosition(p1, p2) {
-    return {x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2, z: (p1.z + p2.z) / 2}
+    return {x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2, z: (p1.z + p2.z) / 2};
   }
 
   function negrand(scalar) {

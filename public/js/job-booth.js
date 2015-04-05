@@ -1,6 +1,8 @@
 
 var Recruiter = require('./recruiter');
 
+module.exports = JobBooth;
+
 function JobBooth(recruiterOptions, posterURL) {
   this.recruiter = new Recruiter(recruiterOptions);
 
@@ -13,10 +15,10 @@ JobBooth.prototype.addTo = function(scene) {
   var self = this;
   this.recruiter.addTo(scene, function() {
     self.recruiter.skinnedMesh.add(self.desk);
-    self.desk.position.set(-15, 0, -4);
+    self.desk.position.set(-10, 0, -4);
 
     self.recruiter.skinnedMesh.add(self.poster);
-    self.poster.position.set(-15, 7, -4);
+    self.poster.position.set(-10, 7, -4);
 
     self.meshes = [self.desk, self.poster, self.recruiter.skinnedMesh, self.recruiter.faceMesh];
   });

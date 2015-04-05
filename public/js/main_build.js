@@ -679,55 +679,6 @@ Head.prototype.render = function() {
 
 },{"./bodypart":3,"./lib/kutility":10}],7:[function(require,module,exports){
 
-var kt = require('./lib/kutility');
-
-var modelNames = require('./model_names');
-
-var BodyPart = require('./bodypart');
-
-module.exports = Human;
-
-function Human(startPos, scale, gender) {
-  if (!startPos) startPos = {x: 0, y: 0, z: 0};
-  this.startX = startPos.x;
-  this.startY = startPos.y;
-  this.startZ = startPos.z;
-
-  this.scale = scale || 20;
-
-  if (!gender) gender = 'girl';
-
-  if (gender == 'girl') {
-    this.specificModelName = modelNames.TWEEN_GIRL;
-  } else {
-    this.specificModelName = modelNames.BOY;
-  }
-}
-
-Human.prototype.__proto__ = BodyPart.prototype;
-
-Human.prototype.createMesh = function(callback) {
-  var self = this;
-
-  modelNames.loadModel(self.specificModelName, function (geometry, materials) {
-    self.geometry = geometry;
-    self.materials = materials;
-
-    self.faceMaterial = new THREE.MeshFaceMaterial(materials);
-    self.material = self.faceMaterial;
-
-    self.mesh = new THREE.SkinnedMesh(geometry, self.material);
-
-    callback();
-  });
-}
-
-Human.prototype.additionalInit = function() {
-  var self = this;
-};
-
-},{"./bodypart":3,"./lib/kutility":10,"./model_names":12}],8:[function(require,module,exports){
-
 // CONTROLS::::
 
 // move torso to move character
@@ -759,58 +710,27 @@ var kneeHistory = {one: {rotating: false}, two: {rotating: false}};
 
 var elbowHistory = {one: {rotUp: false, rotDown: false}, two: {rotUp: false, rotDown: false}};
 
-var MIN_TIME_BETWEEN_GESTURES = 800;
-var PHRASE_GESTURE_DELTA_MULT = 4.0;
-var MAX_PHRASE_DIRECTIONAL_VEL = 100;
-var MIN_PHRASE_VEL = 120.0;
-var phraseGestureTimes = {left1: new Date(), right1: new Date(), left2: new Date(), right2: new Date()};
-var phraseGestureStartPositions = {left1: blankpos(), right1: blankpos(), left2: blankpos(), right2: blankpos()};
-var phraseGestureVelocities = {left1: blankpos(), right1: blankpos(), left2: blankpos(), right2: blankpos()};
-
 var BIG_HEAD_MAG = 15;
-var MAX_HEAD_SWELL = 40;
+var MAX_HEAD_SWELL = 30;
 var TORSO_CLOSE_MAG = 11;
 
 var CLOSE_KNEE_MAG = 60;
-var CLOSE_ELBOW_MAG = 60;
 var FAR_ELBOW_MAG = 300;
-var RIDICULOUS_ELBOW_MAG = 600;
 
 var CLOSE_HANDS_MAG = 100;
 
 var TORSO_MOVEMENT_MAG_MULT = 0.21;
-var MIN_DISTANCE_BETWEEN_WRESTLERS = 50;
+var MIN_DISTANCE_BETWEEN_WRESTLERS = 30;
 
 module.exports.JOBFAIR = 1;
 module.exports.WEIGHING = 2;
-
-var wrestler1, wrestler2, camera, light;
+module.exports.INTERVIEW = 3;
 
 module.exports.mode = module.exports.JOBFAIR;
 
-function blankpos() { return {x: 0, y: 0, z: 0}; };
+var wrestler1, wrestler2, camera, light;
 
-function phrasePos(left) {
-  var pos = blankpos();
-
-  pos.x = left? -20 : 20;
-  pos.y = Math.random() * 40 + 20;
-  pos.z = (Math.random() * -60) - 20;
-  return pos;
-}
-
-function velCleanse(vel) {
-  if (vel.x < -MAX_PHRASE_DIRECTIONAL_VEL) vel.x = -MAX_PHRASE_DIRECTIONAL_VEL;
-  else if (vel.x > MAX_PHRASE_DIRECTIONAL_VEL) vel.x = MAX_PHRASE_DIRECTIONAL_VEL;
-
-  if (vel.y < -MAX_PHRASE_DIRECTIONAL_VEL) vel.y = -MAX_PHRASE_DIRECTIONAL_VEL;
-  else if (vel.y > MAX_PHRASE_DIRECTIONAL_VEL) vel.y = MAX_PHRASE_DIRECTIONAL_VEL;
-
-  if (vel.z < -MAX_PHRASE_DIRECTIONAL_VEL) vel.z = -MAX_PHRASE_DIRECTIONAL_VEL;
-  else if (vel.z > MAX_PHRASE_DIRECTIONAL_VEL) vel.z = MAX_PHRASE_DIRECTIONAL_VEL;
-}
-
-module.exports.eventHandler = function(event, data) {};
+module.exports.eventHandler = function(event, data) {}
 
 module.exports.socket = socket;
 
@@ -834,7 +754,7 @@ module.exports.begin = function(w1, w2, cam, l) {
   socket.emit('rollcall', 'browser');
 
   socket.on('leftHand', function(data) {
-    if (data.wrestler == 1) {
+    if (data.wrestler === 1) {
       leftHand1(data.position);
     } else {
       leftHand2(data.position);
@@ -842,7 +762,7 @@ module.exports.begin = function(w1, w2, cam, l) {
   });
 
   socket.on('rightHand', function(data) {
-    if (data.wrestler == 1) {
+    if (data.wrestler === 1) {
       rightHand1(data.position);
     } else {
       rightHand2(data.position);
@@ -850,7 +770,7 @@ module.exports.begin = function(w1, w2, cam, l) {
   });
 
   socket.on('closestHand', function(data) {
-    if (data.wrestler == 1) {
+    if (data.wrestler === 1) {
       closestHand1(data.position);
     } else {
       closestHand2(data.position);
@@ -858,7 +778,7 @@ module.exports.begin = function(w1, w2, cam, l) {
   });
 
   socket.on('head', function(data) {
-    if (data.wrestler == 1) {
+    if (data.wrestler === 1) {
       head1(data.position);
     } else {
       head2(data.position);
@@ -866,7 +786,7 @@ module.exports.begin = function(w1, w2, cam, l) {
   });
 
   socket.on('leftKnee', function(data) {
-    if (data.wrestler == 1) {
+    if (data.wrestler === 1) {
       leftKnee1(data.position);
     } else {
       leftKnee2(data.position);
@@ -882,7 +802,7 @@ module.exports.begin = function(w1, w2, cam, l) {
   });
 
   socket.on('leftElbow', function(data) {
-    if (data.wrestler == 1) {
+    if (data.wrestler === 1) {
       leftElbow1(data.position);
     } else {
       leftElbow2(data.position);
@@ -890,7 +810,7 @@ module.exports.begin = function(w1, w2, cam, l) {
   });
 
   socket.on('rightElbow', function(data) {
-    if (data.wrestler == 1) {
+    if (data.wrestler === 1) {
       rightElbow1(data.position);
     } else {
       rightElbow2(data.position);
@@ -898,7 +818,7 @@ module.exports.begin = function(w1, w2, cam, l) {
   });
 
   socket.on('torso', function(data) {
-    if (data.wrestler == 1) {
+    if (data.wrestler === 1) {
       torso1(data.position);
     } else {
       torso2(data.position);
@@ -906,7 +826,7 @@ module.exports.begin = function(w1, w2, cam, l) {
   });
 
   socket.on('resetPlayer', function(player) {
-    if (player == 1) {
+    if (player === 1) {
       wrestler1.reset();
     } else {
       wrestler2.reset();
@@ -925,7 +845,7 @@ module.exports.begin = function(w1, w2, cam, l) {
   socket.on('endPokes', function() {
     module.exports.eventHandler('endPokes');
   });
-}
+};
 
 function moveDelta(bodypart, position, lastPos, divisor, directions) {
   if (!directions) directions = {x: true, y: true, z: true};
@@ -964,15 +884,6 @@ function moveDelta(bodypart, position, lastPos, divisor, directions) {
   bodypart.move(deltaX, deltaY, deltaZ);
 }
 
-function scaleWrestler(wrestler, rapidHeadTicks) {
-  var s = 1.0 + 20.0 * (rapidHeadTicks / MAX_HEAD_SWELL);
-  wrestler.swell(s);
-}
-
-function checkShatter(rapidHeadCount) {
-  return rapidHeadCount >= MAX_HEAD_SWELL;
-}
-
 function delta(current, previous) {
   return {x: current.x - previous.x, y: current.y - previous.y, z: current.z - previous.z};
 }
@@ -981,384 +892,240 @@ function totalMagnitude(pos) {
   return Math.abs(pos.x) + Math.abs(pos.y) + Math.abs(pos.z);
 }
 
-function phraseBlast(player, pos, vel) {
-  var data = {player: player, pos: pos, vel: vel};
-  module.exports.eventHandler('phraseBlast', data);
-}
+/*** HANDS ***/
 
 function rightHand1(position) {
-  if (previousPositions.rightHand1) {
-    if (module.exports.mode == module.exports.KNOCK || module.exports.mode == module.exports.RUN) {
-      var denom = (module.exports.mode == module.exports.KNOCK)? 2.5 : 7;
+  rightHandBehavior(position, 1);
+}
+
+function rightHand2(position)  {
+  rightHandBehavior(position, 2);
+}
+
+function rightHandBehavior(position, handNumber) {
+  var rightHandKey = 'rightHand' + handNumber;
+  var wrestler = handNumber === 1 ? wrestler1 : wrestler2;
+
+  if (previousPositions[rightHandKey]) {
+    if (module.exports.mode === module.exports.JOBFAIR) {
+      var denom = 7;
       var directions = {x: true, y: true, z: true};
-      if (module.exports.mode == module.exports.KNOCK) {
-        directions.y = false;
-        directions.x = false;
-      }
-      moveDelta(wrestler1.rightArm, position, previousPositions.rightHand1, denom, directions);
-    }
-    else if (module.exports.mode == module.exports.PHRASE) {
-      var now = new Date();
-      if (now - phraseGestureTimes.right1 >= MIN_TIME_BETWEEN_GESTURES) {
-        var pdelta = delta(position, previousPositions.rightHand1);
-        var vel = {
-          x: pdelta.x * PHRASE_GESTURE_DELTA_MULT,
-          y: pdelta.y * PHRASE_GESTURE_DELTA_MULT,
-          z: pdelta.z * PHRASE_GESTURE_DELTA_MULT
-        };
-        if (totalMagnitude(vel) >= MIN_PHRASE_VEL) {
-          var pos = phrasePos(false);
-
-          velCleanse(vel);
-
-          phraseGestureTimes.right1 = now;
-          phraseGestureVelocities.right1 = vel;
-          phraseGestureStartPositions.right1 = pos;
-
-          phraseBlast(1, pos, vel);
-        }
-      }
+      moveDelta(wrestler.rightArm, position, previousPositions[rightHandKey], denom, directions);
     }
   }
 
-  previousPositions.rightHand1 = position;
+  previousPositions[rightHandKey] = position;
 }
 
 function leftHand1(position) {
-  if (previousPositions.rightHand1) {
-    var rh = previousPositions.rightHand1;
-    positionDeltas.hand1 = {x: position.x - rh.x, y: position.y - rh.y, z: position.z - rh.z};
-    hand1DeltaAction(positionDeltas.hand1);
+  leftHandBehavior(position, 1, hand1DeltaAction);
+}
+
+function leftHand2(position) {
+  leftHandBehavior(position, 2, hand2DeltaAction);
+}
+
+function leftHandBehavior(position, handNumber, handDeltaAction) {
+  var leftHandKey = 'leftHand' + handNumber;
+  var rightHandKey = 'rightHand' + handNumber;
+  var handDeltaKey = 'hand' + handNumber;
+  var wrestler = handNumber === 1 ? wrestler1 : wrestler2;
+
+  if (previousPositions[rightHandKey]) {
+    var rh = previousPositions[rightHandKey];
+    positionDeltas[handDeltaKey] = {x: position.x - rh.x, y: position.y - rh.y, z: position.z - rh.z};
+    handDeltaAction(positionDeltas[handDeltaKey]);
   }
 
-  if (previousPositions.leftHand1) {
-    if (module.exports.mode == module.exports.KNOCK || module.exports.mode == module.exports.RUN) {
-      var denom = (module.exports.mode == module.exports.KNOCK)? 2.5 : 7;
+  if (previousPositions[leftHandKey]) {
+    if (module.exports.mode === module.exports.JOBFAIR) {
+      var denom = 7;
       var directions = {x: true, y: true, z: true};
-      if (module.exports.mode == module.exports.KNOCK) {
-        directions.y = false;
-        directions.x = false;
-      }
-      moveDelta(wrestler1.leftArm, position, previousPositions.leftHand1, denom, directions);
-    }
-    else if (module.exports.mode == module.exports.PHRASE) {
-      var now = new Date();
-      if (now - phraseGestureTimes.left1 >= MIN_TIME_BETWEEN_GESTURES) {
-        var pdelta = delta(position, previousPositions.leftHand1);
-        var vel = {
-          x: pdelta.x * PHRASE_GESTURE_DELTA_MULT,
-          y: pdelta.y * PHRASE_GESTURE_DELTA_MULT,
-          z: pdelta.z * PHRASE_GESTURE_DELTA_MULT
-        };
-        if (totalMagnitude(vel) >= MIN_PHRASE_VEL) {
-          var pos = phrasePos(true);
-
-          velCleanse(vel);
-
-          phraseGestureTimes.left1 = now;
-          phraseGestureVelocities.left1 = vel;
-          phraseGestureStartPositions.left1 = pos;
-
-          phraseBlast(1, pos, vel);
-        }
-      }
+      moveDelta(wrestler.leftArm, position, previousPositions[leftHandKey], denom, directions);
     }
   }
 
-  previousPositions.leftHand1 = position;
+  previousPositions[leftHandKey] = position;
 }
 
 function closestHand1(position) {}
 
+function closestHand2(position) {}
+
+/*** HEADS ***/
+
 function head1(position) {
-  if (previousPositions.head1) {
-    if (positionDeltas.torso1 && totalMagnitude(positionDeltas.torso1) < TORSO_CLOSE_MAG) {
-      var positionChange = delta(position, previousPositions.head1);
+  headBehavior(position, 1);
+}
+
+function head2(position) {
+  headBehavior(position, 2);
+}
+
+function headBehavior(position, headNumber) {
+  var headKey = 'head' + headNumber;
+  var torsoKey = 'torso' + headNumber;
+  var headVelocityKey = headNumber === 1 ? 'one' : 'two';
+
+  if (previousPositions[headKey]) {
+    if (positionDeltas[torsoKey] && totalMagnitude(positionDeltas[torsoKey]) < TORSO_CLOSE_MAG) {
+      var positionChange = delta(position, previousPositions[headKey]);
       var mag = totalMagnitude(positionChange);
 
       if (mag > BIG_HEAD_MAG) {
-        if (eventsWithRapidHeadVelocity.one == 0) {
-          socket.emit('startSwell', 1);
+        if (eventsWithRapidHeadVelocity[headVelocityKey] === 0) {
+          socket.emit('startSwell', headNumber);
         }
 
-        eventsWithRapidHeadVelocity.one = Math.min(eventsWithRapidHeadVelocity.one + 1, MAX_HEAD_SWELL);
+        eventsWithRapidHeadVelocity[headVelocityKey] = Math.min(eventsWithRapidHeadVelocity[headVelocityKey] + 1, MAX_HEAD_SWELL);
       } else {
-        if (eventsWithRapidHeadVelocity.one == 1) {
-          socket.emit('endSwell', 1);
+        if (eventsWithRapidHeadVelocity[headVelocityKey] === 1) {
+          socket.emit('endSwell', headNumber);
         }
 
-        eventsWithRapidHeadVelocity.one = Math.max(eventsWithRapidHeadVelocity.one - 1, 0);
+        eventsWithRapidHeadVelocity[headVelocityKey] = Math.max(eventsWithRapidHeadVelocity[headVelocityKey] - 1, 0);
       }
 
-      if (module.exports.mode == module.exports.KNOCK) {
-        if (checkShatter(eventsWithRapidHeadVelocity.one)) {
-          module.exports.eventHandler('shatter', {});
+      if (module.exports.mode === module.exports.INTERVIEW) {
+        if (eventsWithRapidHeadVelocity[headVelocityKey] >= MAX_HEAD_SWELL) {
+          module.exports.eventHandler('spit', {});
         }
-
-        //scaleWrestler(wrestler1, eventsWithRapidHeadVelocity.one);
       }
-
     }
   }
 
-  previousPositions.head1 = position;
+  previousPositions[headKey] = position;
 }
 
-function leftKnee1(position) {
-  if (previousPositions.rightKnee1) {
-    var rh = previousPositions.rightKnee1;
-    positionDeltas.knee1 = {x: position.x - rh.x, y: position.y - rh.y, z: position.z - rh.z};
-    knee1DeltaAction(positionDeltas.knee1);
+/*** TORSO ***/
+
+function torso1(position) {
+  torsoBehavior(position, 1);
+}
+
+function torso2(position) {
+  torsoBehavior(position, 2);
+}
+
+function torsoBehavior(position, torsoNumber) {
+  var torsoKey = 'torso' + torsoNumber;
+  var wrestler = torsoNumber === 1 ? wrestler1 : wrestler2;
+  var alternateWrestler = torsoNumber === 1 ? wrestler2: wrestler1;
+
+  if (previousPositions[torsoKey]) {
+    if (module.exports.mode === module.exports.JOBFAIR) {
+      var d = delta(position, previousPositions[torsoKey]);
+      var mag = totalMagnitude(d);
+      var dist = TORSO_MOVEMENT_MAG_MULT * mag;
+      wrestler.move(d.x / 30, 0, dist);
+
+      if (wrestler.position.z - alternateWrestler.position.z > MIN_DISTANCE_BETWEEN_WRESTLERS) {
+        alternateWrestler.move(0, 0, wrestler.position.z - MIN_DISTANCE_BETWEEN_WRESTLERS);
+      }
+    }
+
+    positionDeltas[torsoKey] = delta(position, previousPositions[torsoKey]);
   }
 
-  if (previousPositions.leftKnee1) {
-    if (module.exports.mode == module.exports.KNOCK || module.exports.mode == module.exports.PHRASE) {
-      moveDelta(wrestler1.leftLeg, position, previousPositions.leftKnee1, 8);
+  previousPositions[torsoKey] = position;
+}
+
+/*** KNEES ***/
+
+function leftKnee1(position) {
+  leftKneeBehavior(position, 1);
+}
+
+function leftKnee2(position) {
+  leftKneeBehavior(position, 2);
+}
+
+function leftKneeBehavior(position, kneeNumber) {
+  var leftKneeKey = 'leftKnee' + kneeNumber;
+  var rightKneeKey = 'rightKnee' + kneeNumber;
+  var kneeDeltaKey = 'knee' + kneeNumber;
+  var wrestler = kneeNumber === 1 ? wrestler1 : wrestler2;
+
+  if (previousPositions[rightKneeKey]) {
+    var rh = previousPositions[rightKneeKey];
+    positionDeltas[kneeDeltaKey] = {x: position.x - rh.x, y: position.y - rh.y, z: position.z - rh.z};
+    knee2DeltaAction(positionDeltas[kneeDeltaKey]);
+  }
+
+  if (previousPositions[leftKneeKey]) {
+    if (module.exports.mode === module.exports.JOBFAIR) {
+      moveDelta(wrestler.leftLeg, position, previousPositions[leftKneeKey], 8, {x: true, y: true, z: true});
     }
   }
 
-  previousPositions.leftKnee1 = position;
+  previousPositions[leftKneeKey] = position;
 }
 
 function rightKnee1(position) {
-  if (previousPositions.rightKnee1) {
-    if (module.exports.mode == module.exports.KNOCK || module.exports.mode == module.exports.PHRASE) {
-      moveDelta(wrestler1.rightLeg, position, previousPositions.rightKnee1, 8);
+  rightKneeBehavior(position, 1);
+}
+
+function rightKnee2(position) {
+  rightKneeBehavior(position, 2);
+}
+
+function rightKneeBehavior(position, kneeNumber) {
+  var rightKneeKey = 'rightKnee' + kneeNumber;
+  var wrestler = kneeNumber === 1 ? wrestler1 : wrestler2;
+
+  if (previousPositions[rightKneeKey]) {
+    if (module.exports.mode === module.exports.JOBFAIR) {
+      moveDelta(wrestler.rightLeg, position, previousPositions[rightKneeKey], 8, {x: true, y: true, z: true});
     }
   }
 
-  previousPositions.rightKnee1 = position;
+  previousPositions[rightKneeKey] = position;
 }
 
+/*** ELBOWS ***/
+
 function leftElbow1(position) {
-  if (previousPositions.rightElbow1) {
-    var rh = previousPositions.rightElbow1;
-    positionDeltas.elbow1 = {x: position.x - rh.x, y: position.y - rh.y, z: position.z - rh.z};
-    elbow1DeltaAction(positionDeltas.elbow1);
+  leftElbowBehavior(position, 1, elbow1DeltaAction);
+}
+
+function leftElbow2(position) {
+  leftElbowBehavior(position, 2, elbow2DeltaAction);
+}
+
+function leftElbowBehavior(position, elbowNumber, deltaAction) {
+  var elbowDeltaKey = 'elbow' + elbowNumber;
+  var leftElbowKey = 'leftElbow' + elbowNumber;
+  var rightElbowKey = 'rightElbow' + elbowNumber;
+
+  if (previousPositions[rightElbowKey]) {
+    var rh = previousPositions[rightElbowKey];
+    positionDeltas[elbowDeltaKey] = {x: position.x - rh.x, y: position.y - rh.y, z: position.z - rh.z};
+    deltaAction(positionDeltas[elbowDeltaKey]);
   }
 
-  previousPositions.leftElbow1 = position;
+  previousPositions[leftElbowKey] = position;
 }
 
 function rightElbow1(position) {
   previousPositions.rightElbow1 = position;
 }
 
-function torso1(position) {
-  if (previousPositions.torso1) {
-    if (module.exports.mode == module.exports.KNOCK) {
-      //moveDelta(wrestler1, position, previousPositions.torso1, 8, {x: false, y: false, z: true});
-    }
-    else if (module.exports.mode == module.exports.RUN) {
-      var d = delta(position, previousPositions.torso1);
-      var mag = totalMagnitude(d);
-      var dist = TORSO_MOVEMENT_MAG_MULT * mag;
-      wrestler1.move(d.x / 30, 0, dist);
-
-      if (wrestler1.position.z - wrestler2.position.z > MIN_DISTANCE_BETWEEN_WRESTLERS) {
-        wrestler2.move(0, 0, wrestler1.position.z - MIN_DISTANCE_BETWEEN_WRESTLERS);
-      }
-    }
-
-    positionDeltas.torso1 = delta(position, previousPositions.torso1);
-  }
-
-  previousPositions.torso1 = position;
-}
-
-function rightHand2(position)  {
-  if (previousPositions.rightHand2) {
-    if (module.exports.mode == module.exports.KNOCK || module.exports.mode == module.exports.RUN) {
-      var denom = (module.exports.mode == module.exports.KNOCK)? 2.5 : 7;
-      var directions = {x: true, y: true, z: true};
-      if (module.exports.mode == module.exports.KNOCK) {
-        directions.y = false;
-        directions.x = false;
-      }
-      moveDelta(wrestler2.rightArm, position, previousPositions.rightHand2, denom, directions);
-    }
-    else if (module.exports.mode == module.exports.PHRASE) {
-      var now = new Date();
-      if (now - phraseGestureTimes.right2 >= MIN_TIME_BETWEEN_GESTURES) {
-        var pdelta = delta(position, previousPositions.rightHand2);
-        var vel = {
-          x: pdelta.x * PHRASE_GESTURE_DELTA_MULT,
-          y: pdelta.y * PHRASE_GESTURE_DELTA_MULT,
-          z: pdelta.z * PHRASE_GESTURE_DELTA_MULT
-        };
-        if (totalMagnitude(vel) >= MIN_PHRASE_VEL) {
-          var pos = phrasePos(false);
-
-          velCleanse(vel);
-
-          phraseGestureTimes.right2 = now;
-          phraseGestureVelocities.right2 = vel;
-          phraseGestureStartPositions.right2 = pos;
-
-          phraseBlast(2, pos, vel);
-        }
-      }
-    }
-  }
-
-  previousPositions.rightHand2 = position;
-}
-
-function leftHand2(position) {
-  if (previousPositions.rightHand2) {
-    var rh = previousPositions.rightHand2;
-    positionDeltas.hand2 = {x: position.x - rh.x, y: position.y - rh.y, z: position.z - rh.z};
-    hand2DeltaAction(positionDeltas.hand2);
-  }
-
-  if (previousPositions.leftHand2) {
-    if (module.exports.mode == module.exports.KNOCK || module.exports.mode == module.exports.RUN) {
-      var denom = (module.exports.mode == module.exports.KNOCK)? 2.5 : 7;
-      var directions = {x: true, y: true, z: true};
-      if (module.exports.mode == module.exports.KNOCK) {
-        directions.y = false;
-        directions.x = false;
-      }
-      moveDelta(wrestler2.leftArm, position, previousPositions.leftHand2, denom, directions);
-    }
-    else if (module.exports.mode == module.exports.PHRASE) {
-      var now = new Date();
-      if (now - phraseGestureTimes.left2 >= MIN_TIME_BETWEEN_GESTURES) {
-        var pdelta = delta(position, previousPositions.leftHand2);
-        var vel = {
-          x: pdelta.x * PHRASE_GESTURE_DELTA_MULT,
-          y: pdelta.y * PHRASE_GESTURE_DELTA_MULT,
-          z: pdelta.z * PHRASE_GESTURE_DELTA_MULT
-        };
-        if (totalMagnitude(vel) >= MIN_PHRASE_VEL) {
-          var pos = phrasePos(true);
-
-          velCleanse(vel);
-
-          phraseGestureTimes.left2 = now;
-          phraseGestureVelocities.left2 = vel;
-          phraseGestureStartPositions.left2 = pos;
-
-          phraseBlast(2, pos, vel);
-        }
-      }
-    }
-  }
-
-  previousPositions.leftHand2 = position;
-}
-
-function closestHand2(position) {
-
-}
-
-function head2(position) {
-  if (previousPositions.head2) {
-    if (positionDeltas.torso2 && totalMagnitude(positionDeltas.torso2) < TORSO_CLOSE_MAG) {
-      var positionChange = delta(position, previousPositions.head2);
-      var mag = totalMagnitude(positionChange);
-
-      if (mag > BIG_HEAD_MAG) {
-        if (eventsWithRapidHeadVelocity.two == 0) {
-          socket.emit('startSwell', 2);
-        }
-
-        eventsWithRapidHeadVelocity.two = Math.min(eventsWithRapidHeadVelocity.two + 1, MAX_HEAD_SWELL);
-      } else {
-        if (eventsWithRapidHeadVelocity.two == 1) {
-          socket.emit('endSwell', 2);
-        }
-
-        eventsWithRapidHeadVelocity.two = Math.max(eventsWithRapidHeadVelocity.two - 1, 0);
-      }
-
-      if (module.exports.mode == module.exports.KNOCK) {
-        if (checkShatter(eventsWithRapidHeadVelocity.two)) {
-          module.exports.eventHandler('shatter', {});
-        }
-
-        //scaleWrestler(wrestler2, eventsWithRapidHeadVelocity.two);
-      }
-    }
-  }
-
-  previousPositions.head2 = position;
-}
-
-function leftKnee2(position) {
-  if (previousPositions.rightKnee2) {
-    var rh = previousPositions.rightKnee2;
-    positionDeltas.knee2 = {x: position.x - rh.x, y: position.y - rh.y, z: position.z - rh.z};
-    knee2DeltaAction(positionDeltas.knee2);
-  }
-
-  if (previousPositions.leftKnee2) {
-    if (module.exports.mode == module.exports.KNOCK || module.exports.mode == module.exports.PHRASE) {
-      moveDelta(wrestler2.leftLeg, position, previousPositions.leftKnee2, 8, {x: true, y: true, z: true});
-    }
-  }
-
-  previousPositions.leftKnee2 = position;
-}
-
-function rightKnee2(position) {
-  if (previousPositions.rightKnee2) {
-    if (module.exports.mode == module.exports.KNOCK || module.exports.mode == module.exports.PHRASE) {
-      moveDelta(wrestler2.rightLeg, position, previousPositions.rightKnee2, 8, {x: true, y: true, z: true});
-    }
-  }
-
-  previousPositions.rightKnee2 = position;
-}
-
-function leftElbow2(position) {
-  if (previousPositions.rightElbow2) {
-    var rh = previousPositions.rightElbow2;
-    positionDeltas.elbow2 = {x: position.x - rh.x, y: position.y - rh.y, z: position.z - rh.z};
-    elbow2DeltaAction(positionDeltas.elbow2);
-  }
-
-  previousPositions.leftElbow2 = position;
-}
-
 function rightElbow2(position) {
   previousPositions.rightElbow2 = position;
 }
 
-function torso2(position) {
-  if (previousPositions.torso2) {
-    if (module.exports.mode == module.exports.KNOCK) {
-      //moveDelta(wrestler2, position, previousPositions.torso2, 8, {x: false, y: false, z: true});
-    }
-    else if (module.exports.mode == module.exports.RUN) {
-      var d = delta(position, previousPositions.torso2);
-      var mag = totalMagnitude(d);
-      var dist = TORSO_MOVEMENT_MAG_MULT * mag;
-      wrestler2.move(d.x / 30, 0, dist);
-
-      if (wrestler2.position.z - wrestler1.position.z > MIN_DISTANCE_BETWEEN_WRESTLERS) {
-        wrestler1.move(0, 0, wrestler2.position.z - MIN_DISTANCE_BETWEEN_WRESTLERS);
-      }
-    }
-
-    positionDeltas.torso2 = delta(position, previousPositions.torso2);
-  }
-
-  previousPositions.torso2 = position;
-}
+/*** DELTA ACTIONS ***/
 
 function hand1DeltaAction(positionDelta) {
-  var mag = totalMagnitude(positionDelta);
-  var date = new Date();
+  handDeltaActionBehavior(positionDelta, 1);
 
-  if (mag < CLOSE_HANDS_MAG) {
-
-  } else {
-
-  }
 }
 
 function hand2DeltaAction(positionDelta) {
+  handDeltaActionBehavior(positionDelta, 2);
+}
+
+function handDeltaActionBehavior(positionDelta, handNumber) {
   var mag = totalMagnitude(positionDelta);
   var date = new Date();
 
@@ -1370,16 +1137,14 @@ function hand2DeltaAction(positionDelta) {
 }
 
 function knee1DeltaAction(positionDelta) {
-  var mag = totalMagnitude(positionDelta);
-
-  if (mag < CLOSE_KNEE_MAG) {
-
-  } else {
-
-  }
+  kneeDeltaActionBehavior(positionDelta, 1);
 }
 
 function knee2DeltaAction(positionDelta) {
+  kneeDeltaActionBehavior(positionDelta, 2);
+}
+
+function kneeDeltaActionBehavior(positionDelta, kneeNumber) {
   var mag = totalMagnitude(positionDelta);
 
   if (mag < CLOSE_KNEE_MAG) {
@@ -1390,77 +1155,59 @@ function knee2DeltaAction(positionDelta) {
 }
 
 function elbow1DeltaAction(positionDelta) {
-  var mag = totalMagnitude(positionDelta);
-
-  if (mag > FAR_ELBOW_MAG && handsBetweenElbows(1)) {
-    if (previousPositions.rightHand1.y < previousPositions.rightElbow1.y - 10 &&
-        previousPositions.leftHand1.y > previousPositions.leftElbow1.y + 10) {
-
-    } else {
-      checkPlayer1ElbowNonRot(true, false);
-    }
-
-    if (previousPositions.rightHand1.y > previousPositions.rightElbow1.y + 10 &&
-             previousPositions.leftHand1.y < previousPositions.leftElbow1.y - 10) {
-
-    } else {
-      checkPlayer1ElbowNonRot(false, true);
-    }
-  } else {
-    checkPlayer1ElbowNonRot(true, true);
-  }
-
-  previousPositionDeltas.elbow1 = positionDelta;
+  elbowDeltaActionBehavior(positionDelta, 1);
 }
 
 function elbow2DeltaAction(positionDelta) {
+  elbowDeltaActionBehavior(positionDelta, 2);
+}
+
+function elbowDeltaActionBehavior(positionDelta, elbowNum) {
+  var elbowKey = 'elbow' + elbowNum;
+  var rightHandKey = 'rightHand' + elbowNum;
+  var leftHandKey = 'leftHand' + elbowNum;
+  var rightElbowKey = 'rightElbow' + elbowNum;
+  var leftElbowKey = 'leftElbow' + elbowNum;
+
   var mag = totalMagnitude(positionDelta);
 
-  if (mag > FAR_ELBOW_MAG && handsBetweenElbows(2)) {
-    if (previousPositions.rightHand2.y < previousPositions.rightElbow2.y - 10 &&
-        previousPositions.leftHand2.y > previousPositions.leftElbow2.y + 10) {
+  if (mag > FAR_ELBOW_MAG && handsBetweenElbows(elbowNum)) {
+    if (previousPositions[rightHandKey].y < previousPositions[rightElbowKey].y - 10 &&
+        previousPositions[leftHandKey].y > previousPositions[leftElbowKey].y + 10) {
 
     } else {
-      checkPlayer2ElbowNonRot(true, false);
+      checkElbowNonRot(elbowNum, true, false);
     }
 
-    if (previousPositions.rightHand2.y > previousPositions.rightElbow2.y + 10 &&
-             previousPositions.leftHand2.y < previousPositions.leftElbow2.y - 10) {
+    if (previousPositions[rightHandKey].y > previousPositions[rightElbowKey].y + 10 &&
+             previousPositions[leftHandKey].y < previousPositions[leftElbowKey].y - 10) {
 
     } else {
-      checkPlayer2ElbowNonRot(false, true);
+      checkElbowNonRot(elbowNum, false, true);
     }
   } else {
-    checkPlayer2ElbowNonRot(true, true);
+    checkElbowNonRot(elbowNum, true, true);
   }
 
-  previousPositionDeltas.elbow2 = positionDelta;
+  previousPositionDeltas[elbowKey] = positionDelta;
 }
 
-function checkPlayer1ElbowNonRot(rotUp, rotDown) {
-  if (rotUp && elbowHistory.one.rotUp) {
-    elbowHistory.one.rotUp = false;
+function checkElbowNonRot(elbowNum, rotUp, rotDown) {
+  var numKey = elbowNum === 1 ? 'one' : 'two';
+
+  if (rotUp && elbowHistory[numKey].rotUp) {
+    elbowHistory[numKey].rotUp = false;
   }
 
-  if (rotDown && elbowHistory.one.rotDown) {
-    elbowHistory.one.rotDown = false;
-  }
-}
-
-function checkPlayer2ElbowNonRot(rotUp, rotDown) {
-  if (rotUp && elbowHistory.two.rotUp) {
-    elbowHistory.two.rotUp = false;
-  }
-
-  if (rotDown && elbowHistory.two.rotDown) {
-    elbowHistory.two.rotDown = false;
+  if (rotDown && elbowHistory[numKey].rotDown) {
+    elbowHistory[numKey].rotDown = false;
   }
 }
 
 function handsBetweenElbows(playerNum) {
   var leftHand, rightHand, leftElbow, rightElbow;
 
-  if (playerNum == 1) {
+  if (playerNum === 1) {
     leftHand = previousPositions.leftHand1;
     rightHand = previousPositions.rightHand1;
     leftElbow = previousPositions.leftElbow1;
@@ -1483,7 +1230,50 @@ function handsBetweenElbows(playerNum) {
   return (leftHand.x > leftElbow.x) && (rightHand.x < rightElbow.x);
 }
 
-},{}],9:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
+
+var Recruiter = require('./recruiter');
+
+module.exports = JobBooth;
+
+function JobBooth(recruiterOptions, posterURL) {
+  this.recruiter = new Recruiter(recruiterOptions);
+
+  this.desk = makeDesk();
+
+  this.poster = makePoster(posterURL);
+}
+
+JobBooth.prototype.addTo = function(scene) {
+  var self = this;
+  this.recruiter.addTo(scene, function() {
+    self.recruiter.skinnedMesh.add(self.desk);
+    self.desk.position.set(-10, 0, -4);
+
+    self.recruiter.skinnedMesh.add(self.poster);
+    self.poster.position.set(-10, 7, -4);
+
+    self.meshes = [self.desk, self.poster, self.recruiter.skinnedMesh, self.recruiter.faceMesh];
+  });
+};
+
+function makeDesk() {
+  var material = new THREE.MeshBasicMaterial({color: 0x655513});
+  var geometry = new THREE.BoxGeometry(10, 6, 4);
+  var desk = new THREE.Mesh(geometry, material);
+  return desk;
+}
+
+function makePoster(imageURL) {
+  var material = new THREE.MeshBasicMaterial({
+    map: THREE.ImageUtils.loadTexture(imageURL)
+  });
+  var geometry = new THREE.BoxGeometry(5, 7, 1);
+  var poster = new THREE.Mesh(geometry, material);
+  return poster;
+}
+
+},{"./recruiter":14}],9:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 
@@ -2081,17 +1871,12 @@ Kutility.prototype.blur = function(el, x) {
 }
 
 },{}],11:[function(require,module,exports){
+
 $(function() {
 
-  var kt = require('./lib/kutility');
-  var BodyPart = require('./bodypart');
   var Character = require('./character');
   var io = require('./io');
-  var RonaldWord = require('./ronald_word');
-  var mn = require('./model_names');
-  var Hand = require('./hand');
-  var Human = require('./human');
-  var SKYBOX = require('./skybox');
+  var recruiterManager = require('./recruiter-manager');
 
   var TEST_MODE = true;
 
@@ -2101,6 +1886,7 @@ $(function() {
 
   var renderer = new THREE.WebGLRenderer({antialias: true});
 	renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0xffffff);
 	document.body.appendChild(renderer.domElement);
 
   var scene = new Physijs.Scene();
@@ -2111,7 +1897,7 @@ $(function() {
     scene.simulate(undefined, 1);
   });
 
-  var camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 1, 20000);
+  var camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 1, 1000);
   camera.target = {x: 0, y: 0, z: 0};
   scene.add(camera);
 
@@ -2122,9 +1908,10 @@ $(function() {
   mainLight.castShadow = true;
   scene.add(mainLight);
 
-  var startedShatter = false;
   io.eventHandler = function(event, data) {
-    // ok ok check tony-ronald for how to use
+    if (['spit', 'handshake'].indexOf(event) !== -1) {
+      jobfairState.ronaldPerformedAction(event);
+    }
   };
 
   /*
@@ -2132,9 +1919,9 @@ $(function() {
    */
 
   var active = {ronalds: false, lighting: false, camera: false, jobfair: false, weighing: false};
-  var history = {};
 
   var jobfairState = {};
+  var weighingState = {};
 
   var cameraFollowState = {
     target: null,
@@ -2145,10 +1932,10 @@ $(function() {
     offset: {x: 0, y: 0, z: 0}
   };
 
-  var kevinRonald = new Character({x: -700, y: -200, z: -1000}, 20);
+  var kevinRonald = new Character({x: 7, y: -30, z: 100}, 20);
   kevinRonald.addTo(scene);
 
-  var dylanRonald = new Character({x: -600, y: -200, z: -1000}, 20);
+  var dylanRonald = new Character({x: 30, y: -30, z: 100}, 20);
   dylanRonald.addTo(scene);
   var ronalds = [kevinRonald, dylanRonald];
 
@@ -2156,13 +1943,13 @@ $(function() {
    * * * * * STARTIN AND RENDERIN * * * * *
    */
 
-  start();
+  setTimeout(start, 2000);
   function start() {
     if (!TEST_MODE) {
       io.begin(kevinRonald, dylanRonald, camera);
     }
 
-    enterPhrasesState();
+    enterJobfairState();
 
     render();
     scene.simulate();
@@ -2171,40 +1958,31 @@ $(function() {
       console.log('key press eh? ' + ev.which);
       ev.preventDefault();
 
-      if (ev.which == 32) { // spacebar
+      if (ev.which === 32) { // spacebar
         resetRonaldPositions();
       }
-      else if (ev.which == 97)  { // left
-        moveCameraPosition(-1, 0, 0);
-        if (cameraFollowState.offset) {
-          cameraFollowState.offset.x += -1;
-        }
+      else if (ev.which === 97)  { // a
+        if (io.mode === io.JOBFAIR) kevinRonald.move(-1, 0, 0);
       }
-      else if (ev.which == 119)  { // up
-        moveCameraPosition(0, 0, 1);
-        if (cameraFollowState.offset) {
-          cameraFollowState.offset.y += 1;
-        }
+      else if (ev.which === 119)  { // w
+        if (io.mode === io.JOBFAIR) kevinRonald.move(0, 0, -1);
       }
-      else if (ev.which == 100)  { // right
-        moveCameraPosition(1, 0, 0);
-        if (cameraFollowState.offset) {
-          cameraFollowState.offset.x += 1;
-        }
+      else if (ev.which === 100)  { // d
+        if (io.mode === io.JOBFAIR) kevinRonald.move(1, 0, 0);
       }
-      else if (ev.which == 115)  { // down
-        moveCameraPosition(0, 0, -1);
-        if (cameraFollowState.offset) {
-          cameraFollowState.offset.y += -1;
-        }
+      else if (ev.which === 115)  { // s
+        if (io.mode === io.JOBFAIR) kevinRonald.move(0, 0, 1);
       }
-      else if (ev.which == 113) { // q
+      else if (ev.which === 122) { // z
+        jobfairState.ronaldPerformedAction('spit');
+      }
+      else if (ev.which === 113) { // q
         moveCameraPosition(0, 1, 0);
         if (cameraFollowState.offset) {
           cameraFollowState.offset.z += 1;
         }
       }
-      else if (ev.which == 101) { // e
+      else if (ev.which === 101) { // e
         moveCameraPosition(0, -1, 0);
         if (cameraFollowState.offset) {
           cameraFollowState.offset.z += -1;
@@ -2222,6 +2000,13 @@ $(function() {
       });
     }
 
+    if (active.jobfair) {
+      jobfairState.render();
+    }
+    if (active.weighing) {
+      weighingState.render();
+    }
+
     if (cameraFollowState.target) {
       camera.position.copy(cameraFollowState.target).add(cameraFollowState.offset);
       camera.lookAt(cameraFollowState.target);
@@ -2232,6 +2017,123 @@ $(function() {
     }
 
     renderer.render(scene, camera);
+  }
+
+  /*
+   * * * * * STATE CHANGES * * * * *
+   */
+
+  function enterJobfairState() {
+    active.jobfair = true;
+    io.mode = io.JOBFAIR;
+
+    jobfairState.ground_material = Physijs.createMaterial(
+      new THREE.MeshBasicMaterial({color: 0x111111, side: THREE.DoubleSide, transparent: true, opacity: 0.2}),
+      0.8, // high friction
+      0.4 // low restitution
+    );
+
+    jobfairState.ground_geometry = new THREE.PlaneGeometry(140, 2000);
+    calculateGeometryThings(jobfairState.ground_geometry);
+
+    jobfairState.ground = new Physijs.BoxMesh(jobfairState.ground_geometry, jobfairState.ground_material, 0);
+    jobfairState.ground.rotation.x = -Math.PI / 2;
+    jobfairState.ground.position.z = -1000;
+    jobfairState.ground.position.y = 0;
+    jobfairState.ground.__dirtyPosition = true;
+    scene.add(jobfairState.ground);
+
+    cameraFollowState.target = kevinRonald.torso.mesh.position;
+    cameraFollowState.offset = {x: 0, y: 60, z: 150};
+
+    jobfairState.booths = recruiterManager.createBooths(scene);
+
+    var hasReachedBooths = false;
+    var waitingForNextBooth = false;
+
+    function setCurrentBooth(index) {
+      console.log('current booth: ' + index);
+      jobfairState.currentBooth = index;
+      io.mode = io.INTERVIEW;
+    }
+
+    jobfairState.ronaldPerformedAction = function(action) {
+      // here would want to do UI and shit yum
+      console.log('ronald performed: ' + action);
+      if (recruiterManager.actionIsSuccessful(action, this.currentBooth)) {
+
+      } else {
+
+      }
+
+      if (this.currentBooth !== recruiterManager.recruiterCount - 1) {
+        io.mode = io.JOBFAIR;
+        waitingForNextBooth = true;
+      }
+      else {
+        this.transitionToWeighing();
+      }
+    };
+
+    jobfairState.transitionToWeighing = function() {
+      active.jobfair = false;
+      enterWeighingState();
+    };
+
+    jobfairState.render = function() {
+      if (!hasReachedBooths) {
+        if (kevinRonald.position.z <= -recruiterManager.closeToRecruiterDistance) {
+          hasReachedBooths = true;
+          setCurrentBooth(0);
+        }
+      }
+      else if (waitingForNextBooth) {
+        var currentBooth = recruiterManager.boothIndexForZ(kevinRonald.position.z);
+        if (currentBooth > this.currentBooth) {
+          setCurrentBooth(currentBooth);
+        }
+      }
+    };
+
+    jobfairState.endScene = function() {
+      fadeOverlay(true, function() {
+        var meshes = [jobfairState.ground];
+        jobfairState.booths.forEach(function(booth) {
+          booth.meshes.forEach(function(mesh) {
+            meshes.push(mesh);
+          });
+        });
+        clearScene(meshes);
+
+        active.jobfair = false;
+        enterWeighingState();
+        fadeOverlay(false);
+      });
+    };
+  }
+
+  function enterWeighingState() {
+    flash('RONALD IS BORN');
+
+    active.ronalds = true;
+    active.weighing = true;
+    io.mode = io.WEIGHING;
+
+    setCameraPosition(0, 0, 0);
+
+    mainLight.position.set(0, 20, 0);
+    mainLight.target.position.set(0, 5, -100);
+    mainLight.intensity = 5.0;
+
+    kevinRonald.moveTo(-80, 8, -140);
+    kevinRonald.rotate(0, Math.PI/4, 0);
+
+    dylanRonald.moveTo(80, 8, -140);
+    dylanRonald.rotate(0, -Math.PI/4, 0);
+
+    weighingState.render = function() {
+
+    };
   }
 
   /*
@@ -2309,7 +2211,7 @@ $(function() {
   }
 
   function middlePosition(p1, p2) {
-    return {x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2, z: (p1.z + p2.z) / 2}
+    return {x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2, z: (p1.z + p2.z) / 2};
   }
 
   function negrand(scalar) {
@@ -2340,69 +2242,9 @@ $(function() {
     return Math.abs(pos1.x - pos2.x) + Math.abs(pos1.y - pos2.y) + Math.abs(pos1.z - pos2.z);
   }
 
-  /*
-   * * * * * STATE CHANGES * * * * *
-   */
-
-  function enterJobfairState() {
-    active.jobfair = true;
-    io.mode = io.JOBFAIR;
-
-    jobfairState.ground_material = Physijs.createMaterial(
-      new THREE.MeshBasicMaterial({color: 0x111111, side: THREE.DoubleSide, transparent: true, opacity: 0.2}),
-      0.8, // high friction
-      0.4 // low restitution
-    );
-
-    jobfairState.ground_geometry = new THREE.PlaneGeometry(100, 100);
-    calculateGeometryThings(jobfairState.ground_geometry);
-
-    jobfairState.ground = new Physijs.BoxMesh(jobfairState.ground_geometry, jobfairState.ground_material, 0);
-    jobfairState.ground.rotation.x = -Math.PI / 2;
-    jobfairState.ground.position.z = -50;
-    jobfairState.ground.position.y = 0;
-    jobfairState.ground.__dirtyPosition = true;
-    scene.add(jobfairState.ground);
-
-    setCameraPosition(0, 40, 10);
-
-    jobfairState.endScene = function() {
-      fadeOverlay(true, function() {
-        var meshes = [jobfairState.ground];
-        clearScene(meshes);
-
-        active.jobfair = false;
-        enterWeighingState();
-        fadeOverlay(false);
-      });
-    };
-  }
-
-  function enterWeighingState() {
-    flash('RONALD IS BORN');
-
-    active.ronalds = true;
-    active.weighing = true;
-    io.mode = io.WEIGHING;
-
-    setCameraPosition(0, 0, 0);
-
-    mainLight.position.set(0, 20, 0);
-    mainLight.target.position.set(0, 5, -100);
-    mainLight.intensity = 5.0;
-
-    kevinRonald.moveTo(-80, 8, -140);
-    kevinRonald.rotate(0, Math.PI/4, 0);
-
-    dylanRonald.moveTo(80, 8, -140);
-    dylanRonald.rotate(0, -Math.PI/4, 0);
-
-    ronalds = [kevinRonald, dylanRonald];
-  }
-
 });
 
-},{"./bodypart":3,"./character":4,"./hand":5,"./human":7,"./io":8,"./lib/kutility":10,"./model_names":12,"./ronald_word":13,"./skybox":14}],12:[function(require,module,exports){
+},{"./character":4,"./io":7,"./recruiter-manager":13}],12:[function(require,module,exports){
 
 var prefix = '/js/models/';
 
@@ -2430,6 +2272,8 @@ module.exports.FOOTBALL_TORSO = pre('football_torso.js');
 
 module.exports.LOWPOLY_TORSO = pre('low_poly_torso.js');
 
+module.exports.MALE_BODY = pre('body.js');
+
 /* HANDS */
 
 module.exports.FOOTBALL_HAND = pre('football_hand.js');
@@ -2456,225 +2300,224 @@ module.exports.loadModel = function(modelName, callback) {
 }
 
 },{}],13:[function(require,module,exports){
-var kt = require('./lib/kutility');
 
-module.exports = RonaldWord;
+var JobBooth = require('./job-booth');
 
-var player1PhraseBank = [
-  'RONALD',
-  'MY FRIEND RONALD LIVES INSIDE THE COMPUTER',
-  'MY FRIEND RONALD',
-  'MY FRIEND RONALD LIVES IN THE COMPUTER TRASH CAN',
-  'RONALD EATS ALL THE COMPUTER TRASH',
-  'MY FRIEND RONALD SMOKES WEED',
-  "MY FRIEND RONALD'S DEAD",
-  'MY FRIEND RONALD USES ADOBE CREATIVE CLOUD',
-  'MY FRIEND RONALD HAS A STARTUP',
-  'MY FRIEND RONALD NEVER HAS TO GO OUTSIDE',
-  "RONALD'S NOT AFRAID",
-  "WHERE'D YOU GO, RONALD?",
-  'MY FRIEND RONALD WEARS BAND TEES',
-  'MY FRIEND RONALD HAS DESIRES',
-  'MY FRIEND RONALD SEEKS CLOSURE',
-  'MY FRIEND RONALD HELPS ME ESCAPE'
+module.exports.recruiterCount = 10;
+
+var riddles = [
+  '',
+  '',
+  '',
 ];
 
-var player2PhraseBank =  [
-  'I SEE MY FRIEND RONALD INSIDE OF EVERYONE',
-  'MY FRIEND RONALD IS ON SNAPCHAT',
-  'MY FRIEND RONALD BETA TESTED IOS 8',
-  'MY FRIEND RONALD IS A DEVELOPER',
-  'MY FRIEND RONALD PREFERS XBOX',
-  'MY FRIEND RONALD HAS CONNECTIONS',
-  'MY FRIEND RONALD WAKES UP EVERY MORNING WITH A SMILE',
-  "RONALD'S ONLY FRIEND IS ME",
-  'MY ONLY FRIEND IS RONALD',
-  'MY FRIEND RONALD USES VSCO CAM',
-  'MY FRIEND RONALD LOVES TV PARTY',
-  'RONALD USES ANGULAR.JS FOR FRONTEND WEB DEVELOPMENT',
-  "RONALD'S FAVORITE TRASH IS PICTURES",
-  "RONALD'S HOME IS TRASH",
-  "MY FRIEND RONALD IS AN EXPERT WHEN IT COMES TO CLEANING COMPUTERS",
-  'YOU HAVE TO FEED MY FRIEND RONALD TRASH OR HE WILL DIE'
+var posterImages = [
+  '/images/linkedin.jpg',
+  '/images/linkedin.jpg',
+  '/images/linkedin.jpg',
+  '/images/linkedin.jpg',
+  '/images/linkedin.jpg',
+  '/images/linkedin.jpg',
+  '/images/linkedin.jpg',
+  '/images/linkedin.jpg',
+  '/images/linkedin.jpg',
+  '/images/linkedin.jpg'
 ];
 
-function negrand(scalar) {
-  return (Math.random() - 0.5) * scalar;
-}
+module.exports.actionIsSuccessful = function(action, boothIndex) {
+  return Math.random() < 0.5;
+};
 
-function randcolor() {
-  var r = kt.randInt(255);
-  var g = kt.randInt(255);
-  var b = kt.randInt(255);
-  return new THREE.Color(r, g, b);
-}
+module.exports.distanceBetweenBooths = 200;
+module.exports.closeToRecruiterDistance = 90;
 
-function RonaldWord(player, phrase, config) {
-  if (!player) {
-    player = 1;
+module.exports.createBooths = function(scene) {
+  var booths = [];
+
+  for (var i = 0; i < module.exports.recruiterCount; i++) {
+    var booth = new JobBooth(
+      {
+        position: {x: -6, y: 10, z: -i * module.exports.distanceBetweenBooths},
+        riddle: riddles[i]
+      },
+      posterImages[i]
+    );
+
+    booth.addTo(scene);
+    booths.push(booth);
   }
 
-  var phraseBank = (player == 1)? player1PhraseBank : player2PhraseBank;
-  if (!phrase) {
-    phrase = kt.choice(phraseBank);
-  }
+  return booths;
+};
 
-  if (!config) config = {};
-  if (!config.position) {
-    config.position = {x: Math.random() * 80 - 40, y: Math.random() * 80, z: Math.random() * -100};
-    config.position.x = (Math.random() > 0.5)? -20 : 20;
-    config.position.y = Math.random() * 40 + 20;
-    config.position.z = (Math.random() * -60) - 20;
-  }
-  if (!config.velocity) {
-    config.velocity = {x: negrand(50), y: negrand(50), z: negrand(50)};
-  }
-  if (!config.decay) {
-    config.decay = 60000;
-  }
+module.exports.boothIndexForZ = function(z) {
+  var pos = Math.abs(z);
+  return Math.floor(Math.max(pos - module.exports.closeToRecruiterDistance, 0) / module.exports.distanceBetweenBooths);
+};
 
-  this.phraseIndex = phraseBank.indexOf(phrase) + 1;
-  this.phrase = phrase;
-  this.position = config.position;
-  this.velocity = config.velocity;
-  this.decay = config.decay;
+},{"./job-booth":8}],14:[function(require,module,exports){
 
-  this.geometry = new THREE.TextGeometry(this.phrase, {
-    size: 2 + negrand(1)
-    , height: 0.01
-    , curveSegments: 1
-    , font: "droid sans"
-    , bevelThickness: 0.35
-    , bevelSize: 0.15
-    , bevelSegments: 1
-    , bevelEnabled: true
-  });
+// requirements
+var mn = require('./model_names');
 
-  var color = randcolor();
-  this.material = Physijs.createMaterial(
-    new THREE.MeshLambertMaterial({
-      ambient: color
-      , color: color
-      , shininess: 5
-      , reflectivity: 0.1
-      , side: THREE.DoubleSide
-    }),
-    .4, // low friction
-    .6 // high restitution
-  );
+module.exports = Recruiter;
 
-  this.mesh = new Physijs.BoxMesh(this.geometry, this.material);
-  this.mesh.castShadow = this.mesh.receiveShadow = true;
+function Recruiter(options) {
+  if (!options) options = {};
+
+  this.initialPosition = options.position || {x: 0, y: 0, z: 0};
+  if (!this.initialPosition.y) this.initialPosition.y = 0;
+
+  this.riddle = options.riddle || 'who am i / what can i do';
+
+  this.scale = options.scale || 2;
+
+  this.postLoadBehaviors = [];
+
+  this.twitching = false;
+
+  this.faceGeometry = new THREE.BoxGeometry(2, 2, 2);
+  this.faceMaterial = new THREE.MeshBasicMaterial({color: 0x000000});
+  this.faceMesh = new THREE.Mesh(this.faceGeometry, this.faceMaterial);
+
+  this.updateSkinColor(options.color || '#000000');
+
+  this.updateFaceImage(options.faceImageUrl);
 }
 
-RonaldWord.prototype.move = function(x, y, z) {
-  if (!this.mesh) return;
-
-  this.mesh.position.x += x;
-  this.mesh.position.y += y;
-  this.mesh.position.z += z;
-
-  this.mesh.__dirtyPosition = true;
-}
-
-RonaldWord.prototype.rotate = function(rx, ry, rz) {
-  if (!this.mesh) return;
-
-  this.mesh.rotation.x += rx;
-  this.mesh.rotation.y += ry;
-  this.mesh.rotation.z += rz;
-}
-
-RonaldWord.prototype.moveTo = function(x, y, z) {
-  if (!this.mesh) return;
-
-  this.mesh.position.set(x, y, z);
-
-  this.mesh.__dirtyPosition = true;
-}
-
-RonaldWord.prototype.addTo = function(scene, callback) {
-  scene.add(this.mesh);
-
-  this.moveTo(this.position.x, this.position.y, this.position.z);
-  this.mesh.setLinearVelocity(this.velocity);
-
+Recruiter.prototype.addTo = function(scene, callback) {
   var self = this;
-  setTimeout(function() {
-    scene.remove(self.mesh);
-  }, this.decay);
-}
 
-RonaldWord.prototype.render = function() {
-  //this.move(this.velocity.x, this.velocity.y, this.velocity.z);
-}
+  mn.loadModel(mn.MALE_BODY, function (geometry, materials) {
+    self.geometry = geometry;
+    self.materials = materials;
 
-},{"./lib/kutility":10}],14:[function(require,module,exports){
+    self.skinnedMesh = new THREE.SkinnedMesh(geometry, new THREE.MeshFaceMaterial(materials));
 
-var kt = require('./lib/kutility');
+    self.skinnedMesh.scale.set(self.scale, self.scale, self.scale);
+    self.faceMesh.scale.set(self.scale / 2, self.scale / 2, self.scale / 2);
 
-var girlRoomPath = '/images/girl_room.jpg';
+    self.updateSkinColor(self.color);
 
-function cubify(url) {
-  return [url, url, url, url, url, url];
-}
+    self.move(self.initialPosition.x, self.initialPosition.y, self.initialPosition.z);
 
-function makeCubemap(textureURL, repeatX, repeatY) {
-  if (!textureURL) return;
-  if (!repeatX) repeatX = 4;
-  if (!repeatY) repeatY = 4;
+    scene.add(self.skinnedMesh);
+    scene.add(self.faceMesh);
 
-  var textureCube = cubify(textureURL);
+    for (var i = 0; i < self.postLoadBehaviors.length; i++) {
+      self.postLoadBehaviors[i]();
+    }
 
-  var cubemap = THREE.ImageUtils.loadTextureCube(textureCube); // load textures
-  cubemap.format = THREE.RGBFormat;
-  cubemap.wrapS = THREE.RepeatWrapping;
-  cubemap.wrapT = THREE.RepeatWrapping;
-  cubemap.repeat.set(repeatX, repeatY);
-
-  return cubemap;
-}
-
-function makeShader(cubemap) {
-  var shader = THREE.ShaderLib['cube']; // init cube shader from built-in lib
-  shader.uniforms['tCube'].value = cubemap; // apply textures to shader
-  return shader;
-}
-
-function skyboxMaterial(textureURL) {
-  var cubemap = makeCubemap(textureURL);
-  var shader = makeShader(cubemap);
-
-  return new THREE.ShaderMaterial({
-    fragmentShader: shader.fragmentShader,
-    vertexShader: shader.vertexShader,
-    uniforms: shader.uniforms,
-    depthWrite: false,
-    side: THREE.BackSide,
-    opacity: 0.5
+    if (callback) callback();
   });
-}
+};
 
-module.exports.create = function(size, textureURL) {
-  if (!textureURL) textureURL = girlRoomPath;
-  if (!size) size = {x: 20000, y: 20000, z: 20000};
+Recruiter.prototype.move = function(x, y, z) {
+  if (!this.skinnedMesh) return;
 
-  var geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
-  var material = skyboxMaterial(textureURL);
-  return new THREE.Mesh(geometry, material);
-}
+  this.skinnedMesh.position.x += x;
+  this.skinnedMesh.position.y += y;
+  this.skinnedMesh.position.z += z;
 
-module.exports.blocker = function(size) {
-  if (!size) size = {x: 19500, y: 19500, z: 19500};
+  this.faceMesh.position.x = this.skinnedMesh.position.x;
+  this.faceMesh.position.z = this.skinnedMesh.position.z;
+  this.faceMesh.position.y = this.skinnedMesh.position.y + 2.5 * this.scale;
+};
 
-  var geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
-  var material = new THREE.MeshBasicMaterial({
-      color: 0x000000
-    , side: THREE.DoubleSide
-    , opacity: 1.0
-    , transparent: true
-  });
-  return new THREE.Mesh(geometry, material);
-}
+Recruiter.prototype.rotate = function(rx, ry, rz) {
+  if (!this.skinnedMesh) return;
 
-},{"./lib/kutility":10}]},{},[11]);
+  this.skinnedMesh.rotation.x += rx;
+  this.skinnedMesh.rotation.y += ry;
+  this.skinnedMesh.rotation.z += rz;
+
+  this.faceMesh.rotation.copy(this.skinnedMesh.rotation);
+};
+
+Recruiter.prototype.rotateTo = function(x, y, z) {
+  if (!this.skinnedMesh) {
+    var self = this;
+    this.postLoadBehaviors.push(function() {
+      self.rotateTo(x, y, z);
+    });
+    return;
+  }
+
+  this.skinnedMesh.rotation.set(x, y, z);
+  this.rotate(0, 0, 0);
+};
+
+Recruiter.prototype.moveTo = function(x, y, z) {
+  if (!this.skinnedMesh) return;
+
+  this.skinnedMesh.position.set(x, y, z);
+  this.move(0, 0, 0);
+};
+
+Recruiter.prototype.setScale = function(s) {
+  this.skinnedMesh.scale.set(s, s, s);
+  this.faceMesh.scale.set(s / 2, s / 2, s / 2);
+};
+
+Recruiter.prototype.setVisible = function(visible) {
+  this.skinnedMesh.visible = visible;
+  this.faceMesh.visible = visible;
+};
+
+Recruiter.prototype.render = function() {
+  if (this.twitching) {
+    var x = (Math.random() - 0.5) * 2;
+    var y = 0;
+    var z = (Math.random() - 0.5) * 2;
+    this.move(x, y, z);
+
+    var rx = (Math.random() - 0.5) * 0.0001;
+    var ry = (Math.random() - 0.5) * 0.4;
+    var rz = (Math.random() - 0.5) * 0.0001;
+    this.rotate(rx, ry, rz);
+  }
+};
+
+Recruiter.prototype.meshes = function() {
+  var m = [this.faceMesh];
+  if (this.skinnedMesh) {
+    m.push(this.skinnedMesh);
+  }
+  return m;
+};
+
+Recruiter.prototype.updateSkinColor = function(hex) {
+  this.color = hex;
+
+  if (!this.skinnedMesh) return;
+
+  var materials = this.skinnedMesh.material.materials;
+  for (var i = 0; i < materials.length; i++) {
+    var material = materials[i];
+    material.color = new THREE.Color(hex);
+    material.ambient = new THREE.Color(hex);
+    material.emissive = new THREE.Color(hex);
+    material.needsUpdate = true;
+  }
+};
+
+Recruiter.prototype.updateFaceImage = function(image) {
+  var texture;
+
+  if (typeof image === 'string' && image.length > 0) {
+    this.faceImageUrl = image;
+    texture = THREE.ImageUtils.loadTexture(image);
+  } else if (image) {
+    // gotta assume its a texturable image object thing (ie canvas)
+    this.faceImageCanvas = image;
+    texture = new THREE.Texture(image);
+  }
+
+  if (texture) {
+    texture.needsUpdate = true;
+    this.faceMaterial.map = texture;
+    this.faceMaterial.needsUpdate = true;
+  }
+};
+
+},{"./model_names":12}]},{},[11]);

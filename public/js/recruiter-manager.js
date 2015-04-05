@@ -22,7 +22,12 @@ var posterImages = [
   '/images/linkedin.jpg'
 ];
 
-module.exports.distanceBetweenBooths = 50;
+module.exports.actionIsSuccessful = function(action, boothIndex) {
+  return Math.random() < 0.5;
+};
+
+module.exports.distanceBetweenBooths = 200;
+module.exports.closeToRecruiterDistance = 90;
 
 module.exports.createBooths = function(scene) {
   var booths = [];
@@ -30,7 +35,7 @@ module.exports.createBooths = function(scene) {
   for (var i = 0; i < module.exports.recruiterCount; i++) {
     var booth = new JobBooth(
       {
-        position: {x: -5, y: 0, z: -i * module.exports.distanceBetweenBooths},
+        position: {x: -6, y: 10, z: -i * module.exports.distanceBetweenBooths},
         riddle: riddles[i]
       },
       posterImages[i]
@@ -45,5 +50,5 @@ module.exports.createBooths = function(scene) {
 
 module.exports.boothIndexForZ = function(z) {
   var pos = Math.abs(z);
-  return Math.floor(Math.max(pos - 5, 0) / module.exports.distanceBetweenBooths);
+  return Math.floor(Math.max(pos - module.exports.closeToRecruiterDistance, 0) / module.exports.distanceBetweenBooths);
 };
