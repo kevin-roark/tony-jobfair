@@ -30,58 +30,27 @@ var kneeHistory = {one: {rotating: false}, two: {rotating: false}};
 
 var elbowHistory = {one: {rotUp: false, rotDown: false}, two: {rotUp: false, rotDown: false}};
 
-var MIN_TIME_BETWEEN_GESTURES = 800;
-var PHRASE_GESTURE_DELTA_MULT = 4.0;
-var MAX_PHRASE_DIRECTIONAL_VEL = 100;
-var MIN_PHRASE_VEL = 120.0;
-var phraseGestureTimes = {left1: new Date(), right1: new Date(), left2: new Date(), right2: new Date()};
-var phraseGestureStartPositions = {left1: blankpos(), right1: blankpos(), left2: blankpos(), right2: blankpos()};
-var phraseGestureVelocities = {left1: blankpos(), right1: blankpos(), left2: blankpos(), right2: blankpos()};
-
 var BIG_HEAD_MAG = 15;
-var MAX_HEAD_SWELL = 40;
+var MAX_HEAD_SWELL = 30;
 var TORSO_CLOSE_MAG = 11;
 
 var CLOSE_KNEE_MAG = 60;
-var CLOSE_ELBOW_MAG = 60;
 var FAR_ELBOW_MAG = 300;
-var RIDICULOUS_ELBOW_MAG = 600;
 
 var CLOSE_HANDS_MAG = 100;
 
 var TORSO_MOVEMENT_MAG_MULT = 0.21;
-var MIN_DISTANCE_BETWEEN_WRESTLERS = 50;
+var MIN_DISTANCE_BETWEEN_WRESTLERS = 30;
 
 module.exports.JOBFAIR = 1;
 module.exports.WEIGHING = 2;
-
-var wrestler1, wrestler2, camera, light;
+module.exports.INTERVIEW = 3;
 
 module.exports.mode = module.exports.JOBFAIR;
 
-function blankpos() { return {x: 0, y: 0, z: 0}; };
+var wrestler1, wrestler2, camera, light;
 
-function phrasePos(left) {
-  var pos = blankpos();
-
-  pos.x = left? -20 : 20;
-  pos.y = Math.random() * 40 + 20;
-  pos.z = (Math.random() * -60) - 20;
-  return pos;
-}
-
-function velCleanse(vel) {
-  if (vel.x < -MAX_PHRASE_DIRECTIONAL_VEL) vel.x = -MAX_PHRASE_DIRECTIONAL_VEL;
-  else if (vel.x > MAX_PHRASE_DIRECTIONAL_VEL) vel.x = MAX_PHRASE_DIRECTIONAL_VEL;
-
-  if (vel.y < -MAX_PHRASE_DIRECTIONAL_VEL) vel.y = -MAX_PHRASE_DIRECTIONAL_VEL;
-  else if (vel.y > MAX_PHRASE_DIRECTIONAL_VEL) vel.y = MAX_PHRASE_DIRECTIONAL_VEL;
-
-  if (vel.z < -MAX_PHRASE_DIRECTIONAL_VEL) vel.z = -MAX_PHRASE_DIRECTIONAL_VEL;
-  else if (vel.z > MAX_PHRASE_DIRECTIONAL_VEL) vel.z = MAX_PHRASE_DIRECTIONAL_VEL;
-}
-
-module.exports.eventHandler = function(event, data) {};
+module.exports.eventHandler = function(event, data) {}
 
 module.exports.socket = socket;
 
@@ -105,7 +74,7 @@ module.exports.begin = function(w1, w2, cam, l) {
   socket.emit('rollcall', 'browser');
 
   socket.on('leftHand', function(data) {
-    if (data.wrestler == 1) {
+    if (data.wrestler === 1) {
       leftHand1(data.position);
     } else {
       leftHand2(data.position);
@@ -113,7 +82,7 @@ module.exports.begin = function(w1, w2, cam, l) {
   });
 
   socket.on('rightHand', function(data) {
-    if (data.wrestler == 1) {
+    if (data.wrestler === 1) {
       rightHand1(data.position);
     } else {
       rightHand2(data.position);
@@ -121,7 +90,7 @@ module.exports.begin = function(w1, w2, cam, l) {
   });
 
   socket.on('closestHand', function(data) {
-    if (data.wrestler == 1) {
+    if (data.wrestler === 1) {
       closestHand1(data.position);
     } else {
       closestHand2(data.position);
@@ -129,7 +98,7 @@ module.exports.begin = function(w1, w2, cam, l) {
   });
 
   socket.on('head', function(data) {
-    if (data.wrestler == 1) {
+    if (data.wrestler === 1) {
       head1(data.position);
     } else {
       head2(data.position);
@@ -137,7 +106,7 @@ module.exports.begin = function(w1, w2, cam, l) {
   });
 
   socket.on('leftKnee', function(data) {
-    if (data.wrestler == 1) {
+    if (data.wrestler === 1) {
       leftKnee1(data.position);
     } else {
       leftKnee2(data.position);
@@ -153,7 +122,7 @@ module.exports.begin = function(w1, w2, cam, l) {
   });
 
   socket.on('leftElbow', function(data) {
-    if (data.wrestler == 1) {
+    if (data.wrestler === 1) {
       leftElbow1(data.position);
     } else {
       leftElbow2(data.position);
@@ -161,7 +130,7 @@ module.exports.begin = function(w1, w2, cam, l) {
   });
 
   socket.on('rightElbow', function(data) {
-    if (data.wrestler == 1) {
+    if (data.wrestler === 1) {
       rightElbow1(data.position);
     } else {
       rightElbow2(data.position);
@@ -169,7 +138,7 @@ module.exports.begin = function(w1, w2, cam, l) {
   });
 
   socket.on('torso', function(data) {
-    if (data.wrestler == 1) {
+    if (data.wrestler === 1) {
       torso1(data.position);
     } else {
       torso2(data.position);
@@ -177,7 +146,7 @@ module.exports.begin = function(w1, w2, cam, l) {
   });
 
   socket.on('resetPlayer', function(player) {
-    if (player == 1) {
+    if (player === 1) {
       wrestler1.reset();
     } else {
       wrestler2.reset();
@@ -196,7 +165,7 @@ module.exports.begin = function(w1, w2, cam, l) {
   socket.on('endPokes', function() {
     module.exports.eventHandler('endPokes');
   });
-}
+};
 
 function moveDelta(bodypart, position, lastPos, divisor, directions) {
   if (!directions) directions = {x: true, y: true, z: true};
@@ -235,15 +204,6 @@ function moveDelta(bodypart, position, lastPos, divisor, directions) {
   bodypart.move(deltaX, deltaY, deltaZ);
 }
 
-function scaleWrestler(wrestler, rapidHeadTicks) {
-  var s = 1.0 + 20.0 * (rapidHeadTicks / MAX_HEAD_SWELL);
-  wrestler.swell(s);
-}
-
-function checkShatter(rapidHeadCount) {
-  return rapidHeadCount >= MAX_HEAD_SWELL;
-}
-
 function delta(current, previous) {
   return {x: current.x - previous.x, y: current.y - previous.y, z: current.z - previous.z};
 }
@@ -252,384 +212,240 @@ function totalMagnitude(pos) {
   return Math.abs(pos.x) + Math.abs(pos.y) + Math.abs(pos.z);
 }
 
-function phraseBlast(player, pos, vel) {
-  var data = {player: player, pos: pos, vel: vel};
-  module.exports.eventHandler('phraseBlast', data);
-}
+/*** HANDS ***/
 
 function rightHand1(position) {
-  if (previousPositions.rightHand1) {
-    if (module.exports.mode == module.exports.KNOCK || module.exports.mode == module.exports.RUN) {
-      var denom = (module.exports.mode == module.exports.KNOCK)? 2.5 : 7;
+  rightHandBehavior(position, 1);
+}
+
+function rightHand2(position)  {
+  rightHandBehavior(position, 2);
+}
+
+function rightHandBehavior(position, handNumber) {
+  var rightHandKey = 'rightHand' + handNumber;
+  var wrestler = handNumber === 1 ? wrestler1 : wrestler2;
+
+  if (previousPositions[rightHandKey]) {
+    if (module.exports.mode === module.exports.JOBFAIR) {
+      var denom = 7;
       var directions = {x: true, y: true, z: true};
-      if (module.exports.mode == module.exports.KNOCK) {
-        directions.y = false;
-        directions.x = false;
-      }
-      moveDelta(wrestler1.rightArm, position, previousPositions.rightHand1, denom, directions);
-    }
-    else if (module.exports.mode == module.exports.PHRASE) {
-      var now = new Date();
-      if (now - phraseGestureTimes.right1 >= MIN_TIME_BETWEEN_GESTURES) {
-        var pdelta = delta(position, previousPositions.rightHand1);
-        var vel = {
-          x: pdelta.x * PHRASE_GESTURE_DELTA_MULT,
-          y: pdelta.y * PHRASE_GESTURE_DELTA_MULT,
-          z: pdelta.z * PHRASE_GESTURE_DELTA_MULT
-        };
-        if (totalMagnitude(vel) >= MIN_PHRASE_VEL) {
-          var pos = phrasePos(false);
-
-          velCleanse(vel);
-
-          phraseGestureTimes.right1 = now;
-          phraseGestureVelocities.right1 = vel;
-          phraseGestureStartPositions.right1 = pos;
-
-          phraseBlast(1, pos, vel);
-        }
-      }
+      moveDelta(wrestler.rightArm, position, previousPositions[rightHandKey], denom, directions);
     }
   }
 
-  previousPositions.rightHand1 = position;
+  previousPositions[rightHandKey] = position;
 }
 
 function leftHand1(position) {
-  if (previousPositions.rightHand1) {
-    var rh = previousPositions.rightHand1;
-    positionDeltas.hand1 = {x: position.x - rh.x, y: position.y - rh.y, z: position.z - rh.z};
-    hand1DeltaAction(positionDeltas.hand1);
+  leftHandBehavior(position, 1, hand1DeltaAction);
+}
+
+function leftHand2(position) {
+  leftHandBehavior(position, 2, hand2DeltaAction);
+}
+
+function leftHandBehavior(position, handNumber, handDeltaAction) {
+  var leftHandKey = 'leftHand' + handNumber;
+  var rightHandKey = 'rightHand' + handNumber;
+  var handDeltaKey = 'hand' + handNumber;
+  var wrestler = handNumber === 1 ? wrestler1 : wrestler2;
+
+  if (previousPositions[rightHandKey]) {
+    var rh = previousPositions[rightHandKey];
+    positionDeltas[handDeltaKey] = {x: position.x - rh.x, y: position.y - rh.y, z: position.z - rh.z};
+    handDeltaAction(positionDeltas[handDeltaKey]);
   }
 
-  if (previousPositions.leftHand1) {
-    if (module.exports.mode == module.exports.KNOCK || module.exports.mode == module.exports.RUN) {
-      var denom = (module.exports.mode == module.exports.KNOCK)? 2.5 : 7;
+  if (previousPositions[leftHandKey]) {
+    if (module.exports.mode === module.exports.JOBFAIR) {
+      var denom = 7;
       var directions = {x: true, y: true, z: true};
-      if (module.exports.mode == module.exports.KNOCK) {
-        directions.y = false;
-        directions.x = false;
-      }
-      moveDelta(wrestler1.leftArm, position, previousPositions.leftHand1, denom, directions);
-    }
-    else if (module.exports.mode == module.exports.PHRASE) {
-      var now = new Date();
-      if (now - phraseGestureTimes.left1 >= MIN_TIME_BETWEEN_GESTURES) {
-        var pdelta = delta(position, previousPositions.leftHand1);
-        var vel = {
-          x: pdelta.x * PHRASE_GESTURE_DELTA_MULT,
-          y: pdelta.y * PHRASE_GESTURE_DELTA_MULT,
-          z: pdelta.z * PHRASE_GESTURE_DELTA_MULT
-        };
-        if (totalMagnitude(vel) >= MIN_PHRASE_VEL) {
-          var pos = phrasePos(true);
-
-          velCleanse(vel);
-
-          phraseGestureTimes.left1 = now;
-          phraseGestureVelocities.left1 = vel;
-          phraseGestureStartPositions.left1 = pos;
-
-          phraseBlast(1, pos, vel);
-        }
-      }
+      moveDelta(wrestler.leftArm, position, previousPositions[leftHandKey], denom, directions);
     }
   }
 
-  previousPositions.leftHand1 = position;
+  previousPositions[leftHandKey] = position;
 }
 
 function closestHand1(position) {}
 
+function closestHand2(position) {}
+
+/*** HEADS ***/
+
 function head1(position) {
-  if (previousPositions.head1) {
-    if (positionDeltas.torso1 && totalMagnitude(positionDeltas.torso1) < TORSO_CLOSE_MAG) {
-      var positionChange = delta(position, previousPositions.head1);
+  headBehavior(position, 1);
+}
+
+function head2(position) {
+  headBehavior(position, 2);
+}
+
+function headBehavior(position, headNumber) {
+  var headKey = 'head' + headNumber;
+  var torsoKey = 'torso' + headNumber;
+  var headVelocityKey = headNumber === 1 ? 'one' : 'two';
+
+  if (previousPositions[headKey]) {
+    if (positionDeltas[torsoKey] && totalMagnitude(positionDeltas[torsoKey]) < TORSO_CLOSE_MAG) {
+      var positionChange = delta(position, previousPositions[headKey]);
       var mag = totalMagnitude(positionChange);
 
       if (mag > BIG_HEAD_MAG) {
-        if (eventsWithRapidHeadVelocity.one == 0) {
-          socket.emit('startSwell', 1);
+        if (eventsWithRapidHeadVelocity[headVelocityKey] === 0) {
+          socket.emit('startSwell', headNumber);
         }
 
-        eventsWithRapidHeadVelocity.one = Math.min(eventsWithRapidHeadVelocity.one + 1, MAX_HEAD_SWELL);
+        eventsWithRapidHeadVelocity[headVelocityKey] = Math.min(eventsWithRapidHeadVelocity[headVelocityKey] + 1, MAX_HEAD_SWELL);
       } else {
-        if (eventsWithRapidHeadVelocity.one == 1) {
-          socket.emit('endSwell', 1);
+        if (eventsWithRapidHeadVelocity[headVelocityKey] === 1) {
+          socket.emit('endSwell', headNumber);
         }
 
-        eventsWithRapidHeadVelocity.one = Math.max(eventsWithRapidHeadVelocity.one - 1, 0);
+        eventsWithRapidHeadVelocity[headVelocityKey] = Math.max(eventsWithRapidHeadVelocity[headVelocityKey] - 1, 0);
       }
 
-      if (module.exports.mode == module.exports.KNOCK) {
-        if (checkShatter(eventsWithRapidHeadVelocity.one)) {
-          module.exports.eventHandler('shatter', {});
+      if (module.exports.mode === module.exports.INTERVIEW) {
+        if (eventsWithRapidHeadVelocity[headVelocityKey] >= MAX_HEAD_SWELL) {
+          module.exports.eventHandler('spit', {});
         }
-
-        //scaleWrestler(wrestler1, eventsWithRapidHeadVelocity.one);
       }
-
     }
   }
 
-  previousPositions.head1 = position;
+  previousPositions[headKey] = position;
 }
 
-function leftKnee1(position) {
-  if (previousPositions.rightKnee1) {
-    var rh = previousPositions.rightKnee1;
-    positionDeltas.knee1 = {x: position.x - rh.x, y: position.y - rh.y, z: position.z - rh.z};
-    knee1DeltaAction(positionDeltas.knee1);
+/*** TORSO ***/
+
+function torso1(position) {
+  torsoBehavior(position, 1);
+}
+
+function torso2(position) {
+  torsoBehavior(position, 2);
+}
+
+function torsoBehavior(position, torsoNumber) {
+  var torsoKey = 'torso' + torsoNumber;
+  var wrestler = torsoNumber === 1 ? wrestler1 : wrestler2;
+  var alternateWrestler = torsoNumber === 1 ? wrestler2: wrestler1;
+
+  if (previousPositions[torsoKey]) {
+    if (module.exports.mode === module.exports.JOBFAIR) {
+      var d = delta(position, previousPositions[torsoKey]);
+      var mag = totalMagnitude(d);
+      var dist = TORSO_MOVEMENT_MAG_MULT * mag;
+      wrestler.move(d.x / 30, 0, dist);
+
+      if (wrestler.position.z - alternateWrestler.position.z > MIN_DISTANCE_BETWEEN_WRESTLERS) {
+        alternateWrestler.move(0, 0, wrestler.position.z - MIN_DISTANCE_BETWEEN_WRESTLERS);
+      }
+    }
+
+    positionDeltas[torsoKey] = delta(position, previousPositions[torsoKey]);
   }
 
-  if (previousPositions.leftKnee1) {
-    if (module.exports.mode == module.exports.KNOCK || module.exports.mode == module.exports.PHRASE) {
-      moveDelta(wrestler1.leftLeg, position, previousPositions.leftKnee1, 8);
+  previousPositions[torsoKey] = position;
+}
+
+/*** KNEES ***/
+
+function leftKnee1(position) {
+  leftKneeBehavior(position, 1);
+}
+
+function leftKnee2(position) {
+  leftKneeBehavior(position, 2);
+}
+
+function leftKneeBehavior(position, kneeNumber) {
+  var leftKneeKey = 'leftKnee' + kneeNumber;
+  var rightKneeKey = 'rightKnee' + kneeNumber;
+  var kneeDeltaKey = 'knee' + kneeNumber;
+  var wrestler = kneeNumber === 1 ? wrestler1 : wrestler2;
+
+  if (previousPositions[rightKneeKey]) {
+    var rh = previousPositions[rightKneeKey];
+    positionDeltas[kneeDeltaKey] = {x: position.x - rh.x, y: position.y - rh.y, z: position.z - rh.z};
+    knee2DeltaAction(positionDeltas[kneeDeltaKey]);
+  }
+
+  if (previousPositions[leftKneeKey]) {
+    if (module.exports.mode === module.exports.JOBFAIR) {
+      moveDelta(wrestler.leftLeg, position, previousPositions[leftKneeKey], 8, {x: true, y: true, z: true});
     }
   }
 
-  previousPositions.leftKnee1 = position;
+  previousPositions[leftKneeKey] = position;
 }
 
 function rightKnee1(position) {
-  if (previousPositions.rightKnee1) {
-    if (module.exports.mode == module.exports.KNOCK || module.exports.mode == module.exports.PHRASE) {
-      moveDelta(wrestler1.rightLeg, position, previousPositions.rightKnee1, 8);
+  rightKneeBehavior(position, 1);
+}
+
+function rightKnee2(position) {
+  rightKneeBehavior(position, 2);
+}
+
+function rightKneeBehavior(position, kneeNumber) {
+  var rightKneeKey = 'rightKnee' + kneeNumber;
+  var wrestler = kneeNumber === 1 ? wrestler1 : wrestler2;
+
+  if (previousPositions[rightKneeKey]) {
+    if (module.exports.mode === module.exports.JOBFAIR) {
+      moveDelta(wrestler.rightLeg, position, previousPositions[rightKneeKey], 8, {x: true, y: true, z: true});
     }
   }
 
-  previousPositions.rightKnee1 = position;
+  previousPositions[rightKneeKey] = position;
 }
 
+/*** ELBOWS ***/
+
 function leftElbow1(position) {
-  if (previousPositions.rightElbow1) {
-    var rh = previousPositions.rightElbow1;
-    positionDeltas.elbow1 = {x: position.x - rh.x, y: position.y - rh.y, z: position.z - rh.z};
-    elbow1DeltaAction(positionDeltas.elbow1);
+  leftElbowBehavior(position, 1, elbow1DeltaAction);
+}
+
+function leftElbow2(position) {
+  leftElbowBehavior(position, 2, elbow2DeltaAction);
+}
+
+function leftElbowBehavior(position, elbowNumber, deltaAction) {
+  var elbowDeltaKey = 'elbow' + elbowNumber;
+  var leftElbowKey = 'leftElbow' + elbowNumber;
+  var rightElbowKey = 'rightElbow' + elbowNumber;
+
+  if (previousPositions[rightElbowKey]) {
+    var rh = previousPositions[rightElbowKey];
+    positionDeltas[elbowDeltaKey] = {x: position.x - rh.x, y: position.y - rh.y, z: position.z - rh.z};
+    deltaAction(positionDeltas[elbowDeltaKey]);
   }
 
-  previousPositions.leftElbow1 = position;
+  previousPositions[leftElbowKey] = position;
 }
 
 function rightElbow1(position) {
   previousPositions.rightElbow1 = position;
 }
 
-function torso1(position) {
-  if (previousPositions.torso1) {
-    if (module.exports.mode == module.exports.KNOCK) {
-      //moveDelta(wrestler1, position, previousPositions.torso1, 8, {x: false, y: false, z: true});
-    }
-    else if (module.exports.mode == module.exports.RUN) {
-      var d = delta(position, previousPositions.torso1);
-      var mag = totalMagnitude(d);
-      var dist = TORSO_MOVEMENT_MAG_MULT * mag;
-      wrestler1.move(d.x / 30, 0, dist);
-
-      if (wrestler1.position.z - wrestler2.position.z > MIN_DISTANCE_BETWEEN_WRESTLERS) {
-        wrestler2.move(0, 0, wrestler1.position.z - MIN_DISTANCE_BETWEEN_WRESTLERS);
-      }
-    }
-
-    positionDeltas.torso1 = delta(position, previousPositions.torso1);
-  }
-
-  previousPositions.torso1 = position;
-}
-
-function rightHand2(position)  {
-  if (previousPositions.rightHand2) {
-    if (module.exports.mode == module.exports.KNOCK || module.exports.mode == module.exports.RUN) {
-      var denom = (module.exports.mode == module.exports.KNOCK)? 2.5 : 7;
-      var directions = {x: true, y: true, z: true};
-      if (module.exports.mode == module.exports.KNOCK) {
-        directions.y = false;
-        directions.x = false;
-      }
-      moveDelta(wrestler2.rightArm, position, previousPositions.rightHand2, denom, directions);
-    }
-    else if (module.exports.mode == module.exports.PHRASE) {
-      var now = new Date();
-      if (now - phraseGestureTimes.right2 >= MIN_TIME_BETWEEN_GESTURES) {
-        var pdelta = delta(position, previousPositions.rightHand2);
-        var vel = {
-          x: pdelta.x * PHRASE_GESTURE_DELTA_MULT,
-          y: pdelta.y * PHRASE_GESTURE_DELTA_MULT,
-          z: pdelta.z * PHRASE_GESTURE_DELTA_MULT
-        };
-        if (totalMagnitude(vel) >= MIN_PHRASE_VEL) {
-          var pos = phrasePos(false);
-
-          velCleanse(vel);
-
-          phraseGestureTimes.right2 = now;
-          phraseGestureVelocities.right2 = vel;
-          phraseGestureStartPositions.right2 = pos;
-
-          phraseBlast(2, pos, vel);
-        }
-      }
-    }
-  }
-
-  previousPositions.rightHand2 = position;
-}
-
-function leftHand2(position) {
-  if (previousPositions.rightHand2) {
-    var rh = previousPositions.rightHand2;
-    positionDeltas.hand2 = {x: position.x - rh.x, y: position.y - rh.y, z: position.z - rh.z};
-    hand2DeltaAction(positionDeltas.hand2);
-  }
-
-  if (previousPositions.leftHand2) {
-    if (module.exports.mode == module.exports.KNOCK || module.exports.mode == module.exports.RUN) {
-      var denom = (module.exports.mode == module.exports.KNOCK)? 2.5 : 7;
-      var directions = {x: true, y: true, z: true};
-      if (module.exports.mode == module.exports.KNOCK) {
-        directions.y = false;
-        directions.x = false;
-      }
-      moveDelta(wrestler2.leftArm, position, previousPositions.leftHand2, denom, directions);
-    }
-    else if (module.exports.mode == module.exports.PHRASE) {
-      var now = new Date();
-      if (now - phraseGestureTimes.left2 >= MIN_TIME_BETWEEN_GESTURES) {
-        var pdelta = delta(position, previousPositions.leftHand2);
-        var vel = {
-          x: pdelta.x * PHRASE_GESTURE_DELTA_MULT,
-          y: pdelta.y * PHRASE_GESTURE_DELTA_MULT,
-          z: pdelta.z * PHRASE_GESTURE_DELTA_MULT
-        };
-        if (totalMagnitude(vel) >= MIN_PHRASE_VEL) {
-          var pos = phrasePos(true);
-
-          velCleanse(vel);
-
-          phraseGestureTimes.left2 = now;
-          phraseGestureVelocities.left2 = vel;
-          phraseGestureStartPositions.left2 = pos;
-
-          phraseBlast(2, pos, vel);
-        }
-      }
-    }
-  }
-
-  previousPositions.leftHand2 = position;
-}
-
-function closestHand2(position) {
-
-}
-
-function head2(position) {
-  if (previousPositions.head2) {
-    if (positionDeltas.torso2 && totalMagnitude(positionDeltas.torso2) < TORSO_CLOSE_MAG) {
-      var positionChange = delta(position, previousPositions.head2);
-      var mag = totalMagnitude(positionChange);
-
-      if (mag > BIG_HEAD_MAG) {
-        if (eventsWithRapidHeadVelocity.two == 0) {
-          socket.emit('startSwell', 2);
-        }
-
-        eventsWithRapidHeadVelocity.two = Math.min(eventsWithRapidHeadVelocity.two + 1, MAX_HEAD_SWELL);
-      } else {
-        if (eventsWithRapidHeadVelocity.two == 1) {
-          socket.emit('endSwell', 2);
-        }
-
-        eventsWithRapidHeadVelocity.two = Math.max(eventsWithRapidHeadVelocity.two - 1, 0);
-      }
-
-      if (module.exports.mode == module.exports.KNOCK) {
-        if (checkShatter(eventsWithRapidHeadVelocity.two)) {
-          module.exports.eventHandler('shatter', {});
-        }
-
-        //scaleWrestler(wrestler2, eventsWithRapidHeadVelocity.two);
-      }
-    }
-  }
-
-  previousPositions.head2 = position;
-}
-
-function leftKnee2(position) {
-  if (previousPositions.rightKnee2) {
-    var rh = previousPositions.rightKnee2;
-    positionDeltas.knee2 = {x: position.x - rh.x, y: position.y - rh.y, z: position.z - rh.z};
-    knee2DeltaAction(positionDeltas.knee2);
-  }
-
-  if (previousPositions.leftKnee2) {
-    if (module.exports.mode == module.exports.KNOCK || module.exports.mode == module.exports.PHRASE) {
-      moveDelta(wrestler2.leftLeg, position, previousPositions.leftKnee2, 8, {x: true, y: true, z: true});
-    }
-  }
-
-  previousPositions.leftKnee2 = position;
-}
-
-function rightKnee2(position) {
-  if (previousPositions.rightKnee2) {
-    if (module.exports.mode == module.exports.KNOCK || module.exports.mode == module.exports.PHRASE) {
-      moveDelta(wrestler2.rightLeg, position, previousPositions.rightKnee2, 8, {x: true, y: true, z: true});
-    }
-  }
-
-  previousPositions.rightKnee2 = position;
-}
-
-function leftElbow2(position) {
-  if (previousPositions.rightElbow2) {
-    var rh = previousPositions.rightElbow2;
-    positionDeltas.elbow2 = {x: position.x - rh.x, y: position.y - rh.y, z: position.z - rh.z};
-    elbow2DeltaAction(positionDeltas.elbow2);
-  }
-
-  previousPositions.leftElbow2 = position;
-}
-
 function rightElbow2(position) {
   previousPositions.rightElbow2 = position;
 }
 
-function torso2(position) {
-  if (previousPositions.torso2) {
-    if (module.exports.mode == module.exports.KNOCK) {
-      //moveDelta(wrestler2, position, previousPositions.torso2, 8, {x: false, y: false, z: true});
-    }
-    else if (module.exports.mode == module.exports.RUN) {
-      var d = delta(position, previousPositions.torso2);
-      var mag = totalMagnitude(d);
-      var dist = TORSO_MOVEMENT_MAG_MULT * mag;
-      wrestler2.move(d.x / 30, 0, dist);
-
-      if (wrestler2.position.z - wrestler1.position.z > MIN_DISTANCE_BETWEEN_WRESTLERS) {
-        wrestler1.move(0, 0, wrestler2.position.z - MIN_DISTANCE_BETWEEN_WRESTLERS);
-      }
-    }
-
-    positionDeltas.torso2 = delta(position, previousPositions.torso2);
-  }
-
-  previousPositions.torso2 = position;
-}
+/*** DELTA ACTIONS ***/
 
 function hand1DeltaAction(positionDelta) {
-  var mag = totalMagnitude(positionDelta);
-  var date = new Date();
+  handDeltaActionBehavior(positionDelta, 1);
 
-  if (mag < CLOSE_HANDS_MAG) {
-
-  } else {
-
-  }
 }
 
 function hand2DeltaAction(positionDelta) {
+  handDeltaActionBehavior(positionDelta, 2);
+}
+
+function handDeltaActionBehavior(positionDelta, handNumber) {
   var mag = totalMagnitude(positionDelta);
   var date = new Date();
 
@@ -641,16 +457,14 @@ function hand2DeltaAction(positionDelta) {
 }
 
 function knee1DeltaAction(positionDelta) {
-  var mag = totalMagnitude(positionDelta);
-
-  if (mag < CLOSE_KNEE_MAG) {
-
-  } else {
-
-  }
+  kneeDeltaActionBehavior(positionDelta, 1);
 }
 
 function knee2DeltaAction(positionDelta) {
+  kneeDeltaActionBehavior(positionDelta, 2);
+}
+
+function kneeDeltaActionBehavior(positionDelta, kneeNumber) {
   var mag = totalMagnitude(positionDelta);
 
   if (mag < CLOSE_KNEE_MAG) {
@@ -661,77 +475,59 @@ function knee2DeltaAction(positionDelta) {
 }
 
 function elbow1DeltaAction(positionDelta) {
-  var mag = totalMagnitude(positionDelta);
-
-  if (mag > FAR_ELBOW_MAG && handsBetweenElbows(1)) {
-    if (previousPositions.rightHand1.y < previousPositions.rightElbow1.y - 10 &&
-        previousPositions.leftHand1.y > previousPositions.leftElbow1.y + 10) {
-
-    } else {
-      checkPlayer1ElbowNonRot(true, false);
-    }
-
-    if (previousPositions.rightHand1.y > previousPositions.rightElbow1.y + 10 &&
-             previousPositions.leftHand1.y < previousPositions.leftElbow1.y - 10) {
-
-    } else {
-      checkPlayer1ElbowNonRot(false, true);
-    }
-  } else {
-    checkPlayer1ElbowNonRot(true, true);
-  }
-
-  previousPositionDeltas.elbow1 = positionDelta;
+  elbowDeltaActionBehavior(positionDelta, 1);
 }
 
 function elbow2DeltaAction(positionDelta) {
+  elbowDeltaActionBehavior(positionDelta, 2);
+}
+
+function elbowDeltaActionBehavior(positionDelta, elbowNum) {
+  var elbowKey = 'elbow' + elbowNum;
+  var rightHandKey = 'rightHand' + elbowNum;
+  var leftHandKey = 'leftHand' + elbowNum;
+  var rightElbowKey = 'rightElbow' + elbowNum;
+  var leftElbowKey = 'leftElbow' + elbowNum;
+
   var mag = totalMagnitude(positionDelta);
 
-  if (mag > FAR_ELBOW_MAG && handsBetweenElbows(2)) {
-    if (previousPositions.rightHand2.y < previousPositions.rightElbow2.y - 10 &&
-        previousPositions.leftHand2.y > previousPositions.leftElbow2.y + 10) {
+  if (mag > FAR_ELBOW_MAG && handsBetweenElbows(elbowNum)) {
+    if (previousPositions[rightHandKey].y < previousPositions[rightElbowKey].y - 10 &&
+        previousPositions[leftHandKey].y > previousPositions[leftElbowKey].y + 10) {
 
     } else {
-      checkPlayer2ElbowNonRot(true, false);
+      checkElbowNonRot(elbowNum, true, false);
     }
 
-    if (previousPositions.rightHand2.y > previousPositions.rightElbow2.y + 10 &&
-             previousPositions.leftHand2.y < previousPositions.leftElbow2.y - 10) {
+    if (previousPositions[rightHandKey].y > previousPositions[rightElbowKey].y + 10 &&
+             previousPositions[leftHandKey].y < previousPositions[leftElbowKey].y - 10) {
 
     } else {
-      checkPlayer2ElbowNonRot(false, true);
+      checkElbowNonRot(elbowNum, false, true);
     }
   } else {
-    checkPlayer2ElbowNonRot(true, true);
+    checkElbowNonRot(elbowNum, true, true);
   }
 
-  previousPositionDeltas.elbow2 = positionDelta;
+  previousPositionDeltas[elbowKey] = positionDelta;
 }
 
-function checkPlayer1ElbowNonRot(rotUp, rotDown) {
-  if (rotUp && elbowHistory.one.rotUp) {
-    elbowHistory.one.rotUp = false;
+function checkElbowNonRot(elbowNum, rotUp, rotDown) {
+  var numKey = elbowNum === 1 ? 'one' : 'two';
+
+  if (rotUp && elbowHistory[numKey].rotUp) {
+    elbowHistory[numKey].rotUp = false;
   }
 
-  if (rotDown && elbowHistory.one.rotDown) {
-    elbowHistory.one.rotDown = false;
-  }
-}
-
-function checkPlayer2ElbowNonRot(rotUp, rotDown) {
-  if (rotUp && elbowHistory.two.rotUp) {
-    elbowHistory.two.rotUp = false;
-  }
-
-  if (rotDown && elbowHistory.two.rotDown) {
-    elbowHistory.two.rotDown = false;
+  if (rotDown && elbowHistory[numKey].rotDown) {
+    elbowHistory[numKey].rotDown = false;
   }
 }
 
 function handsBetweenElbows(playerNum) {
   var leftHand, rightHand, leftElbow, rightElbow;
 
-  if (playerNum == 1) {
+  if (playerNum === 1) {
     leftHand = previousPositions.leftHand1;
     rightHand = previousPositions.rightHand1;
     leftElbow = previousPositions.leftElbow1;

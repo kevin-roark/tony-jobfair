@@ -25,6 +25,8 @@ module.exports.FOOTBALL_TORSO = pre('football_torso.js');
 
 module.exports.LOWPOLY_TORSO = pre('low_poly_torso.js');
 
+module.exports.MALE_BODY = pre('body.js');
+
 /* HANDS */
 
 module.exports.FOOTBALL_HAND = pre('football_hand.js');

@@ -1,14 +1,8 @@
 $(function() {
 
-  var kt = require('./lib/kutility');
-  var BodyPart = require('./bodypart');
   var Character = require('./character');
   var io = require('./io');
-  var RonaldWord = require('./ronald_word');
-  var mn = require('./model_names');
-  var Hand = require('./hand');
-  var Human = require('./human');
-  var SKYBOX = require('./skybox');
+  var recruiterManager = require('./recruiter-manager');
 
   var TEST_MODE = true;
 
@@ -62,10 +56,10 @@ $(function() {
     offset: {x: 0, y: 0, z: 0}
   };
 
-  var kevinRonald = new Character({x: -700, y: -200, z: -1000}, 20);
+  var kevinRonald = new Character({x: 0, y: 5, z: 0}, 20);
   kevinRonald.addTo(scene);
 
-  var dylanRonald = new Character({x: -600, y: -200, z: -1000}, 20);
+  var dylanRonald = new Character({x: 30, y: 5, z: 0}, 20);
   dylanRonald.addTo(scene);
   var ronalds = [kevinRonald, dylanRonald];
 
@@ -79,7 +73,7 @@ $(function() {
       io.begin(kevinRonald, dylanRonald, camera);
     }
 
-    enterPhrasesState();
+    enterJobfairState();
 
     render();
     scene.simulate();
@@ -88,40 +82,40 @@ $(function() {
       console.log('key press eh? ' + ev.which);
       ev.preventDefault();
 
-      if (ev.which == 32) { // spacebar
+      if (ev.which === 32) { // spacebar
         resetRonaldPositions();
       }
-      else if (ev.which == 97)  { // left
+      else if (ev.which === 97)  { // left
         moveCameraPosition(-1, 0, 0);
         if (cameraFollowState.offset) {
           cameraFollowState.offset.x += -1;
         }
       }
-      else if (ev.which == 119)  { // up
+      else if (ev.which === 119)  { // up
         moveCameraPosition(0, 0, 1);
         if (cameraFollowState.offset) {
           cameraFollowState.offset.y += 1;
         }
       }
-      else if (ev.which == 100)  { // right
+      else if (ev.which === 100)  { // right
         moveCameraPosition(1, 0, 0);
         if (cameraFollowState.offset) {
           cameraFollowState.offset.x += 1;
         }
       }
-      else if (ev.which == 115)  { // down
+      else if (ev.which === 115)  { // down
         moveCameraPosition(0, 0, -1);
         if (cameraFollowState.offset) {
           cameraFollowState.offset.y += -1;
         }
       }
-      else if (ev.which == 113) { // q
+      else if (ev.which === 113) { // q
         moveCameraPosition(0, 1, 0);
         if (cameraFollowState.offset) {
           cameraFollowState.offset.z += 1;
         }
       }
-      else if (ev.which == 101) { // e
+      else if (ev.which === 101) { // e
         moveCameraPosition(0, -1, 0);
         if (cameraFollowState.offset) {
           cameraFollowState.offset.z += -1;
@@ -139,6 +133,10 @@ $(function() {
       });
     }
 
+    if (active.jobfair) {
+      jobfairState.render();
+    }
+
     if (cameraFollowState.target) {
       camera.position.copy(cameraFollowState.target).add(cameraFollowState.offset);
       camera.lookAt(cameraFollowState.target);
@@ -149,6 +147,91 @@ $(function() {
     }
 
     renderer.render(scene, camera);
+  }
+
+  /*
+   * * * * * STATE CHANGES * * * * *
+   */
+
+  function enterJobfairState() {
+    active.jobfair = true;
+    io.mode = io.JOBFAIR;
+
+    jobfairState.ground_material = Physijs.createMaterial(
+      new THREE.MeshBasicMaterial({color: 0x111111, side: THREE.DoubleSide, transparent: true, opacity: 0.2}),
+      0.8, // high friction
+      0.4 // low restitution
+    );
+
+    jobfairState.ground_geometry = new THREE.PlaneGeometry(100, 100);
+    calculateGeometryThings(jobfairState.ground_geometry);
+
+    jobfairState.ground = new Physijs.BoxMesh(jobfairState.ground_geometry, jobfairState.ground_material, 0);
+    jobfairState.ground.rotation.x = -Math.PI / 2;
+    jobfairState.ground.position.z = -50;
+    jobfairState.ground.position.y = 0;
+    jobfairState.ground.__dirtyPosition = true;
+    scene.add(jobfairState.ground);
+
+    setCameraPosition(0, 40, 10);
+
+    jobfairState.booths = recruiterManager.createBooths(scene);
+    jobfairState.currentBooth = 0;
+
+    function moveRonaldToBooth(boothNumber, callback) {
+      var booth = jobfairState.booths[boothNumber];
+      kevinRonald.position.z = booth.recruiter.skinnedMesh.position.z + 8;
+      callback();
+    }
+
+    jobfairState.render = function() {
+      var currentBooth = recruiterManager.boothIndexForZ(kevinRonald.position.z);
+      if (currentBooth !== jobfairState.currentBooth) {
+        // lets react to that change in booth eh?
+        jobfairState.currentBooth = currentBooth;
+        moveRonaldToBooth(currentBooth, function() {
+          io.mode = io.INTERVIEW;
+        });
+      }
+    };
+
+    jobfairState.endScene = function() {
+      fadeOverlay(true, function() {
+        var meshes = [jobfairState.ground];
+        jobfairState.booths.forEach(function(booth) {
+          booth.meshes.forEach(function(mesh) {
+            meshes.push(mesh);
+          });
+        });
+        clearScene(meshes);
+
+        active.jobfair = false;
+        enterWeighingState();
+        fadeOverlay(false);
+      });
+    };
+  }
+
+  function enterWeighingState() {
+    flash('RONALD IS BORN');
+
+    active.ronalds = true;
+    active.weighing = true;
+    io.mode = io.WEIGHING;
+
+    setCameraPosition(0, 0, 0);
+
+    mainLight.position.set(0, 20, 0);
+    mainLight.target.position.set(0, 5, -100);
+    mainLight.intensity = 5.0;
+
+    kevinRonald.moveTo(-80, 8, -140);
+    kevinRonald.rotate(0, Math.PI/4, 0);
+
+    dylanRonald.moveTo(80, 8, -140);
+    dylanRonald.rotate(0, -Math.PI/4, 0);
+
+    ronalds = [kevinRonald, dylanRonald];
   }
 
   /*
@@ -255,66 +338,6 @@ $(function() {
 
   function distanceMagnitude(pos1, pos2) {
     return Math.abs(pos1.x - pos2.x) + Math.abs(pos1.y - pos2.y) + Math.abs(pos1.z - pos2.z);
-  }
-
-  /*
-   * * * * * STATE CHANGES * * * * *
-   */
-
-  function enterJobfairState() {
-    active.jobfair = true;
-    io.mode = io.JOBFAIR;
-
-    jobfairState.ground_material = Physijs.createMaterial(
-      new THREE.MeshBasicMaterial({color: 0x111111, side: THREE.DoubleSide, transparent: true, opacity: 0.2}),
-      0.8, // high friction
-      0.4 // low restitution
-    );
-
-    jobfairState.ground_geometry = new THREE.PlaneGeometry(100, 100);
-    calculateGeometryThings(jobfairState.ground_geometry);
-
-    jobfairState.ground = new Physijs.BoxMesh(jobfairState.ground_geometry, jobfairState.ground_material, 0);
-    jobfairState.ground.rotation.x = -Math.PI / 2;
-    jobfairState.ground.position.z = -50;
-    jobfairState.ground.position.y = 0;
-    jobfairState.ground.__dirtyPosition = true;
-    scene.add(jobfairState.ground);
-
-    setCameraPosition(0, 40, 10);
-
-    jobfairState.endScene = function() {
-      fadeOverlay(true, function() {
-        var meshes = [jobfairState.ground];
-        clearScene(meshes);
-
-        active.jobfair = false;
-        enterWeighingState();
-        fadeOverlay(false);
-      });
-    };
-  }
-
-  function enterWeighingState() {
-    flash('RONALD IS BORN');
-
-    active.ronalds = true;
-    active.weighing = true;
-    io.mode = io.WEIGHING;
-
-    setCameraPosition(0, 0, 0);
-
-    mainLight.position.set(0, 20, 0);
-    mainLight.target.position.set(0, 5, -100);
-    mainLight.intensity = 5.0;
-
-    kevinRonald.moveTo(-80, 8, -140);
-    kevinRonald.rotate(0, Math.PI/4, 0);
-
-    dylanRonald.moveTo(80, 8, -140);
-    dylanRonald.rotate(0, -Math.PI/4, 0);
-
-    ronalds = [kevinRonald, dylanRonald];
   }
 
 });
