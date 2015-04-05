@@ -1,0 +1,19 @@
+create local network - get IP from dylan and edit forwarder.js and phone.js
+
+open synapse_heartbeat patch on both computers
+
+connect to synapse on both computers
+
+run server on server computer
+
+connect other computer to server with node forwarder.js
+
+connect server's browser
+
+to connect phone u gotta use sever_ip/8888:phone.html in safari
+
+
+architecture:
+  browser socket io.js -> kinect.js socket.io server -> maxer.js osc -> max msp
+  forwarder connect socket -> kinect.js socket.io server -> browser socket io.js
+  phone socket phone.js -> kinect.js socket.io server -> browser socket io.js
