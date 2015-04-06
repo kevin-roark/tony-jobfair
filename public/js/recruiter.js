@@ -19,7 +19,7 @@ function Recruiter(options) {
   this.twitching = false;
 
   this.faceGeometry = new THREE.BoxGeometry(2, 2, 2);
-  this.faceMaterial = new THREE.MeshBasicMaterial({color: 0x000000});
+  this.faceMaterial = new THREE.MeshBasicMaterial({});
   this.faceMesh = new THREE.Mesh(this.faceGeometry, this.faceMaterial);
 
   this.updateSkinColor(options.color || '#000000');
@@ -40,6 +40,7 @@ Recruiter.prototype.addTo = function(scene, callback) {
     self.faceMesh.scale.set(self.scale / 2, self.scale / 2, self.scale / 2);
 
     self.updateSkinColor(self.color);
+    self.updateFaceImage(self.faceImageUrl);
 
     self.move(self.initialPosition.x, self.initialPosition.y, self.initialPosition.z);
 
@@ -144,20 +145,10 @@ Recruiter.prototype.updateSkinColor = function(hex) {
 };
 
 Recruiter.prototype.updateFaceImage = function(image) {
-  var texture;
+  this.faceImageUrl = image;
 
-  if (typeof image === 'string' && image.length > 0) {
-    this.faceImageUrl = image;
-    texture = THREE.ImageUtils.loadTexture(image);
-  } else if (image) {
-    // gotta assume its a texturable image object thing (ie canvas)
-    this.faceImageCanvas = image;
-    texture = new THREE.Texture(image);
-  }
-
-  if (texture) {
-    texture.needsUpdate = true;
-    this.faceMaterial.map = texture;
-    this.faceMaterial.needsUpdate = true;
-  }
+  var texture = THREE.ImageUtils.loadTexture(image);
+  texture.needsUpdate = true;
+  this.faceMaterial.map = texture;
+  this.faceMaterial.needsUpdate = true;
 };

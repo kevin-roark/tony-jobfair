@@ -25,6 +25,10 @@ module.exports.getPosterImage = function(company) {
   return '/media/posters/' + company + '.jpg';
 };
 
+module.exports.getRecruiterImage = function(company) {
+  return '/media/recruiters/' + company + '.jpg';
+}
+
 var riddles = {};
 
 module.exports.actionIsSuccessful = function(action, boothIndex) {
@@ -44,7 +48,8 @@ module.exports.createBooths = function(scene) {
       {
         position: {x: (side === 'left' ? -12 : 12), y: 10, z: -i * module.exports.distanceBetweenBooths},
         scale: 1.5 + 2.5 * i,
-        riddle: riddles[company]
+        riddle: riddles[company],
+        faceImageUrl: module.exports.getRecruiterImage(company)
       },
       module.exports.getPosterImage(company),
       side
