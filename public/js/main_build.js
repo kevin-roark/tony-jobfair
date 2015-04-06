@@ -1886,6 +1886,7 @@ $(function() {
 
   var Character = require('./character');
   var RonaldText = require('./ronald-text');
+  var Spit = require('./spit');
   var io = require('./io');
   var recruiterManager = require('./recruiter-manager');
 
@@ -2112,21 +2113,52 @@ $(function() {
       });
     }
 
+    jobfairState.spitToRecruiter = function(callback) {
+      var spit = new Spit();
+      spit.addTo(scene);
+
+      spit.mesh.position.copy(kevinRonald.head.mesh.position);
+      spit.mesh.position.z -= 1;
+
+      var recruiterPos = jobfairState.booths[jobfairState.currentBooth].recruiter.faceMesh.position;
+      var target = {x: recruiterPos.x + (jobfairState.currentBooth % 2 === 0 ? -5 : 5), y: recruiterPos.y - 2, z: recruiterPos.z - 20};
+      var spitInterval = setInterval(function() {
+        moveTowardsTarget(spit.mesh.position, target, {x: 0.75, y: 0.25, z: 1.4});
+        if (distanceMagnitude(spit.mesh.position, target) <= 2) {
+          clearInterval(spitInterval);
+          scene.remove(spit.mesh);
+          callback();
+        }
+      }, 30);
+    };
+
     jobfairState.ronaldPerformedAction = function(action) {
       // here would want to do UI and shit yum
       console.log('ronald performed: ' + action);
-      if (recruiterManager.actionIsSuccessful(action, this.currentBooth)) {
-        showSuccessfulResponse(kevinRonald.position.z + 72);
+      if (action === 'spit') {
+        this.spitToRecruiter(showResults);
       } else {
-        showFailedResponse(kevinRonald.position.z + 72);
+        showResults();
       }
 
-      if (this.currentBooth !== recruiterManager.recruiterCount - 1) {
-        io.mode = io.JOBFAIR;
-        waitingForNextBooth = true;
+      function showResults() {
+        if (recruiterManager.actionIsSuccessful(action, this.currentBooth)) {
+          showSuccessfulResponse(kevinRonald.position.z + 72);
+        } else {
+          showFailedResponse(kevinRonald.position.z + 72);
+        }
+
+        goToNextBooth();
       }
-      else {
-        this.transitionToWeighing();
+
+      function goToNextBooth() {
+        if (this.currentBooth !== recruiterManager.recruiterCount - 1) {
+          io.mode = io.JOBFAIR;
+          waitingForNextBooth = true;
+        }
+        else {
+          this.transitionToWeighing();
+        }
       }
     };
 
@@ -2303,7 +2335,7 @@ $(function() {
 
 });
 
-},{"./character":4,"./io":7,"./recruiter-manager":13,"./ronald-text":15}],12:[function(require,module,exports){
+},{"./character":4,"./io":7,"./recruiter-manager":13,"./ronald-text":15,"./spit":16}],12:[function(require,module,exports){
 
 var prefix = '/js/models/';
 
@@ -2686,4 +2718,33 @@ RonaldText.prototype.addTo = function(scene, addCallback, decayCallback) {
   }, this.decay);
 };
 
-},{"./lib/kutility":10}]},{},[11]);
+},{"./lib/kutility":10}],16:[function(require,module,exports){
+
+module.exports = Spit;
+
+function Spit() {
+  this.mesh = new THREE.Mesh(
+    new THREE.SphereGeometry(1.5),
+    new THREE.MeshBasicMaterial({color: 0x8888ff})
+  );
+
+  var leftSpit = new THREE.Mesh(
+    new THREE.SphereGeometry(1),
+    new THREE.MeshBasicMaterial({color: 0x00bbff})
+  );
+  this.mesh.add(leftSpit);
+  leftSpit.position.set(-5, 1, 0);
+
+  var rightSpit = new THREE.Mesh(
+    new THREE.SphereGeometry(0.75),
+    new THREE.MeshBasicMaterial({color: 0x0000ff})
+  );
+  this.mesh.add(rightSpit);
+  rightSpit.position.set(4, -2, 0);
+}
+
+Spit.prototype.addTo = function(scene) {
+  scene.add(this.mesh);
+};
+
+},{}]},{},[11]);

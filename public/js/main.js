@@ -3,6 +3,7 @@ $(function() {
 
   var Character = require('./character');
   var RonaldText = require('./ronald-text');
+  var Spit = require('./spit');
   var io = require('./io');
   var recruiterManager = require('./recruiter-manager');
 
@@ -229,21 +230,52 @@ $(function() {
       });
     }
 
+    jobfairState.spitToRecruiter = function(callback) {
+      var spit = new Spit();
+      spit.addTo(scene);
+
+      spit.mesh.position.copy(kevinRonald.head.mesh.position);
+      spit.mesh.position.z -= 1;
+
+      var recruiterPos = jobfairState.booths[jobfairState.currentBooth].recruiter.faceMesh.position;
+      var target = {x: recruiterPos.x + (jobfairState.currentBooth % 2 === 0 ? -5 : 5), y: recruiterPos.y - 2, z: recruiterPos.z - 20};
+      var spitInterval = setInterval(function() {
+        moveTowardsTarget(spit.mesh.position, target, {x: 0.75, y: 0.25, z: 1.4});
+        if (distanceMagnitude(spit.mesh.position, target) <= 2) {
+          clearInterval(spitInterval);
+          scene.remove(spit.mesh);
+          callback();
+        }
+      }, 30);
+    };
+
     jobfairState.ronaldPerformedAction = function(action) {
       // here would want to do UI and shit yum
       console.log('ronald performed: ' + action);
-      if (recruiterManager.actionIsSuccessful(action, this.currentBooth)) {
-        showSuccessfulResponse(kevinRonald.position.z + 72);
+      if (action === 'spit') {
+        this.spitToRecruiter(showResults);
       } else {
-        showFailedResponse(kevinRonald.position.z + 72);
+        showResults();
       }
 
-      if (this.currentBooth !== recruiterManager.recruiterCount - 1) {
-        io.mode = io.JOBFAIR;
-        waitingForNextBooth = true;
+      function showResults() {
+        if (recruiterManager.actionIsSuccessful(action, this.currentBooth)) {
+          showSuccessfulResponse(kevinRonald.position.z + 72);
+        } else {
+          showFailedResponse(kevinRonald.position.z + 72);
+        }
+
+        goToNextBooth();
       }
-      else {
-        this.transitionToWeighing();
+
+      function goToNextBooth() {
+        if (this.currentBooth !== recruiterManager.recruiterCount - 1) {
+          io.mode = io.JOBFAIR;
+          waitingForNextBooth = true;
+        }
+        else {
+          this.transitionToWeighing();
+        }
       }
     };
 
