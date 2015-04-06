@@ -1875,6 +1875,7 @@ Kutility.prototype.blur = function(el, x) {
 $(function() {
 
   var Character = require('./character');
+  var RonaldText = require('./ronald-text');
   var io = require('./io');
   var recruiterManager = require('./recruiter-manager');
 
@@ -1932,10 +1933,10 @@ $(function() {
     offset: {x: 0, y: 0, z: 0}
   };
 
-  var kevinRonald = new Character({x: 7, y: -30, z: 100}, 20);
+  var kevinRonald = new Character({x: 7, y: -25, z: 100}, 20);
   kevinRonald.addTo(scene);
 
-  var dylanRonald = new Character({x: 30, y: -30, z: 100}, 20);
+  var dylanRonald = new Character({x: 30, y: -25, z: 100}, 20);
   dylanRonald.addTo(scene);
   var ronalds = [kevinRonald, dylanRonald];
 
@@ -2050,6 +2051,8 @@ $(function() {
 
     var hasReachedBooths = false;
     var waitingForNextBooth = false;
+    var overlay = $('.interview-overlay');
+    var interviewOverlayInterval;
 
     function setCurrentBooth(index) {
       console.log('current booth: ' + index);
@@ -2057,13 +2060,55 @@ $(function() {
       io.mode = io.INTERVIEW;
     }
 
+    function flashOverlay(color) {
+      overlay.css('background-color', color);
+
+      var hidden = true;
+      interviewOverlayInterval = setInterval(function() {
+        if (hidden) {
+          overlay.show();
+        } else {
+          overlay.hide();
+        }
+        hidden = !hidden;
+      }, 200);
+    }
+
+    function showSuccessfulResponse(z) {
+      jobfairState.responseText = new RonaldText({
+        phrase: 'SUCCESS',
+        position: {x: 20, y: 25, z: z},
+        color: 0x00ff00
+      });
+      flashOverlay('rgb(0, 255, 0)');
+      jobfairState.responseText.addTo(scene, null, function() {
+        clearInterval(interviewOverlayInterval);
+        overlay.hide();
+        jobfairState.responseText = null;
+      });
+    }
+
+    function showFailedResponse(z) {
+      jobfairState.responseText = new RonaldText({
+        phrase: 'NO!!!',
+        position: {x: 20, y: 25, z: z},
+        color: 0xff0000
+      });
+      flashOverlay('rgb(255, 0, 0)');
+      jobfairState.responseText.addTo(scene, null, function() {
+        clearInterval(interviewOverlayInterval);
+        overlay.hide();
+        jobfairState.responseText = null;
+      });
+    }
+
     jobfairState.ronaldPerformedAction = function(action) {
       // here would want to do UI and shit yum
       console.log('ronald performed: ' + action);
       if (recruiterManager.actionIsSuccessful(action, this.currentBooth)) {
-
+        showSuccessfulResponse(kevinRonald.position.z + 72);
       } else {
-
+        showFailedResponse(kevinRonald.position.z + 72);
       }
 
       if (this.currentBooth !== recruiterManager.recruiterCount - 1) {
@@ -2092,6 +2137,10 @@ $(function() {
         if (currentBooth > this.currentBooth) {
           setCurrentBooth(currentBooth);
         }
+      }
+
+      if (jobfairState.responseText) {
+        jobfairState.responseText.render();
       }
     };
 
@@ -2244,7 +2293,7 @@ $(function() {
 
 });
 
-},{"./character":4,"./io":7,"./recruiter-manager":13}],12:[function(require,module,exports){
+},{"./character":4,"./io":7,"./recruiter-manager":13,"./ronald-text":15}],12:[function(require,module,exports){
 
 var prefix = '/js/models/';
 
@@ -2520,4 +2569,103 @@ Recruiter.prototype.updateFaceImage = function(image) {
   }
 };
 
-},{"./model_names":12}]},{},[11]);
+},{"./model_names":12}],15:[function(require,module,exports){
+var kt = require('./lib/kutility');
+
+module.exports = RonaldText;
+
+function negrand(scalar) {
+  return (Math.random() - 0.5) * scalar;
+}
+
+function randcolor() {
+  var r = kt.randInt(255);
+  var g = kt.randInt(255);
+  var b = kt.randInt(255);
+  return new THREE.Color(r, g, b);
+}
+
+function RonaldText(config) {
+  if (!config) config = {};
+
+  this.phrase = config.phrase || 'SUCCESS';
+  this.position = config.position || {x: 8, y: 25, z: 20};
+  this.velocity = config.velocity || {x: 0, y: 0, z: 0};
+  this.decay = config.decay || 10000;
+  this.color = config.color || randcolor();
+
+  this.geometry = new THREE.TextGeometry(this.phrase, {
+    size: 2 + negrand(1),
+    height: 0.01,
+    curveSegments: 1,
+    font: "droid sans",
+    bevelThickness: 0.35,
+    bevelSize: 0.15,
+    bevelSegments: 1,
+    bevelEnabled: true
+  });
+
+  this.material = Physijs.createMaterial(
+    new THREE.MeshBasicMaterial({
+      ambient: this.color,
+      color: this.color,
+      emissive: this.color,
+      side: THREE.DoubleSide
+    }),
+    0.4, // low friction
+    0.6 // high restitution
+  );
+
+  this.mesh = new Physijs.BoxMesh(this.geometry, this.material);
+  this.mesh.castShadow = this.mesh.receiveShadow = true;
+}
+
+RonaldText.prototype.move = function(x, y, z) {
+  if (!this.mesh) return;
+
+  this.mesh.position.x += x;
+  this.mesh.position.y += y;
+  this.mesh.position.z += z;
+
+  this.mesh.__dirtyPosition = true;
+};
+
+RonaldText.prototype.rotate = function(rx, ry, rz) {
+  if (!this.mesh) return;
+
+  this.mesh.rotation.x += rx;
+  this.mesh.rotation.y += ry;
+  this.mesh.rotation.z += rz;
+
+  this.mesh.__dirtyRotation = true;
+};
+
+RonaldText.prototype.moveTo = function(x, y, z) {
+  if (!this.mesh) return;
+
+  this.mesh.position.set(x, y, z);
+
+  this.mesh.__dirtyPosition = true;
+};
+
+RonaldText.prototype.render = function() {
+  this.rotate(0, 0.05, 0);
+  console.log('r');
+};
+
+RonaldText.prototype.addTo = function(scene, addCallback, decayCallback) {
+  scene.add(this.mesh);
+
+  this.moveTo(this.position.x, this.position.y, this.position.z);
+  this.mesh.setLinearVelocity(this.velocity);
+
+  if (addCallback) addCallback();
+
+  var self = this;
+  setTimeout(function() {
+    scene.remove(self.mesh);
+    if (decayCallback) decayCallback();
+  }, this.decay);
+};
+
+},{"./lib/kutility":10}]},{},[11]);

@@ -2,6 +2,7 @@
 $(function() {
 
   var Character = require('./character');
+  var RonaldText = require('./ronald-text');
   var io = require('./io');
   var recruiterManager = require('./recruiter-manager');
 
@@ -59,10 +60,10 @@ $(function() {
     offset: {x: 0, y: 0, z: 0}
   };
 
-  var kevinRonald = new Character({x: 7, y: -30, z: 100}, 20);
+  var kevinRonald = new Character({x: 7, y: -25, z: 100}, 20);
   kevinRonald.addTo(scene);
 
-  var dylanRonald = new Character({x: 30, y: -30, z: 100}, 20);
+  var dylanRonald = new Character({x: 30, y: -25, z: 100}, 20);
   dylanRonald.addTo(scene);
   var ronalds = [kevinRonald, dylanRonald];
 
@@ -177,6 +178,8 @@ $(function() {
 
     var hasReachedBooths = false;
     var waitingForNextBooth = false;
+    var overlay = $('.interview-overlay');
+    var interviewOverlayInterval;
 
     function setCurrentBooth(index) {
       console.log('current booth: ' + index);
@@ -184,13 +187,55 @@ $(function() {
       io.mode = io.INTERVIEW;
     }
 
+    function flashOverlay(color) {
+      overlay.css('background-color', color);
+
+      var hidden = true;
+      interviewOverlayInterval = setInterval(function() {
+        if (hidden) {
+          overlay.show();
+        } else {
+          overlay.hide();
+        }
+        hidden = !hidden;
+      }, 200);
+    }
+
+    function showSuccessfulResponse(z) {
+      jobfairState.responseText = new RonaldText({
+        phrase: 'SUCCESS',
+        position: {x: 20, y: 25, z: z},
+        color: 0x00ff00
+      });
+      flashOverlay('rgb(0, 255, 0)');
+      jobfairState.responseText.addTo(scene, null, function() {
+        clearInterval(interviewOverlayInterval);
+        overlay.hide();
+        jobfairState.responseText = null;
+      });
+    }
+
+    function showFailedResponse(z) {
+      jobfairState.responseText = new RonaldText({
+        phrase: 'NO!!!',
+        position: {x: 20, y: 25, z: z},
+        color: 0xff0000
+      });
+      flashOverlay('rgb(255, 0, 0)');
+      jobfairState.responseText.addTo(scene, null, function() {
+        clearInterval(interviewOverlayInterval);
+        overlay.hide();
+        jobfairState.responseText = null;
+      });
+    }
+
     jobfairState.ronaldPerformedAction = function(action) {
       // here would want to do UI and shit yum
       console.log('ronald performed: ' + action);
       if (recruiterManager.actionIsSuccessful(action, this.currentBooth)) {
-
+        showSuccessfulResponse(kevinRonald.position.z + 72);
       } else {
-
+        showFailedResponse(kevinRonald.position.z + 72);
       }
 
       if (this.currentBooth !== recruiterManager.recruiterCount - 1) {
@@ -219,6 +264,10 @@ $(function() {
         if (currentBooth > this.currentBooth) {
           setCurrentBooth(currentBooth);
         }
+      }
+
+      if (jobfairState.responseText) {
+        jobfairState.responseText.render();
       }
     };
 
