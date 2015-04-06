@@ -19,7 +19,7 @@ function RonaldText(config) {
   this.phrase = config.phrase || 'SUCCESS';
   this.position = config.position || {x: 8, y: 25, z: 20};
   this.velocity = config.velocity || {x: 0, y: 0, z: 0};
-  this.decay = config.decay || 10000;
+  this.decay = config.decay || 5000;
   this.color = config.color || randcolor();
 
   this.geometry = new THREE.TextGeometry(this.phrase, {

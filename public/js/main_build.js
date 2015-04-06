@@ -1236,8 +1236,11 @@ var Recruiter = require('./recruiter');
 
 module.exports = JobBooth;
 
-function JobBooth(recruiterOptions, posterURL) {
+function JobBooth(recruiterOptions, posterURL, side) {
   this.recruiter = new Recruiter(recruiterOptions);
+  this.recruiterScale = this.recruiter.scale;
+
+  this.side = side || 'left';
 
   this.desk = makeDesk();
 
@@ -1247,13 +1250,20 @@ function JobBooth(recruiterOptions, posterURL) {
 JobBooth.prototype.addTo = function(scene) {
   var self = this;
   this.recruiter.addTo(scene, function() {
-    self.recruiter.skinnedMesh.add(self.desk);
-    self.desk.position.set(-10, 0, -4);
+    var rotation = self.side === 'left' ? Math.PI / 6 : - Math.PI / 6;
+    self.recruiter.rotate(0, rotation, 0);
 
-    self.recruiter.skinnedMesh.add(self.poster);
-    self.poster.position.set(-10, 7, -4);
+    var recruiterPos = self.recruiter.skinnedMesh.position;
 
-    self.meshes = [self.desk, self.poster, self.recruiter.skinnedMesh, self.recruiter.faceMesh];
+    scene.add(self.desk);
+    self.desk.position.set(recruiterPos.x + (self.side === 'left' ? -15 : 15), 5, recruiterPos.z + self.recruiterScale * 1.5);
+    self.desk.rotation.y = rotation;
+
+    self.desk.add(self.poster);
+    self.poster.position.set(0, 14, 0);
+    self.poster.rotation.y = rotation;
+
+    self.meshes = [self.desk, self.recruiter.skinnedMesh, self.recruiter.faceMesh];
   });
 };
 
@@ -1268,7 +1278,7 @@ function makePoster(imageURL) {
   var material = new THREE.MeshBasicMaterial({
     map: THREE.ImageUtils.loadTexture(imageURL)
   });
-  var geometry = new THREE.BoxGeometry(5, 7, 1);
+  var geometry = new THREE.BoxGeometry(20, 20, 1);
   var poster = new THREE.Mesh(geometry, material);
   return poster;
 }
@@ -1898,7 +1908,7 @@ $(function() {
     scene.simulate(undefined, 1);
   });
 
-  var camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 1, 1000);
+  var camera = new THREE.PerspectiveCamera(65, window.innerWidth/window.innerHeight, 1, 1000);
   camera.target = {x: 0, y: 0, z: 0};
   scene.add(camera);
 
@@ -1933,10 +1943,10 @@ $(function() {
     offset: {x: 0, y: 0, z: 0}
   };
 
-  var kevinRonald = new Character({x: 7, y: -25, z: 100}, 20);
+  var kevinRonald = new Character({x: 0, y: -10, z: 100}, 20);
   kevinRonald.addTo(scene);
 
-  var dylanRonald = new Character({x: 30, y: -25, z: 100}, 20);
+  var dylanRonald = new Character({x: 30, y: -10, z: 100}, 20);
   dylanRonald.addTo(scene);
   var ronalds = [kevinRonald, dylanRonald];
 
@@ -2045,7 +2055,7 @@ $(function() {
     scene.add(jobfairState.ground);
 
     cameraFollowState.target = kevinRonald.torso.mesh.position;
-    cameraFollowState.offset = {x: 0, y: 60, z: 150};
+    cameraFollowState.offset = {x: 0, y: 40, z: 150};
 
     jobfairState.booths = recruiterManager.createBooths(scene);
 
@@ -2352,44 +2362,53 @@ module.exports.loadModel = function(modelName, callback) {
 
 var JobBooth = require('./job-booth');
 
-module.exports.recruiterCount = 10;
-
-var riddles = [
-  '',
-  '',
-  '',
+var companies = [
+  'linkedin',
+  'buzzfeed',
+  'jpmorgan',
+  'vsco',
+  'venmo',
+  'addthis',
+  'google',
+  'millersfantasy',
+  'facebook',
+  'uber',
+  'spotify',
+  'apple',
+  'microsoft',
+  'nestle',
+  'forbes'
 ];
 
-var posterImages = [
-  '/images/linkedin.jpg',
-  '/images/linkedin.jpg',
-  '/images/linkedin.jpg',
-  '/images/linkedin.jpg',
-  '/images/linkedin.jpg',
-  '/images/linkedin.jpg',
-  '/images/linkedin.jpg',
-  '/images/linkedin.jpg',
-  '/images/linkedin.jpg',
-  '/images/linkedin.jpg'
-];
+module.exports.recruiterCount = companies.length;
+
+module.exports.getPosterImage = function(company) {
+  return '/media/posters/' + company + '.jpg';
+};
+
+var riddles = {};
 
 module.exports.actionIsSuccessful = function(action, boothIndex) {
   return Math.random() < 0.5;
 };
 
-module.exports.distanceBetweenBooths = 200;
+module.exports.distanceBetweenBooths = 400;
 module.exports.closeToRecruiterDistance = 90;
 
 module.exports.createBooths = function(scene) {
   var booths = [];
 
   for (var i = 0; i < module.exports.recruiterCount; i++) {
+    var company = companies[i];
+    var side = i % 2 === 0 ? 'left' : 'right';
     var booth = new JobBooth(
       {
-        position: {x: -6, y: 10, z: -i * module.exports.distanceBetweenBooths},
-        riddle: riddles[i]
+        position: {x: (side === 'left' ? -12 : 12), y: 10, z: -i * module.exports.distanceBetweenBooths},
+        scale: 1.5 + 2.5 * i,
+        riddle: riddles[company]
       },
-      posterImages[i]
+      module.exports.getPosterImage(company),
+      side
     );
 
     booth.addTo(scene);
@@ -2591,7 +2610,7 @@ function RonaldText(config) {
   this.phrase = config.phrase || 'SUCCESS';
   this.position = config.position || {x: 8, y: 25, z: 20};
   this.velocity = config.velocity || {x: 0, y: 0, z: 0};
-  this.decay = config.decay || 10000;
+  this.decay = config.decay || 5000;
   this.color = config.color || randcolor();
 
   this.geometry = new THREE.TextGeometry(this.phrase, {
@@ -2650,7 +2669,6 @@ RonaldText.prototype.moveTo = function(x, y, z) {
 
 RonaldText.prototype.render = function() {
   this.rotate(0, 0.05, 0);
-  console.log('r');
 };
 
 RonaldText.prototype.addTo = function(scene, addCallback, decayCallback) {

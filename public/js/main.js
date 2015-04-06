@@ -25,7 +25,7 @@ $(function() {
     scene.simulate(undefined, 1);
   });
 
-  var camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 1, 1000);
+  var camera = new THREE.PerspectiveCamera(65, window.innerWidth/window.innerHeight, 1, 1000);
   camera.target = {x: 0, y: 0, z: 0};
   scene.add(camera);
 
@@ -60,10 +60,10 @@ $(function() {
     offset: {x: 0, y: 0, z: 0}
   };
 
-  var kevinRonald = new Character({x: 7, y: -25, z: 100}, 20);
+  var kevinRonald = new Character({x: 0, y: -10, z: 100}, 20);
   kevinRonald.addTo(scene);
 
-  var dylanRonald = new Character({x: 30, y: -25, z: 100}, 20);
+  var dylanRonald = new Character({x: 30, y: -10, z: 100}, 20);
   dylanRonald.addTo(scene);
   var ronalds = [kevinRonald, dylanRonald];
 
@@ -172,7 +172,7 @@ $(function() {
     scene.add(jobfairState.ground);
 
     cameraFollowState.target = kevinRonald.torso.mesh.position;
-    cameraFollowState.offset = {x: 0, y: 60, z: 150};
+    cameraFollowState.offset = {x: 0, y: 40, z: 150};
 
     jobfairState.booths = recruiterManager.createBooths(scene);
 
