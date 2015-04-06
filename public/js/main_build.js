@@ -640,7 +640,7 @@ var BodyPart = require('./bodypart');
 
 module.exports = Head;
 
-var headNames = ['/images/kevin.jpg', '/images/dylan.jpg'];
+var headNames = ['/media/faces/kevin.jpg', '/media/faces/dylan.jpg'];
 var headIndex = 0;
 
 function Head(startPos, scale) {
@@ -1988,6 +1988,9 @@ $(function() {
       else if (ev.which === 122) { // z
         jobfairState.ronaldPerformedAction('spit');
       }
+      else if (ev.which === 120) { // x
+        jobfairState.ronaldPerformedAction('handshake');
+      }
       else if (ev.which === 113) { // q
         moveCameraPosition(0, 1, 0);
         if (cameraFollowState.offset) {
@@ -2132,11 +2135,70 @@ $(function() {
       }, 30);
     };
 
+    jobfairState.shakeHandsWithRecruiter = function(callback) {
+      var hand = this.currentBooth % 2 === 0 ? kevinRonald.leftArm : kevinRonald.rightArm;
+      hand.rotate(Math.PI / 2, 0, 0);
+      hand.move(0, 0, -7);
+      cycle();
+
+      var count = 0;
+      function cycle() {
+        fullShake(function() {
+          count += 1;
+          if (count > 4) {
+            hand.rotate(-Math.PI / 2, 0 , 0);
+            hand.move(0, 0, 7);
+            callback();
+          } else {
+            cycle();
+          }
+        });
+      }
+
+      function fullShake(callback) {
+        moveDown(function() {
+          moveUp(function() {
+            moveDown(function() {
+              callback();
+            });
+          });
+        });
+      }
+
+      function moveDown(callback, limit) {
+        if (!limit) limit = 12;
+        var downCount = 0;
+        var interval = setInterval(function() {
+          hand.move(0, -1.25, 0);
+          downCount += 1;
+          if (downCount >= limit) {
+            clearInterval(interval);
+            callback();
+          }
+        }, 30);
+      }
+
+      function moveUp(callback, limit) {
+        if (!limit) limit = 24;
+        var upCount = 0;
+        var interval = setInterval(function() {
+          hand.move(0, 1.25, 0);
+          upCount += 1;
+          if (upCount >= limit) {
+            clearInterval(interval);
+            callback();
+          }
+        }, 30);
+      }
+    };
+
     jobfairState.ronaldPerformedAction = function(action) {
       // here would want to do UI and shit yum
       console.log('ronald performed: ' + action);
       if (action === 'spit') {
         this.spitToRecruiter(showResults);
+      } else if (action === 'handshake') {
+        this.shakeHandsWithRecruiter(showResults);
       } else {
         showResults();
       }

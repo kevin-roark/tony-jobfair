@@ -5,7 +5,7 @@ var BodyPart = require('./bodypart');
 
 module.exports = Head;
 
-var headNames = ['/images/kevin.jpg', '/images/dylan.jpg'];
+var headNames = ['/media/faces/kevin.jpg', '/media/faces/dylan.jpg'];
 var headIndex = 0;
 
 function Head(startPos, scale) {
