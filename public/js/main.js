@@ -1,10 +1,13 @@
 
 $(function() {
 
+  var kt = require('./lib/kutility');
+  var io = require('./io');
   var Character = require('./character');
   var RonaldText = require('./ronald-text');
   var Spit = require('./spit');
-  var io = require('./io');
+  var Money = require('./money');
+  var Cellphone = require('./cellphone');
   var recruiterManager = require('./recruiter-manager');
 
   var TEST_MODE = true;
@@ -38,7 +41,7 @@ $(function() {
   scene.add(mainLight);
 
   io.eventHandler = function(event, data) {
-    if (['spit', 'handshake', 'kneel'].indexOf(event) !== -1) {
+    if (['spit', 'handshake', 'kneel', 'bribe'].indexOf(event) !== -1) {
       jobfairState.ronaldPerformedAction(event);
     }
   };
@@ -110,6 +113,9 @@ $(function() {
       }
       else if (ev.which === 99) { // c
         jobfairState.ronaldPerformedAction('kneel');
+      }
+      else if (ev.which === 118) { // v
+        jobfairState.ronaldPerformedAction('bribe');
       }
       else if (ev.which === 113) { // q
         moveCameraPosition(0, 1, 0);
@@ -375,16 +381,67 @@ $(function() {
       }
     };
 
+    jobfairState.bribeRecruiter = function(callback) {
+      var recruiterPos = this.booths[this.currentBooth].recruiter.faceMesh.position;
+      var xOffset = this.currentBooth % 2 === 0 ? -20 : 14;
+      var torsoPos = kevinRonald.torso.mesh.position;
+
+      var moneys = [];
+      var phone = new Cellphone({x: torsoPos.x + this.currentBooth % 2 === 0 ? 65 : 0, y: recruiterPos.y + 20, z: recruiterPos.z});
+      phone.addTo(scene, function() {
+        addMoneys();
+        rainMoneys(function() {
+          removeMoneys();
+          phone.removeFrom(scene);
+          callback();
+        });
+      });
+
+      function addMoneys() {
+        for (var i = 0; i < 20; i++) {
+          var money = Money.create();
+          money.position.set(recruiterPos.x + xOffset + kt.randInt(15, -15), recruiterPos.y + kt.randInt(20, 8), recruiterPos.z + kt.randInt(80, 40));
+          scene.add(money);
+          moneys.push(money);
+        }
+      }
+
+      function rainMoneys(cb) {
+        var intCount = 0;
+        var moneyInterval = setInterval(function() {
+          for (var i = 0; i < moneys.length; i++) {
+            moneys[i].translateY(-0.1);
+            moneys[i].translateZ(-0.4);
+          }
+          phone.move(Math.random() - 0.5, 0, 0);
+          intCount += 1;
+          if (intCount > 250) {
+            clearInterval(moneyInterval);
+            cb();
+          }
+        }, 30);
+      }
+
+      function removeMoneys() {
+        for (var i = 0; i < moneys.length; i++) {
+          scene.remove(moneys[i]);
+        }
+      }
+    };
+
     jobfairState.ronaldPerformedAction = function(action) {
       // here would want to do UI and shit yum
       console.log('ronald performed: ' + action);
-      if (action === 'spit') {
-        this.spitToRecruiter(showResults);
-      } else if (action === 'handshake') {
-        this.shakeHandsWithRecruiter(showResults);
-      } else if (action === 'kneel') {
-        this.kneelToRecruiter(showResults);
-      }  else {
+      var behaviorMap = {
+        spit: this.spitToRecruiter.bind(this),
+        handshake: this.shakeHandsWithRecruiter.bind(this),
+        kneel: this.kneelToRecruiter.bind(this),
+        bribe: this.bribeRecruiter.bind(this)
+      };
+
+      if (behaviorMap[action]) {
+        behaviorMap[action](showResults);
+      } else {
         showResults();
       }
 

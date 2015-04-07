@@ -42,6 +42,10 @@ module.exports.FOOTBALL_FOOT = pre('football_foot.js');
 module.exports.TWEEN_GIRL = pre('manga.js');
 module.exports.BOY = pre('chubby.js');
 
+/* OBJECTS */
+
+module.exports.PHONE = pre('phone.js');
+
 /* FUNCTIONS */
 
 module.exports.loadModel = function(modelName, callback) {

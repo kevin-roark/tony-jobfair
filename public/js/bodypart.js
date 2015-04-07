@@ -149,7 +149,7 @@ BodyPart.prototype.createMesh = function(callback) {
 
     callback();
   });
-}
+};
 
 BodyPart.prototype.resetMovement = function() {
   var self = this;
@@ -159,7 +159,7 @@ BodyPart.prototype.resetMovement = function() {
   self.mesh.setLinearFactor({x: 0, y: 0, z: 0});
   self.mesh.setAngularVelocity({x: 0, y: 0, z: 0});
   self.mesh.setAngularFactor({x: 0, y: 0, z: 0});
-}
+};
 
 BodyPart.prototype.addTo = function(scene, callback) {
   var self = this;

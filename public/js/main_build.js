@@ -40,7 +40,7 @@ Arm.prototype.collisonHandle = function() {
   if (this.collisionHandler) this.collisionHandler();
 }
 
-},{"./bodypart":3,"./lib/kutility":10,"./model_names":12}],2:[function(require,module,exports){
+},{"./bodypart":3,"./lib/kutility":11,"./model_names":13}],2:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 
@@ -72,7 +72,7 @@ Body.prototype.additionalInit = function() {
   }
 };
 
-},{"./bodypart":3,"./lib/kutility":10,"./model_names":12}],3:[function(require,module,exports){
+},{"./bodypart":3,"./lib/kutility":11,"./model_names":13}],3:[function(require,module,exports){
 var kt = require('./lib/kutility');
 
 var modelNames = require('./model_names');
@@ -224,7 +224,7 @@ BodyPart.prototype.createMesh = function(callback) {
 
     callback();
   });
-}
+};
 
 BodyPart.prototype.resetMovement = function() {
   var self = this;
@@ -234,7 +234,7 @@ BodyPart.prototype.resetMovement = function() {
   self.mesh.setLinearFactor({x: 0, y: 0, z: 0});
   self.mesh.setAngularVelocity({x: 0, y: 0, z: 0});
   self.mesh.setAngularFactor({x: 0, y: 0, z: 0});
-}
+};
 
 BodyPart.prototype.addTo = function(scene, callback) {
   var self = this;
@@ -350,7 +350,53 @@ BodyPart.prototype.additionalInit = function() {};
 BodyPart.prototype.additionalRender = function() {};
 BodyPart.prototype.collisonHandle = function() {}
 
-},{"./lib/kutility":10,"./model_names":12}],4:[function(require,module,exports){
+},{"./lib/kutility":11,"./model_names":13}],4:[function(require,module,exports){
+
+var kt = require('./lib/kutility');
+var modelNames = require('./model_names');
+
+var BodyPart = require('./bodypart');
+
+module.exports = Phone;
+
+function Phone(startPos, scale, screenImage) {
+  if (!startPos) startPos = {x: 0, y: 0, z: 0};
+  this.startX = startPos.x;
+  this.startY = startPos.y;
+  this.startZ = startPos.z;
+
+  this.scale = scale || 6;
+
+  this.modelChoices = [modelNames.PHONE];
+
+  this.screenImage = screenImage || '/media/textures/venmo.jpg';
+}
+
+Phone.prototype = Object.create(BodyPart.prototype);
+
+Phone.prototype.addTo = function(scene, callback) {
+  var self = this;
+
+  var screenMaterial = new THREE.MeshBasicMaterial({map: THREE.ImageUtils.loadTexture(self.screenImage)});
+  var screenGeometry = new THREE.PlaneGeometry(1.6 * self.scale, 2.8 * self.scale);
+  self.screenMesh = new THREE.Mesh(screenGeometry, screenMaterial);
+  scene.add(self.screenMesh);
+
+  BodyPart.prototype.addTo.call(this, scene, callback);
+};
+
+Phone.prototype.removeFrom = function(scene) {
+  scene.remove(this.mesh);
+  scene.remove(this.screenMesh);
+};
+
+Phone.prototype.move = function(dx, dy, dz) {
+  BodyPart.prototype.move.call(this, dx, dy, dz);
+
+  this.screenMesh.position.set(this.mesh.position.x - 34, this.mesh.position.y - 17.5, this.mesh.position.z - 20);
+};
+
+},{"./bodypart":3,"./lib/kutility":11,"./model_names":13}],5:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 
@@ -555,7 +601,7 @@ function posNegRandom() {
   return (Math.random() - 0.5) * 2;
 }
 
-},{"./arm":1,"./body":2,"./hand":5,"./head":6,"./leg":9,"./lib/kutility":10,"./model_names":12}],5:[function(require,module,exports){
+},{"./arm":1,"./body":2,"./hand":6,"./head":7,"./leg":10,"./lib/kutility":11,"./model_names":13}],6:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 
@@ -632,7 +678,7 @@ Hand.prototype.collisonHandle = function() {
   }
 };
 
-},{"./bodypart":3,"./lib/kutility":10,"./model_names":12}],6:[function(require,module,exports){
+},{"./bodypart":3,"./lib/kutility":11,"./model_names":13}],7:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 
@@ -677,7 +723,7 @@ Head.prototype.render = function() {
   }
 }
 
-},{"./bodypart":3,"./lib/kutility":10}],7:[function(require,module,exports){
+},{"./bodypart":3,"./lib/kutility":11}],8:[function(require,module,exports){
 
 // CONTROLS::::
 
@@ -1230,7 +1276,7 @@ function handsBetweenElbows(playerNum) {
   return (leftHand.x > leftElbow.x) && (rightHand.x < rightElbow.x);
 }
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 
 var Recruiter = require('./recruiter');
 
@@ -1283,7 +1329,7 @@ function makePoster(imageURL) {
   return poster;
 }
 
-},{"./recruiter":14}],9:[function(require,module,exports){
+},{"./recruiter":16}],10:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 
@@ -1315,7 +1361,7 @@ Leg.prototype.additionalInit = function() {
   }
 };
 
-},{"./bodypart":3,"./lib/kutility":10,"./model_names":12}],10:[function(require,module,exports){
+},{"./bodypart":3,"./lib/kutility":11,"./model_names":13}],11:[function(require,module,exports){
 /* export something */
 module.exports = new Kutility;
 
@@ -1880,14 +1926,17 @@ Kutility.prototype.blur = function(el, x) {
   this.setFilter(el, cf + f);
 }
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 
 $(function() {
 
+  var kt = require('./lib/kutility');
+  var io = require('./io');
   var Character = require('./character');
   var RonaldText = require('./ronald-text');
   var Spit = require('./spit');
-  var io = require('./io');
+  var Money = require('./money');
+  var Cellphone = require('./cellphone');
   var recruiterManager = require('./recruiter-manager');
 
   var TEST_MODE = true;
@@ -1921,7 +1970,7 @@ $(function() {
   scene.add(mainLight);
 
   io.eventHandler = function(event, data) {
-    if (['spit', 'handshake', 'kneel'].indexOf(event) !== -1) {
+    if (['spit', 'handshake', 'kneel', 'bribe'].indexOf(event) !== -1) {
       jobfairState.ronaldPerformedAction(event);
     }
   };
@@ -1993,6 +2042,9 @@ $(function() {
       }
       else if (ev.which === 99) { // c
         jobfairState.ronaldPerformedAction('kneel');
+      }
+      else if (ev.which === 118) { // v
+        jobfairState.ronaldPerformedAction('bribe');
       }
       else if (ev.which === 113) { // q
         moveCameraPosition(0, 1, 0);
@@ -2258,16 +2310,67 @@ $(function() {
       }
     };
 
+    jobfairState.bribeRecruiter = function(callback) {
+      var recruiterPos = this.booths[this.currentBooth].recruiter.faceMesh.position;
+      var xOffset = this.currentBooth % 2 === 0 ? -20 : 14;
+      var torsoPos = kevinRonald.torso.mesh.position;
+
+      var moneys = [];
+      var phone = new Cellphone({x: torsoPos.x + this.currentBooth % 2 === 0 ? 65 : 0, y: recruiterPos.y + 20, z: recruiterPos.z});
+      phone.addTo(scene, function() {
+        addMoneys();
+        rainMoneys(function() {
+          removeMoneys();
+          phone.removeFrom(scene);
+          callback();
+        });
+      });
+
+      function addMoneys() {
+        for (var i = 0; i < 20; i++) {
+          var money = Money.create();
+          money.position.set(recruiterPos.x + xOffset + kt.randInt(15, -15), recruiterPos.y + kt.randInt(20, 8), recruiterPos.z + kt.randInt(80, 40));
+          scene.add(money);
+          moneys.push(money);
+        }
+      }
+
+      function rainMoneys(cb) {
+        var intCount = 0;
+        var moneyInterval = setInterval(function() {
+          for (var i = 0; i < moneys.length; i++) {
+            moneys[i].translateY(-0.1);
+            moneys[i].translateZ(-0.4);
+          }
+          phone.move(Math.random() - 0.5, 0, 0);
+          intCount += 1;
+          if (intCount > 250) {
+            clearInterval(moneyInterval);
+            cb();
+          }
+        }, 30);
+      }
+
+      function removeMoneys() {
+        for (var i = 0; i < moneys.length; i++) {
+          scene.remove(moneys[i]);
+        }
+      }
+    };
+
     jobfairState.ronaldPerformedAction = function(action) {
       // here would want to do UI and shit yum
       console.log('ronald performed: ' + action);
-      if (action === 'spit') {
-        this.spitToRecruiter(showResults);
-      } else if (action === 'handshake') {
-        this.shakeHandsWithRecruiter(showResults);
-      } else if (action === 'kneel') {
-        this.kneelToRecruiter(showResults);
-      }  else {
+      var behaviorMap = {
+        spit: this.spitToRecruiter.bind(this),
+        handshake: this.shakeHandsWithRecruiter.bind(this),
+        kneel: this.kneelToRecruiter.bind(this),
+        bribe: this.bribeRecruiter.bind(this)
+      };
+
+      if (behaviorMap[action]) {
+        behaviorMap[action](showResults);
+      } else {
         showResults();
       }
 
@@ -2465,7 +2568,7 @@ $(function() {
 
 });
 
-},{"./character":4,"./io":7,"./recruiter-manager":13,"./ronald-text":15,"./spit":16}],12:[function(require,module,exports){
+},{"./cellphone":4,"./character":5,"./io":8,"./lib/kutility":11,"./money":14,"./recruiter-manager":15,"./ronald-text":17,"./spit":18}],13:[function(require,module,exports){
 
 var prefix = '/js/models/';
 
@@ -2510,6 +2613,10 @@ module.exports.FOOTBALL_FOOT = pre('football_foot.js');
 module.exports.TWEEN_GIRL = pre('manga.js');
 module.exports.BOY = pre('chubby.js');
 
+/* OBJECTS */
+
+module.exports.PHONE = pre('phone.js');
+
 /* FUNCTIONS */
 
 module.exports.loadModel = function(modelName, callback) {
@@ -2520,7 +2627,17 @@ module.exports.loadModel = function(modelName, callback) {
   });
 }
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
+
+module.exports.create = function() {
+  var geometry = new THREE.BoxGeometry(8, 3.5, 0.8);
+  var material = new THREE.MeshBasicMaterial({
+    map: THREE.ImageUtils.loadTexture('/media/textures/money.jpg')
+  });
+  return new THREE.Mesh(geometry, material);
+};
+
+},{}],15:[function(require,module,exports){
 
 var JobBooth = require('./job-booth');
 
@@ -2590,7 +2707,7 @@ module.exports.boothIndexForZ = function(z) {
   return Math.floor(Math.max(pos - module.exports.closeToRecruiterDistance, 0) / module.exports.distanceBetweenBooths);
 };
 
-},{"./job-booth":8}],14:[function(require,module,exports){
+},{"./job-booth":9}],16:[function(require,module,exports){
 
 // requirements
 var mn = require('./model_names');
@@ -2746,7 +2863,7 @@ Recruiter.prototype.updateFaceImage = function(image) {
   this.faceMaterial.needsUpdate = true;
 };
 
-},{"./model_names":12}],15:[function(require,module,exports){
+},{"./model_names":13}],17:[function(require,module,exports){
 var kt = require('./lib/kutility');
 
 module.exports = RonaldText;
@@ -2844,7 +2961,7 @@ RonaldText.prototype.addTo = function(scene, addCallback, decayCallback) {
   }, this.decay);
 };
 
-},{"./lib/kutility":10}],16:[function(require,module,exports){
+},{"./lib/kutility":11}],18:[function(require,module,exports){
 
 module.exports = Spit;
 
@@ -2873,4 +2990,4 @@ Spit.prototype.addTo = function(scene) {
   scene.add(this.mesh);
 };
 
-},{}]},{},[11]);
+},{}]},{},[12]);
