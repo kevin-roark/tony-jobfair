@@ -1921,7 +1921,7 @@ $(function() {
   scene.add(mainLight);
 
   io.eventHandler = function(event, data) {
-    if (['spit', 'handshake'].indexOf(event) !== -1) {
+    if (['spit', 'handshake', 'kneel'].indexOf(event) !== -1) {
       jobfairState.ronaldPerformedAction(event);
     }
   };
@@ -1990,6 +1990,9 @@ $(function() {
       }
       else if (ev.which === 120) { // x
         jobfairState.ronaldPerformedAction('handshake');
+      }
+      else if (ev.which === 99) { // c
+        jobfairState.ronaldPerformedAction('kneel');
       }
       else if (ev.which === 113) { // q
         moveCameraPosition(0, 1, 0);
@@ -2192,6 +2195,69 @@ $(function() {
       }
     };
 
+    jobfairState.kneelToRecruiter = function(callback) {
+      var rotIncrement = 0.05;
+      var headYIncrement = 0.75;
+      var headZIncrement = 1.25;
+
+      var head = kevinRonald.head;
+      var kneelParts = [head, kevinRonald.torso, kevinRonald.leftArm, kevinRonald.rightArm];
+
+      cycle();
+
+      var count = 0;
+      function cycle() {
+        fullKneel(function() {
+          count += 1;
+          if (count >= 3) {
+            callback();
+          } else {
+            cycle();
+          }
+        });
+      }
+
+      function fullKneel(cb) {
+        kneelDown(function() {
+          comeBackUp(function() {
+            cb();
+          });
+        });
+      }
+
+      function kneelDown(cb) {
+        var totalRot = 0;
+        var interval = setInterval(function() {
+          for (var i = 0; i < kneelParts.length; i++) {
+            kneelParts[i].rotate(-rotIncrement, 0, 0);
+          }
+          head.move(0, -headYIncrement, -headZIncrement);
+
+          totalRot -= rotIncrement;
+          if (totalRot <= -Math.PI / 2) {
+            clearInterval(interval);
+            cb();
+          }
+        }, 30);
+      }
+
+      function comeBackUp(cb) {
+        var totalRot = 0;
+        var interval = setInterval(function() {
+          for (var i = 0; i < kneelParts.length; i++) {
+            kneelParts[i].rotate(rotIncrement, 0, 0);
+          }
+          head.move(0, headYIncrement, headZIncrement);
+
+          totalRot += rotIncrement;
+          if (totalRot >= Math.PI / 2) {
+            clearInterval(interval);
+            cb();
+          }
+        }, 30);
+      }
+    };
+
     jobfairState.ronaldPerformedAction = function(action) {
       // here would want to do UI and shit yum
       console.log('ronald performed: ' + action);
@@ -2199,7 +2265,9 @@ $(function() {
         this.spitToRecruiter(showResults);
       } else if (action === 'handshake') {
         this.shakeHandsWithRecruiter(showResults);
-      } else {
+      } else if (action === 'kneel') {
+        this.kneelToRecruiter(showResults);
+      }  else {
         showResults();
       }
 
