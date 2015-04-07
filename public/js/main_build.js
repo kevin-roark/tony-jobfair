@@ -1937,6 +1937,7 @@ $(function() {
   var Spit = require('./spit');
   var Money = require('./money');
   var Cellphone = require('./cellphone');
+  var Shirt = require('./tshirt');
   var recruiterManager = require('./recruiter-manager');
 
   var TEST_MODE = true;
@@ -2117,6 +2118,8 @@ $(function() {
     cameraFollowState.offset = {x: 0, y: 40, z: 150};
 
     jobfairState.booths = recruiterManager.createBooths(scene);
+
+    jobfairState.collectedTokens = [];
 
     var hasReachedBooths = false;
     var waitingForNextBooth = false;
@@ -2375,9 +2378,15 @@ $(function() {
       }
 
       function showResults() {
-        if (recruiterManager.actionIsSuccessful(action, this.currentBooth)) {
+        var success = recruiterManager.actionIsSuccessful(action, this.currentBooth);
+
+        if (success) {
           showSuccessfulResponse(kevinRonald.position.z + 72);
-        } else {
+
+          var shirt = new Shirt(null, 4, recruiterManager.companies[jobfairState.currentBooth]);
+          jobfairState.collectedTokens.push(shirt);
+        }
+        else {
           showFailedResponse(kevinRonald.position.z + 72);
         }
 
@@ -2397,7 +2406,7 @@ $(function() {
 
     jobfairState.transitionToWeighing = function() {
       active.jobfair = false;
-      enterWeighingState();
+      enterWeighingState(this.collectedTokens);
     };
 
     jobfairState.render = function() {
@@ -2436,7 +2445,7 @@ $(function() {
     };
   }
 
-  function enterWeighingState() {
+  function enterWeighingState(tokens) {
     flash('RONALD IS BORN');
 
     active.ronalds = true;
@@ -2568,7 +2577,7 @@ $(function() {
 
 });
 
-},{"./cellphone":4,"./character":5,"./io":8,"./lib/kutility":11,"./money":14,"./recruiter-manager":15,"./ronald-text":17,"./spit":18}],13:[function(require,module,exports){
+},{"./cellphone":4,"./character":5,"./io":8,"./lib/kutility":11,"./money":14,"./recruiter-manager":15,"./ronald-text":17,"./spit":18,"./tshirt":19}],13:[function(require,module,exports){
 
 var prefix = '/js/models/';
 
@@ -2641,7 +2650,7 @@ module.exports.create = function() {
 
 var JobBooth = require('./job-booth');
 
-var companies = [
+var companies = module.exports.companies = [
   'linkedin',
   'buzzfeed',
   'jpmorgan',
@@ -2667,7 +2676,11 @@ module.exports.getPosterImage = function(company) {
 
 module.exports.getRecruiterImage = function(company) {
   return '/media/recruiters/' + company + '.jpg';
-}
+};
+
+module.exports.getCompanyShirt = function(company) {
+  return '/media/tshirts/' + company + '.jpg';
+};
 
 var riddles = {};
 
@@ -2676,7 +2689,7 @@ module.exports.actionIsSuccessful = function(action, boothIndex) {
 };
 
 module.exports.distanceBetweenBooths = 400;
-module.exports.closeToRecruiterDistance = 90;
+module.exports.closeToRecruiterDistance = 120;
 
 module.exports.createBooths = function(scene) {
   var booths = [];
@@ -2990,4 +3003,41 @@ Spit.prototype.addTo = function(scene) {
   scene.add(this.mesh);
 };
 
-},{}]},{},[12]);
+},{}],19:[function(require,module,exports){
+
+var BodyPart = require('./bodypart');
+var recruiterManager = require('./recruiter-manager');
+
+module.exports = Shirt;
+
+function Shirt(startPos, scale, company) {
+  if (!startPos) startPos = {x: 0, y: 0, z: 0};
+  this.startX = startPos.x;
+  this.startY = startPos.y;
+  this.startZ = startPos.z;
+
+  this.scale = scale || 2;
+
+  this.company = company || 'facebook';
+}
+
+Shirt.prototype = Object.create(BodyPart.prototype);
+
+Shirt.prototype.createMesh = function(callback) {
+  if (this.mass === undefined) {
+    this.mass = 20;
+  }
+
+  var texture = THREE.ImageUtils.loadTexture(recruiterManager.getCompanyShirt(this.company));
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+
+  var material = Physijs.createMaterial(new THREE.MeshBasicMaterial({map: texture}), 0.4, 0.6);
+  var geometry = new THREE.BoxGeometry(1, 2.5, 0.25);
+  var mesh = new Physijs.ConvexMesh(geometry, material, this.mass);
+
+  this.mesh = mesh;
+  callback();
+};
+
+},{"./bodypart":3,"./recruiter-manager":15}]},{},[12]);

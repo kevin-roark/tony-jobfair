@@ -8,6 +8,7 @@ $(function() {
   var Spit = require('./spit');
   var Money = require('./money');
   var Cellphone = require('./cellphone');
+  var Shirt = require('./tshirt');
   var recruiterManager = require('./recruiter-manager');
 
   var TEST_MODE = true;
@@ -188,6 +189,8 @@ $(function() {
     cameraFollowState.offset = {x: 0, y: 40, z: 150};
 
     jobfairState.booths = recruiterManager.createBooths(scene);
+
+    jobfairState.collectedTokens = [];
 
     var hasReachedBooths = false;
     var waitingForNextBooth = false;
@@ -446,9 +449,15 @@ $(function() {
       }
 
       function showResults() {
-        if (recruiterManager.actionIsSuccessful(action, this.currentBooth)) {
+        var success = recruiterManager.actionIsSuccessful(action, this.currentBooth);
+
+        if (success) {
           showSuccessfulResponse(kevinRonald.position.z + 72);
-        } else {
+
+          var shirt = new Shirt(null, 4, recruiterManager.companies[jobfairState.currentBooth]);
+          jobfairState.collectedTokens.push(shirt);
+        }
+        else {
           showFailedResponse(kevinRonald.position.z + 72);
         }
 
@@ -468,7 +477,7 @@ $(function() {
 
     jobfairState.transitionToWeighing = function() {
       active.jobfair = false;
-      enterWeighingState();
+      enterWeighingState(this.collectedTokens);
     };
 
     jobfairState.render = function() {
@@ -507,7 +516,7 @@ $(function() {
     };
   }
 
-  function enterWeighingState() {
+  function enterWeighingState(tokens) {
     flash('RONALD IS BORN');
 
     active.ronalds = true;

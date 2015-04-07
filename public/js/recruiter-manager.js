@@ -1,7 +1,7 @@
 
 var JobBooth = require('./job-booth');
 
-var companies = [
+var companies = module.exports.companies = [
   'linkedin',
   'buzzfeed',
   'jpmorgan',
@@ -27,7 +27,11 @@ module.exports.getPosterImage = function(company) {
 
 module.exports.getRecruiterImage = function(company) {
   return '/media/recruiters/' + company + '.jpg';
-}
+};
+
+module.exports.getCompanyShirt = function(company) {
+  return '/media/tshirts/' + company + '.jpg';
+};
 
 var riddles = {};
 
@@ -36,7 +40,7 @@ module.exports.actionIsSuccessful = function(action, boothIndex) {
 };
 
 module.exports.distanceBetweenBooths = 400;
-module.exports.closeToRecruiterDistance = 90;
+module.exports.closeToRecruiterDistance = 120;
 
 module.exports.createBooths = function(scene) {
   var booths = [];
