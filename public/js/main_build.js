@@ -40,7 +40,7 @@ Arm.prototype.collisonHandle = function() {
   if (this.collisionHandler) this.collisionHandler();
 }
 
-},{"./bodypart":3,"./lib/kutility":12,"./model_names":15}],2:[function(require,module,exports){
+},{"./bodypart":3,"./lib/kutility":13,"./model_names":16}],2:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 
@@ -72,7 +72,7 @@ Body.prototype.additionalInit = function() {
   }
 };
 
-},{"./bodypart":3,"./lib/kutility":12,"./model_names":15}],3:[function(require,module,exports){
+},{"./bodypart":3,"./lib/kutility":13,"./model_names":16}],3:[function(require,module,exports){
 var kt = require('./lib/kutility');
 
 var modelNames = require('./model_names');
@@ -350,7 +350,7 @@ BodyPart.prototype.additionalInit = function() {};
 BodyPart.prototype.additionalRender = function() {};
 BodyPart.prototype.collisonHandle = function() {}
 
-},{"./lib/kutility":12,"./model_names":15}],4:[function(require,module,exports){
+},{"./lib/kutility":13,"./model_names":16}],4:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 var modelNames = require('./model_names');
@@ -396,7 +396,7 @@ Phone.prototype.move = function(dx, dy, dz) {
   this.screenMesh.position.set(this.mesh.position.x - 34, this.mesh.position.y - 17.5, this.mesh.position.z - 20);
 };
 
-},{"./bodypart":3,"./lib/kutility":12,"./model_names":15}],5:[function(require,module,exports){
+},{"./bodypart":3,"./lib/kutility":13,"./model_names":16}],5:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 
@@ -601,7 +601,7 @@ function posNegRandom() {
   return (Math.random() - 0.5) * 2;
 }
 
-},{"./arm":1,"./body":2,"./hand":7,"./head":8,"./leg":11,"./lib/kutility":12,"./model_names":15}],6:[function(require,module,exports){
+},{"./arm":1,"./body":2,"./hand":8,"./head":9,"./leg":12,"./lib/kutility":13,"./model_names":16}],6:[function(require,module,exports){
 
 
 module.exports.nearest = function(object, targetObjects) {
@@ -657,6 +657,14 @@ module.exports.positionDeltaIncrement = function(pos1, pos2, steps) {
 };
 
 },{}],7:[function(require,module,exports){
+
+
+module.exports.calculateGeometryThings = function(geometry) {
+  geometry.computeFaceNormals();
+  geometry.computeVertexNormals();
+};
+
+},{}],8:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 
@@ -733,7 +741,7 @@ Hand.prototype.collisonHandle = function() {
   }
 };
 
-},{"./bodypart":3,"./lib/kutility":12,"./model_names":15}],8:[function(require,module,exports){
+},{"./bodypart":3,"./lib/kutility":13,"./model_names":16}],9:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 
@@ -778,7 +786,7 @@ Head.prototype.render = function() {
   }
 }
 
-},{"./bodypart":3,"./lib/kutility":12}],9:[function(require,module,exports){
+},{"./bodypart":3,"./lib/kutility":13}],10:[function(require,module,exports){
 
 // CONTROLS::::
 
@@ -826,6 +834,7 @@ var MIN_DISTANCE_BETWEEN_WRESTLERS = 30;
 module.exports.JOBFAIR = 1;
 module.exports.WEIGHING = 2;
 module.exports.INTERVIEW = 3;
+module.exports.TRASH = 4;
 
 module.exports.mode = module.exports.JOBFAIR;
 
@@ -1331,7 +1340,7 @@ function handsBetweenElbows(playerNum) {
   return (leftHand.x > leftElbow.x) && (rightHand.x < rightElbow.x);
 }
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 
 var Recruiter = require('./recruiter');
 
@@ -1384,7 +1393,7 @@ function makePoster(imageURL) {
   return poster;
 }
 
-},{"./recruiter":18}],11:[function(require,module,exports){
+},{"./recruiter":19}],12:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 
@@ -1416,7 +1425,7 @@ Leg.prototype.additionalInit = function() {
   }
 };
 
-},{"./bodypart":3,"./lib/kutility":12,"./model_names":15}],12:[function(require,module,exports){
+},{"./bodypart":3,"./lib/kutility":13,"./model_names":16}],13:[function(require,module,exports){
 /* export something */
 module.exports = new Kutility;
 
@@ -1981,7 +1990,7 @@ Kutility.prototype.blur = function(el, x) {
   this.setFilter(el, cf + f);
 }
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 
 $(function() {
 
@@ -1994,10 +2003,13 @@ $(function() {
   var recruiterManager = require('./recruiter-manager');
   var ronaldGestures = require('./ronald-gestures');
   var distanceUtil = require('./distance-util');
+  var geometryUtil = require('./geometry-util');
+  var sceneUtil = require('./scene-util');
   var meshGestures = require('./mesh-gestures');
 
   var TEST_MODE = true;
   var START_WITH_SCALE = true;
+  var SPEED_TO_TRASH = true;
 
   /*
    * * * * * RENDERIN AND LIGHTIN * * * * *
@@ -2037,10 +2049,11 @@ $(function() {
    * * * * * STATE OBJECTS * * * * *
    */
 
-  var active = {ronalds: false, lighting: false, camera: false, jobfair: false, weighing: false};
+  var active = {ronalds: false, lighting: false, camera: false, jobfair: false, weighing: false, trash: false};
 
   var jobfairState = {};
   var weighingState = {};
+  var garbageState = {};
 
   var cameraFollowState = {
     target: null,
@@ -2173,7 +2186,7 @@ $(function() {
     );
 
     jobfairState.ground_geometry = new THREE.PlaneGeometry(140, 2000);
-    calculateGeometryThings(jobfairState.ground_geometry);
+    geometryUtil.calculateGeometryThings(jobfairState.ground_geometry);
 
     jobfairState.ground = new Physijs.BoxMesh(jobfairState.ground_geometry, jobfairState.ground_material, 0);
     jobfairState.ground.rotation.x = -Math.PI / 2;
@@ -2319,7 +2332,7 @@ $(function() {
             meshes.push(mesh);
           });
         });
-        clearScene(meshes);
+        sceneUtil.clearScene(scene, meshes, [camera, mainLight]);
 
         active.jobfair = false;
         enterWeighingState();
@@ -2344,6 +2357,10 @@ $(function() {
       }
     }
 
+    if (SPEED_TO_TRASH) {
+      tokens = tokens.slice(0, 2);
+    }
+
     console.log('tokens length: ' + tokens.length);
 
     active.ronalds = true;
@@ -2360,7 +2377,7 @@ $(function() {
     var tokenMeshes = [];
     tokens.forEach(function(token) {
       token.addTo(scene, function() {
-        token.moveTo(negrand(200), Math.random() * 10 + 20, -kt.randInt(250, 140));
+        token.moveTo((Math.random() - 0.5) * 240, Math.random() * 10 + 8, -kt.randInt(250, 140));
         tokenMeshes.push(token.mesh);
       });
     });
@@ -2384,6 +2401,7 @@ $(function() {
 
     weighingState.kevinRenderer = new WeighingStateRonaldRenderer('kevin');
     weighingState.dylanRenderer = new WeighingStateRonaldRenderer('dylan');
+    weighingState.tokensDestroyed = 0;
 
     weighingState.render = function() {
       var ronPos = kevinRonald.torso.mesh.position;
@@ -2406,6 +2424,19 @@ $(function() {
       } else {
         this.dylanRenderer.performedThrow(direction);
       }
+    };
+
+    weighingState.beginGarbageTransition = function() {
+      console.log('beginning garbage transition');
+      scale.updateForMasses(0, 0);
+      setTimeout(function() {
+        var multiplier = 0.1;
+        var interval = setInterval(function() {
+          scale.mesh.rotation.z += Math.random() * multiplier;
+
+          multiplier *= 1.02;
+        }, 40);
+      }, 2500);
     };
 
     function WeighingStateRonaldRenderer(name) {
@@ -2441,16 +2472,23 @@ $(function() {
           var scaleSetter = this.throwDirection === 'left' ? scale.setLeftObject.bind(scale) : scale.setRightObject.bind(scale);
           scaleSetter(this.activeTokenMesh);
 
+          console.log('ended throw: ' + weighingState.tokensDestroyed);
+
+          // if scale is filled with last two things
+          if (weighingState.tokensDestroyed === tokens.length - 1 && scale.numberOfObjects() == 2) {
+            self.mode = 'waitingForGarbage';
+            setTimeout(function() {
+              weighingState.beginGarbageTransition();
+            }, 1200);
+            return;
+          }
+
           self.mode = 'waiting';
           setTimeout(function() {
             scale.clearLightestObject(function(lightestObject) {
-              if (!lightestObject) {
-                self.mode = 'seeking';
-                return;
-              }
-
               meshGestures.sendFlying(lightestObject, {steps: 100}, function() {
                 self.mode = 'seeking';
+                weighingState.tokensDestroyed += 1;
               });
             });
           }, 500);
@@ -2463,7 +2501,6 @@ $(function() {
       }
 
       var missingObject = scale.missingObject();
-      console.log('missing object: ' + missingObject);
       if (missingObject === 'left' || missingObject === 'right') {
         direction = missingObject;
       }
@@ -2477,20 +2514,14 @@ $(function() {
     };
   }
 
+  function enterTrashState() {
+    io.mode = io.TRASH;
+    active.trash = true;
+  }
+
   /*
    * * * * * UTILITY * * * * *
    */
-
-  function clearScene(meshes) {
-    if (!meshes) meshes = scene.children;
-
-    for (var i = meshes.length - 1; i >= 0; i--) {
-      var obj = meshes[ i ];
-      if (obj !== camera && obj !== mainLight) {
-        scene.remove(obj);
-      }
-    }
-  }
 
   function resetRonaldPositions() {
     ronalds.forEach(function(ronald) {
@@ -2546,21 +2577,17 @@ $(function() {
     }
   }
 
-  function calculateGeometryThings(geometry) {
-    geometry.computeFaceNormals();
-    geometry.computeVertexNormals();
-  }
-
-  function negrand(scalar) {
-    return (Math.random() - 0.5) * scalar;
-  }
-
 });
 
-},{"./character":5,"./distance-util":6,"./io":9,"./lib/kutility":12,"./mesh-gestures":14,"./recruiter-manager":17,"./ronald-gestures":19,"./ronald-text":20,"./scale":21,"./tshirt":23}],14:[function(require,module,exports){
+},{"./character":5,"./distance-util":6,"./geometry-util":7,"./io":10,"./lib/kutility":13,"./mesh-gestures":15,"./recruiter-manager":18,"./ronald-gestures":20,"./ronald-text":21,"./scale":22,"./scene-util":23,"./tshirt":25}],15:[function(require,module,exports){
 
 
 module.exports.sendFlying = function(mesh, options, callback) {
+  if (!mesh) {
+    if (callback) callback();
+    return;
+  }
+
   var delta = options.delta || {x: 1.2 * (Math.random() - 0.5), y: Math.random() * 0.2, z: -2 * (Math.random() + 0.5)};
 
   var count = 0;
@@ -2578,7 +2605,7 @@ module.exports.sendFlying = function(mesh, options, callback) {
   }, 25);
 };
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 
 var prefix = '/js/models/';
 
@@ -2637,7 +2664,7 @@ module.exports.loadModel = function(modelName, callback) {
   });
 }
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 
 module.exports.create = function() {
   var geometry = new THREE.BoxGeometry(8, 3.5, 0.8);
@@ -2647,7 +2674,7 @@ module.exports.create = function() {
   return new THREE.Mesh(geometry, material);
 };
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 
 var JobBooth = require('./job-booth');
 
@@ -2721,7 +2748,7 @@ module.exports.boothIndexForZ = function(z) {
   return Math.floor(Math.max(pos - module.exports.closeToRecruiterDistance, 0) / module.exports.distanceBetweenBooths);
 };
 
-},{"./job-booth":10}],18:[function(require,module,exports){
+},{"./job-booth":11}],19:[function(require,module,exports){
 
 // requirements
 var mn = require('./model_names');
@@ -2877,7 +2904,7 @@ Recruiter.prototype.updateFaceImage = function(image) {
   this.faceMaterial.needsUpdate = true;
 };
 
-},{"./model_names":15}],19:[function(require,module,exports){
+},{"./model_names":16}],20:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 var distanceUtil = require('./distance-util');
@@ -3072,7 +3099,7 @@ module.exports.bribeRecruiter = function(scene, booths, currentBooth, kevinRonal
   }
 };
 
-},{"./cellphone":4,"./distance-util":6,"./lib/kutility":12,"./money":16,"./spit":22}],20:[function(require,module,exports){
+},{"./cellphone":4,"./distance-util":6,"./lib/kutility":13,"./money":17,"./spit":24}],21:[function(require,module,exports){
 var kt = require('./lib/kutility');
 
 module.exports = RonaldText;
@@ -3170,7 +3197,7 @@ RonaldText.prototype.addTo = function(scene, addCallback, decayCallback) {
   }, this.decay);
 };
 
-},{"./lib/kutility":12}],21:[function(require,module,exports){
+},{"./lib/kutility":13}],22:[function(require,module,exports){
 
 module.exports = Scale;
 
@@ -3203,7 +3230,6 @@ Scale.prototype.addTo = function(scene) {
   scene.add(this.mesh);
 };
 
-// TODO : get crazy rotation by setting this in a loop
 Scale.prototype.setLeftObject = function(obj) {
   if (obj) {
     this.mesh.add(obj);
@@ -3225,10 +3251,10 @@ Scale.prototype.setRightObject = function(obj) {
 };
 
 Scale.prototype.didSetObject = function() {
-  var leftMass = this.leftObject ? this.leftObject.mass : -1000;
-  var rightMass = this.rightObject ? this.rightObject.mass : -1000;
+  var leftMass = this.leftObject ? this.leftObject.mass : -Math.random() * 1000 - 1000;
+  var rightMass = this.rightObject ? this.rightObject.mass : -Math.random() * 1000 - 1000;
   this.updateForMasses(leftMass, rightMass);
-}
+};
 
 Scale.prototype.numberOfObjects = function() {
   var count = 0;
@@ -3347,7 +3373,20 @@ Scale.prototype.rotateAnimated = function(rz, steps) {
   }
 };
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
+
+module.exports.clearScene = function(scene, meshes, exemptions) {
+  if (!meshes) meshes = scene.children;
+
+  for (var i = meshes.length - 1; i >= 0; i--) {
+    var obj = meshes[ i ];
+    if (exemptions.indexOf(obj) === -1) {
+      scene.remove(obj);
+    }
+  }
+};
+
+},{}],24:[function(require,module,exports){
 
 module.exports = Spit;
 
@@ -3376,7 +3415,7 @@ Spit.prototype.addTo = function(scene) {
   scene.add(this.mesh);
 };
 
-},{}],23:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 
 var BodyPart = require('./bodypart');
 var recruiterManager = require('./recruiter-manager');
@@ -3416,4 +3455,4 @@ Shirt.prototype.createMesh = function(callback) {
   callback();
 };
 
-},{"./bodypart":3,"./recruiter-manager":17}]},{},[13]);
+},{"./bodypart":3,"./recruiter-manager":18}]},{},[14]);

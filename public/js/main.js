@@ -10,10 +10,13 @@ $(function() {
   var recruiterManager = require('./recruiter-manager');
   var ronaldGestures = require('./ronald-gestures');
   var distanceUtil = require('./distance-util');
+  var geometryUtil = require('./geometry-util');
+  var sceneUtil = require('./scene-util');
   var meshGestures = require('./mesh-gestures');
 
   var TEST_MODE = true;
   var START_WITH_SCALE = true;
+  var SPEED_TO_TRASH = true;
 
   /*
    * * * * * RENDERIN AND LIGHTIN * * * * *
@@ -53,10 +56,11 @@ $(function() {
    * * * * * STATE OBJECTS * * * * *
    */
 
-  var active = {ronalds: false, lighting: false, camera: false, jobfair: false, weighing: false};
+  var active = {ronalds: false, lighting: false, camera: false, jobfair: false, weighing: false, trash: false};
 
   var jobfairState = {};
   var weighingState = {};
+  var garbageState = {};
 
   var cameraFollowState = {
     target: null,
@@ -189,7 +193,7 @@ $(function() {
     );
 
     jobfairState.ground_geometry = new THREE.PlaneGeometry(140, 2000);
-    calculateGeometryThings(jobfairState.ground_geometry);
+    geometryUtil.calculateGeometryThings(jobfairState.ground_geometry);
 
     jobfairState.ground = new Physijs.BoxMesh(jobfairState.ground_geometry, jobfairState.ground_material, 0);
     jobfairState.ground.rotation.x = -Math.PI / 2;
@@ -335,7 +339,7 @@ $(function() {
             meshes.push(mesh);
           });
         });
-        clearScene(meshes);
+        sceneUtil.clearScene(scene, meshes, [camera, mainLight]);
 
         active.jobfair = false;
         enterWeighingState();
@@ -360,6 +364,10 @@ $(function() {
       }
     }
 
+    if (SPEED_TO_TRASH) {
+      tokens = tokens.slice(0, 2);
+    }
+
     console.log('tokens length: ' + tokens.length);
 
     active.ronalds = true;
@@ -376,7 +384,7 @@ $(function() {
     var tokenMeshes = [];
     tokens.forEach(function(token) {
       token.addTo(scene, function() {
-        token.moveTo(negrand(200), Math.random() * 10 + 20, -kt.randInt(250, 140));
+        token.moveTo((Math.random() - 0.5) * 240, Math.random() * 10 + 8, -kt.randInt(250, 140));
         tokenMeshes.push(token.mesh);
       });
     });
@@ -400,6 +408,7 @@ $(function() {
 
     weighingState.kevinRenderer = new WeighingStateRonaldRenderer('kevin');
     weighingState.dylanRenderer = new WeighingStateRonaldRenderer('dylan');
+    weighingState.tokensDestroyed = 0;
 
     weighingState.render = function() {
       var ronPos = kevinRonald.torso.mesh.position;
@@ -422,6 +431,19 @@ $(function() {
       } else {
         this.dylanRenderer.performedThrow(direction);
       }
+    };
+
+    weighingState.beginGarbageTransition = function() {
+      console.log('beginning garbage transition');
+      scale.updateForMasses(0, 0);
+      setTimeout(function() {
+        var multiplier = 0.1;
+        var interval = setInterval(function() {
+          scale.mesh.rotation.z += Math.random() * multiplier;
+
+          multiplier *= 1.02;
+        }, 40);
+      }, 2500);
     };
 
     function WeighingStateRonaldRenderer(name) {
@@ -457,16 +479,23 @@ $(function() {
           var scaleSetter = this.throwDirection === 'left' ? scale.setLeftObject.bind(scale) : scale.setRightObject.bind(scale);
           scaleSetter(this.activeTokenMesh);
 
+          console.log('ended throw: ' + weighingState.tokensDestroyed);
+
+          // if scale is filled with last two things
+          if (weighingState.tokensDestroyed === tokens.length - 1 && scale.numberOfObjects() == 2) {
+            self.mode = 'waitingForGarbage';
+            setTimeout(function() {
+              weighingState.beginGarbageTransition();
+            }, 1200);
+            return;
+          }
+
           self.mode = 'waiting';
           setTimeout(function() {
             scale.clearLightestObject(function(lightestObject) {
-              if (!lightestObject) {
-                self.mode = 'seeking';
-                return;
-              }
-
               meshGestures.sendFlying(lightestObject, {steps: 100}, function() {
                 self.mode = 'seeking';
+                weighingState.tokensDestroyed += 1;
               });
             });
           }, 500);
@@ -479,7 +508,6 @@ $(function() {
       }
 
       var missingObject = scale.missingObject();
-      console.log('missing object: ' + missingObject);
       if (missingObject === 'left' || missingObject === 'right') {
         direction = missingObject;
       }
@@ -493,20 +521,14 @@ $(function() {
     };
   }
 
+  function enterTrashState() {
+    io.mode = io.TRASH;
+    active.trash = true;
+  }
+
   /*
    * * * * * UTILITY * * * * *
    */
-
-  function clearScene(meshes) {
-    if (!meshes) meshes = scene.children;
-
-    for (var i = meshes.length - 1; i >= 0; i--) {
-      var obj = meshes[ i ];
-      if (obj !== camera && obj !== mainLight) {
-        scene.remove(obj);
-      }
-    }
-  }
 
   function resetRonaldPositions() {
     ronalds.forEach(function(ronald) {
@@ -560,15 +582,6 @@ $(function() {
         callback();
       });
     }
-  }
-
-  function calculateGeometryThings(geometry) {
-    geometry.computeFaceNormals();
-    geometry.computeVertexNormals();
-  }
-
-  function negrand(scalar) {
-    return (Math.random() - 0.5) * scalar;
   }
 
 });

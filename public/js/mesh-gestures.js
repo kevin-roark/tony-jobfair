@@ -1,6 +1,11 @@
 
 
 module.exports.sendFlying = function(mesh, options, callback) {
+  if (!mesh) {
+    if (callback) callback();
+    return;
+  }
+
   var delta = options.delta || {x: 1.2 * (Math.random() - 0.5), y: Math.random() * 0.2, z: -2 * (Math.random() + 0.5)};
 
   var count = 0;

@@ -30,7 +30,6 @@ Scale.prototype.addTo = function(scene) {
   scene.add(this.mesh);
 };
 
-// TODO : get crazy rotation by setting this in a loop
 Scale.prototype.setLeftObject = function(obj) {
   if (obj) {
     this.mesh.add(obj);
@@ -52,10 +51,10 @@ Scale.prototype.setRightObject = function(obj) {
 };
 
 Scale.prototype.didSetObject = function() {
-  var leftMass = this.leftObject ? this.leftObject.mass : -1000;
-  var rightMass = this.rightObject ? this.rightObject.mass : -1000;
+  var leftMass = this.leftObject ? this.leftObject.mass : -Math.random() * 1000 - 1000;
+  var rightMass = this.rightObject ? this.rightObject.mass : -Math.random() * 1000 - 1000;
   this.updateForMasses(leftMass, rightMass);
-}
+};
 
 Scale.prototype.numberOfObjects = function() {
   var count = 0;
