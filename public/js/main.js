@@ -12,12 +12,13 @@ $(function() {
 
   var io = require('./io');
 
-  var mn = require('./model_names');
   var Character = require('./character');
   var RonaldText = require('./ronald-text');
   var Scale = require('./scale');
   var Shirt = require('./tshirt');
   var Garbage = require('./garbage');
+  var Computer = require('./computer');
+  var skybox = require('./skybox');
   var recruiterManager = require('./recruiter-manager');
 
   var TEST_MODE = true;
@@ -492,7 +493,7 @@ $(function() {
           setTimeout(function() {
             clearInterval(truckInterval);
             exitState(truck);
-          }, 10000);
+          }, SPEED_TO_TRASH? 2000 : 10000);
         }
 
         function exitState(truck) {
@@ -521,14 +522,14 @@ $(function() {
               var bananaInterval = setInterval(function() {
                 addBanana();
                 bananaCount += 1;
-                if (bananaCount >= 40) {
+                if (bananaCount >= (SPEED_TO_TRASH? 5 : 40)) {
                   clearInterval(bananaInterval);
                   addTruck();
                 }
               }, 900);
             }, 3000);
-          }, 3000);
-        }, 1000); /// 6666
+          }, SPEED_TO_TRASH? 500 : 33333);
+        }, SPEED_TO_TRASH? 500 : 6666);
 
       }, 2500);
     };
@@ -608,14 +609,55 @@ $(function() {
     };
   }
 
-  function enterTrashState() {
+  function enterTrashState(truck) {
     io.mode = io.TRASH;
     active.trash = true;
 
-    ronaldUI.flash('YOU ARE GARBAGE', 3333);
+    mainLight.position.set(0, 100, 0);
+    mainLight.target.position.set(0, 5, -50);
+    mainLight.intensity = 2.0;
+
+    truck.position.set(0, 0, -30);
+    truck.rotation.y -= Math.PI / 2;
+
+    kevinRonald.moveTo(-50, 20, -100);
+    dylanRonald.moveTo(50, 20, -100);
+
+    var computerLab = skybox.create(null, '/media/textures/computer_lab.jpg');
+    scene.add(computerLab);
+
+    var computers = [];
+    var compZOffset = 20;
+    for (var i = 0; i < 100; i++) {
+      var comp = new Computer({x: (Math.random() - 0.5) * 40, y: 10, z: -(i + 1) * compZOffset});
+      computers.push(comp);
+      comp.addTo(scene);
+    }
+
+    garbageState.nextComputerToShatterIndex = 0;
+    garbageState.mode = 'waiting';
+
+    ronaldUI.flash('YOU ARE GARBAGE', 2000);
+    setTimeout(function() {
+      garbageState.mode = 'driving';
+    }, 3500);
 
     garbageState.render = function() {
+      cameraFollowState.target = {x: truck.position.x, y: truck.position.y, z: truck.position.z};
+      cameraFollowState.offset = {x: 0, y: 40, z: 100};
 
+      if (this.mode === 'driving') {
+        var inc = 1.0;
+        truck.position.z += inc;
+        kevinRonald.move(0, 0, inc);
+        dylanRonald.move(0, 0, inc);
+
+        if (this.nextComputerToShatterIndex < computers.length &&
+            truck.position.z < (this.nextComputerToShatterIndex + 1) * -compZOffset) {
+          computers[this.nextComputerToShatterIndex].shatter();
+          this.nextComputerToShatterIndex += 1;
+        }
+      }
     };
   }
 
