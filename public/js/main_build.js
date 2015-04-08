@@ -603,17 +603,13 @@ function posNegRandom() {
 
 },{"./arm":1,"./body":2,"./hand":10,"./head":11,"./leg":14,"./lib/kutility":15,"./model_names":18}],6:[function(require,module,exports){
 
-var kt = require('./lib/kutility');
-
-var modelNames = require('./model_names');
-
 var BodyPart = require('./bodypart');
 
 module.exports = Computer;
 
-var MAC = '/images/mac_monitor.jpg';
-var PC = '/images/pc_monitor.jpg';
-var LINUX = '/images/linux_monitor.jpg';
+var MAC = '/media/textures/mac_monitor.jpg';
+var PC = '/media/textures/pc_monitor.jpg';
+var LINUX = '/media/textures/linux_monitor.jpg';
 
 module.exports.computerNames = [MAC, PC, LINUX];
 var computerNames = module.exports.computerNames;
@@ -685,14 +681,14 @@ Computer.prototype.shatter = function() {
   if (this.shattering) {
     return;
   }
-  
+
   this.shattering = true;
   this.ignoreCollisons = false;
   this.mesh.setLinearVelocity({x: negrand(36, 15), y: Math.random() * 36, z: negrand(36, 15)});
   this.mesh.setAngularVelocity({x: negrand(36, 15), y: Math.random() * 36, z: negrand(36, 15)});
 };
 
-},{"./bodypart":3,"./lib/kutility":15,"./model_names":18}],7:[function(require,module,exports){
+},{"./bodypart":3}],7:[function(require,module,exports){
 
 
 module.exports.nearest = function(object, targetObjects) {
@@ -2173,7 +2169,7 @@ $(function() {
     scene.simulate(undefined, 1);
   });
 
-  var camera = new THREE.PerspectiveCamera(65, window.innerWidth/window.innerHeight, 1, 1000);
+  var camera = new THREE.PerspectiveCamera(65, window.innerWidth/window.innerHeight, 1, 3200);
   camera.target = {x: 0, y: 0, z: 0};
   scene.add(camera);
 
@@ -2751,16 +2747,16 @@ $(function() {
     truck.position.set(0, 0, -30);
     truck.rotation.y -= Math.PI / 2;
 
-    kevinRonald.moveTo(-50, 20, -100);
-    dylanRonald.moveTo(50, 20, -100);
+    kevinRonald.moveTo(-55, 55, -30);
+    dylanRonald.moveTo(55, 55, -30);
 
     var computerLab = skybox.create(null, '/media/textures/computer_lab.jpg');
     scene.add(computerLab);
 
     var computers = [];
-    var compZOffset = 20;
+    var compZOffset = 25;
     for (var i = 0; i < 100; i++) {
-      var comp = new Computer({x: (Math.random() - 0.5) * 40, y: 10, z: -(i + 1) * compZOffset});
+      var comp = new Computer({x: (Math.random() - 0.5) * 80, y: 10, z: -(i + 1) * compZOffset});
       computers.push(comp);
       comp.addTo(scene);
     }
@@ -2775,16 +2771,18 @@ $(function() {
 
     garbageState.render = function() {
       cameraFollowState.target = {x: truck.position.x, y: truck.position.y, z: truck.position.z};
-      cameraFollowState.offset = {x: 0, y: 40, z: 100};
+      cameraFollowState.offset = {x: 0, y: 40, z: 300};
 
       if (this.mode === 'driving') {
-        var inc = 1.0;
+        var inc = -0.6;
         truck.position.z += inc;
         kevinRonald.move(0, 0, inc);
         dylanRonald.move(0, 0, inc);
 
-        if (this.nextComputerToShatterIndex < computers.length &&
-            truck.position.z < (this.nextComputerToShatterIndex + 1) * -compZOffset) {
+        if (this.nextComputerToShatterIndex >= computers.length) {
+
+        }
+        else if (truck.position.z < (this.nextComputerToShatterIndex + 1) * -compZOffset) {
           computers[this.nextComputerToShatterIndex].shatter();
           this.nextComputerToShatterIndex += 1;
         }
@@ -3729,13 +3727,13 @@ function skyboxMaterial(textureURL) {
 }
 
 module.exports.create = function(size, textureURL) {
-  if (!size) size = {x: 1000, y: 1000, z: 1000};
+  if (!size) size = {x: 5000, y: 5000, z: 5000};
   if (!textureURL) textureURL = girlRoomPath;
 
   var geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
   var material = skyboxMaterial(textureURL);
   return new THREE.Mesh(geometry, material);
-}
+};
 
 module.exports.blocker = function(size) {
   if (!size) size = {x: 19500, y: 19500, z: 19500};
@@ -3748,7 +3746,7 @@ module.exports.blocker = function(size) {
     , transparent: true
   });
   return new THREE.Mesh(geometry, material);
-}
+};
 
 },{"./lib/kutility":15}],28:[function(require,module,exports){
 

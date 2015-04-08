@@ -1,15 +1,11 @@
 
-var kt = require('./lib/kutility');
-
-var modelNames = require('./model_names');
-
 var BodyPart = require('./bodypart');
 
 module.exports = Computer;
 
-var MAC = '/images/mac_monitor.jpg';
-var PC = '/images/pc_monitor.jpg';
-var LINUX = '/images/linux_monitor.jpg';
+var MAC = '/media/textures/mac_monitor.jpg';
+var PC = '/media/textures/pc_monitor.jpg';
+var LINUX = '/media/textures/linux_monitor.jpg';
 
 module.exports.computerNames = [MAC, PC, LINUX];
 var computerNames = module.exports.computerNames;
@@ -81,7 +77,7 @@ Computer.prototype.shatter = function() {
   if (this.shattering) {
     return;
   }
-  
+
   this.shattering = true;
   this.ignoreCollisons = false;
   this.mesh.setLinearVelocity({x: negrand(36, 15), y: Math.random() * 36, z: negrand(36, 15)});

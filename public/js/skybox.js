@@ -44,13 +44,13 @@ function skyboxMaterial(textureURL) {
 }
 
 module.exports.create = function(size, textureURL) {
-  if (!size) size = {x: 1000, y: 1000, z: 1000};
+  if (!size) size = {x: 5000, y: 5000, z: 5000};
   if (!textureURL) textureURL = girlRoomPath;
 
   var geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
   var material = skyboxMaterial(textureURL);
   return new THREE.Mesh(geometry, material);
-}
+};
 
 module.exports.blocker = function(size) {
   if (!size) size = {x: 19500, y: 19500, z: 19500};
@@ -63,4 +63,4 @@ module.exports.blocker = function(size) {
     , transparent: true
   });
   return new THREE.Mesh(geometry, material);
-}
+};

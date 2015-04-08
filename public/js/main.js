@@ -42,7 +42,7 @@ $(function() {
     scene.simulate(undefined, 1);
   });
 
-  var camera = new THREE.PerspectiveCamera(65, window.innerWidth/window.innerHeight, 1, 1000);
+  var camera = new THREE.PerspectiveCamera(65, window.innerWidth/window.innerHeight, 1, 3200);
   camera.target = {x: 0, y: 0, z: 0};
   scene.add(camera);
 
@@ -145,13 +145,13 @@ $(function() {
         weighingState.ronaldPerformedThrow('kevin', 'right');
       }
       else if (ev.which === 113) { // q
-        moveCameraPosition(0, 1, 0);
+        moveMesh(camera, 0, 1, 0);
         if (cameraFollowState.offset) {
           cameraFollowState.offset.z += 1;
         }
       }
       else if (ev.which === 101) { // e
-        moveCameraPosition(0, -1, 0);
+        moveMesh(camera, 0, -1, 0);
         if (cameraFollowState.offset) {
           cameraFollowState.offset.z += -1;
         }
@@ -620,16 +620,16 @@ $(function() {
     truck.position.set(0, 0, -30);
     truck.rotation.y -= Math.PI / 2;
 
-    kevinRonald.moveTo(-50, 20, -100);
-    dylanRonald.moveTo(50, 20, -100);
+    kevinRonald.moveTo(-55, 55, -30);
+    dylanRonald.moveTo(55, 55, -30);
 
     var computerLab = skybox.create(null, '/media/textures/computer_lab.jpg');
     scene.add(computerLab);
 
     var computers = [];
-    var compZOffset = 20;
+    var compZOffset = 25;
     for (var i = 0; i < 100; i++) {
-      var comp = new Computer({x: (Math.random() - 0.5) * 40, y: 10, z: -(i + 1) * compZOffset});
+      var comp = new Computer({x: (Math.random() - 0.5) * 80, y: 10, z: -(i + 1) * compZOffset});
       computers.push(comp);
       comp.addTo(scene);
     }
@@ -644,20 +644,29 @@ $(function() {
 
     garbageState.render = function() {
       cameraFollowState.target = {x: truck.position.x, y: truck.position.y, z: truck.position.z};
-      cameraFollowState.offset = {x: 0, y: 40, z: 100};
+      cameraFollowState.offset = {x: 0, y: 40, z: 300};
 
       if (this.mode === 'driving') {
-        var inc = 1.0;
+        var inc = -0.6;
         truck.position.z += inc;
         kevinRonald.move(0, 0, inc);
         dylanRonald.move(0, 0, inc);
 
-        if (this.nextComputerToShatterIndex < computers.length &&
-            truck.position.z < (this.nextComputerToShatterIndex + 1) * -compZOffset) {
+        shakeMesh(truck);
+
+        if (this.nextComputerToShatterIndex >= computers.length && !this.isFadingLinkedin) {
+          this.fadeLinkedIn();
+        }
+
+        if (this.nextComputerToShatterIndex < computers.length && truck.position.z < (this.nextComputerToShatterIndex + 1) * -compZOffset) {
           computers[this.nextComputerToShatterIndex].shatter();
           this.nextComputerToShatterIndex += 1;
         }
       }
+    };
+
+    garbageState.fadeLinkedIn = function() {
+      this.isFadingLinkedin = true;
     };
   }
 
@@ -671,24 +680,18 @@ $(function() {
     });
   }
 
-  function shakeCamera() {
+  function shakeMesh(mesh) {
     var dx = (Math.random() - 0.5) * 1;
     var dy = (Math.random() - 0.5) * 0.5;
     var dz = (Math.random() - 0.5) * 1;
 
-    moveCameraPosition(dx, dy, dz);
+    moveMesh(mesh, dx, dy, dz);
   }
 
-  function moveCameraPosition(dx, dy, dz) {
-    camera.position.x += dx;
-    camera.position.y += dy;
-    camera.position.z += dz;
-  }
-
-  function setCameraPosition(x, y, z) {
-    camera.position.x = x;
-    camera.position.y = y;
-    camera.position.z = z;
+  function moveMesh(mesh, dx, dy, dz) {
+    mesh.position.x += dx;
+    mesh.position.y += dy;
+    mesh.position.z += dz;
   }
 
 });
