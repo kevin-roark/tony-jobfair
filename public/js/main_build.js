@@ -2147,7 +2147,7 @@ $(function() {
 
   var TEST_MODE = true;
   var START_WITH_SCALE = true;
-  var SPEED_TO_TRASH = true;
+  var SPEED_TO_TRASH = false;
 
   /*
    * * * * * RENDERIN AND LIGHTIN * * * * *
@@ -2520,7 +2520,7 @@ $(function() {
     var tokenMeshes = [];
     tokens.forEach(function(token) {
       token.addTo(scene, function() {
-        token.moveTo((Math.random() - 0.5) * 240, Math.random() * 10 + 8, -kt.randInt(250, 140));
+        token.moveTo((Math.random() - 0.5) * 360, Math.random() * 10 + 8, -kt.randInt(250, 160));
         tokenMeshes.push(token.mesh);
       });
     });
@@ -3790,7 +3790,7 @@ function Shirt(startPos, scale, company) {
   this.startY = startPos.y;
   this.startZ = startPos.z;
 
-  this.scale = scale || 15;
+  this.scale = scale || 24;
 
   this.company = company || 'facebook';
 }
@@ -3811,7 +3811,7 @@ Shirt.prototype.createMesh = function(callback) {
     transparent: true,
     opacity: 1.0
   }), 0.4, 0.6);
-  this.geometry = new THREE.BoxGeometry(1, 2.5, 0.25);
+  this.geometry = new THREE.BoxGeometry(1.8, 2.8, 0.25);
   this.mesh = new Physijs.ConvexMesh(this.geometry, this.material, this.mass);
 
   callback();
