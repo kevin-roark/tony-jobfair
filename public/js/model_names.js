@@ -53,6 +53,7 @@ module.exports.METAL_TRASH_CAN = pre('metal_trash_can.json');
 module.exports.LOW_POLY_TRASH_CAN = pre('low_poly_trash_can.json');
 module.exports.TRASH_ORANGE = pre('trash_orange.json');
 module.exports.TRASH_BANANA = pre('trash_banana.json');
+module.exports.CATERPILLAR = pre('caterpillar.json');
 
 /* FUNCTIONS */
 

@@ -90,7 +90,6 @@ $(function() {
    * * * * * STARTIN AND RENDERIN * * * * *
    */
 
-  mn.loadModel(mn.GARBAGE_CAN);
   setTimeout(start, 2000);
   function start() {
     if (!TEST_MODE) {
@@ -478,7 +477,39 @@ $(function() {
         }
 
         function addTruck() {
+          clearInterval(interval);
+          var geometry = new THREE.BoxGeometry(175, 125, 60);
+          var material = new THREE.MeshBasicMaterial({
+            map: THREE.ImageUtils.loadTexture('/media/textures/garbage_truck.jpg'),
+            side: THREE.DoubleSide
+          });
+          var truck = new THREE.Mesh(geometry, material);
+          truck.position.set(0, 100, -300);
+          scene.add(truck);
+          var truckInterval = setInterval(function() {
+            if (truck.position.y > 4) truck.position.y -= 0.5;
+          }, 30);
+          setTimeout(function() {
+            clearInterval(truckInterval);
+            exitState(truck);
+          }, 10000);
+        }
 
+        function exitState(truck) {
+          ronaldUI.fadeOverlay(true, function() {
+            var lameMeshes = [scaleText, scale.mesh];
+            tokenMeshes.forEach(function(mesh) {
+              lameMeshes.push(mesh);
+            });
+            fallingObjects.forEach(function(obj) {
+              lameMeshes.push(obj.mesh);
+            });
+            sceneUtil.clearScene(scene, lameMeshes, [camera, mainLight]);
+
+            active.weighing = false;
+            enterTrashState(truck);
+            ronaldUI.fadeOverlay(false);
+          });
         }
 
         setTimeout(function() {
@@ -580,6 +611,12 @@ $(function() {
   function enterTrashState() {
     io.mode = io.TRASH;
     active.trash = true;
+
+    ronaldUI.flash('YOU ARE GARBAGE', 3333);
+
+    garbageState.render = function() {
+
+    };
   }
 
   /*
