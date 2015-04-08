@@ -19,7 +19,7 @@ Shirt.prototype = Object.create(BodyPart.prototype);
 
 Shirt.prototype.createMesh = function(callback) {
   if (this.mass === undefined) {
-    this.mass = 20;
+    this.mass = Math.random() * 20 + 5;
   }
 
   var texture = THREE.ImageUtils.loadTexture(recruiterManager.getCompanyShirt(this.company));

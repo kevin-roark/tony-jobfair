@@ -1934,14 +1934,13 @@ $(function() {
   var io = require('./io');
   var Character = require('./character');
   var RonaldText = require('./ronald-text');
-  var Spit = require('./spit');
-  var Money = require('./money');
-  var Cellphone = require('./cellphone');
+  var Scale = require('./scale');
   var Shirt = require('./tshirt');
   var recruiterManager = require('./recruiter-manager');
   var ronaldGestures = require('./ronald-gestures');
 
   var TEST_MODE = true;
+  var START_WITH_SCALE = true;
 
   /*
    * * * * * RENDERIN AND LIGHTIN * * * * *
@@ -2012,7 +2011,12 @@ $(function() {
       io.begin(kevinRonald, dylanRonald, camera);
     }
 
-    enterJobfairState();
+    if (START_WITH_SCALE) {
+      enterWeighingState();
+    }
+    else {
+      enterJobfairState();
+    }
 
     render();
     scene.simulate();
@@ -2025,16 +2029,16 @@ $(function() {
         resetRonaldPositions();
       }
       else if (ev.which === 97)  { // a
-        if (io.mode === io.JOBFAIR) kevinRonald.move(-1, 0, 0);
+        kevinRonald.move(-1, 0, 0);
       }
       else if (ev.which === 119)  { // w
-        if (io.mode === io.JOBFAIR) kevinRonald.move(0, 0, -1);
+        kevinRonald.move(0, 0, -1);
       }
       else if (ev.which === 100)  { // d
-        if (io.mode === io.JOBFAIR) kevinRonald.move(1, 0, 0);
+        kevinRonald.move(1, 0, 0);
       }
       else if (ev.which === 115)  { // s
-        if (io.mode === io.JOBFAIR) kevinRonald.move(0, 0, 1);
+        kevinRonald.move(0, 0, 1);
       }
       else if (ev.which === 122) { // z
         jobfairState.ronaldPerformedAction('spit');
@@ -2262,26 +2266,57 @@ $(function() {
   }
 
   function enterWeighingState(tokens) {
-    flash('CHOOSE YOUR FATE');
+    flash('CHOOSE YOUR ROLE');
+
+    if (!tokens) {
+      tokens = [];
+      for (var i = 0; i < recruiterManager.companies.length; i++) {
+        if (Math.random() < 0.5) {
+          var company = recruiterManager.companies[i];
+          var shirt = new Shirt(null, 4, company);
+          tokens.push(shirt);
+        }
+      }
+    }
 
     active.ronalds = true;
     active.weighing = true;
     io.mode = io.WEIGHING;
 
-    setCameraPosition(0, 0, 0);
-
     mainLight.position.set(0, 20, 0);
     mainLight.target.position.set(0, 5, -100);
     mainLight.intensity = 5.0;
 
-    kevinRonald.moveTo(-80, 8, -140);
-    kevinRonald.rotate(0, Math.PI/4, 0);
+    kevinRonald.moveTo(-70, 0, -140);
+    dylanRonald.moveTo(70, 0, -140);
 
-    dylanRonald.moveTo(80, 8, -140);
-    dylanRonald.rotate(0, -Math.PI/4, 0);
+    var scale = new Scale();
+    scale.addTo(scene);
+    scale.mesh.position.set(0, 45, -290);
+
+    var scaleText = new RonaldText({
+      phrase: 'YOU HAVE TO WEIGH YOUR JOB OPTIONS',
+      position: {x: 40, y: 90, z: -115},
+      decay: 10000000,
+      color: 0x4444ff
+    });
+    scaleText.addTo(scene);
+
+    setTimeout(function() {
+      scale.updateForMasses(-1, 0);
+      setTimeout(function() {
+        scale.updateForMasses(1, 0);
+        setTimeout(function() {
+          scale.updateForMasses(0, 0);
+        }, 4000);
+      }, 4000);
+    }, 2000);
 
     weighingState.render = function() {
-
+      var ronPos = kevinRonald.torso.mesh.position;
+      var dylPos = dylanRonald.torso.mesh.position;
+      cameraFollowState.target = {x: (ronPos.x + dylPos.x) / 2, y: 0, z: (ronPos.z + dylPos.z) / 2};
+      cameraFollowState.offset = {x: 0, y: 72, z: 170};
     };
   }
 
@@ -2369,7 +2404,7 @@ $(function() {
 
 });
 
-},{"./cellphone":4,"./character":5,"./io":8,"./lib/kutility":11,"./money":14,"./recruiter-manager":15,"./ronald-gestures":17,"./ronald-text":18,"./spit":19,"./tshirt":20}],13:[function(require,module,exports){
+},{"./character":5,"./io":8,"./lib/kutility":11,"./recruiter-manager":15,"./ronald-gestures":17,"./ronald-text":18,"./scale":19,"./tshirt":21}],13:[function(require,module,exports){
 
 var prefix = '/js/models/';
 
@@ -2886,7 +2921,7 @@ function distanceMagnitude(pos1, pos2) {
   return Math.abs(pos1.x - pos2.x) + Math.abs(pos1.y - pos2.y) + Math.abs(pos1.z - pos2.z);
 }
 
-},{"./cellphone":4,"./lib/kutility":11,"./money":14,"./spit":19}],18:[function(require,module,exports){
+},{"./cellphone":4,"./lib/kutility":11,"./money":14,"./spit":20}],18:[function(require,module,exports){
 var kt = require('./lib/kutility');
 
 module.exports = RonaldText;
@@ -2986,6 +3021,67 @@ RonaldText.prototype.addTo = function(scene, addCallback, decayCallback) {
 
 },{"./lib/kutility":11}],19:[function(require,module,exports){
 
+module.exports = Scale;
+
+function Scale(options) {
+  if (!options) options = {};
+
+  var material = new THREE.MeshBasicMaterial({
+    color: options.color || 0xe9dc45
+  });
+  var geometry = new THREE.BoxGeometry(210, 5, 15);
+  var scale = new THREE.Mesh(geometry, material);
+
+  var baseMaterial = new THREE.MeshBasicMaterial({
+    color: options.baseColor || 0x000000
+  });
+  var baseGeometry = new THREE.TetrahedronGeometry(10);
+  var baseMesh = new THREE.Mesh(baseGeometry, baseMaterial);
+
+  scale.add(baseMesh);
+  baseMesh.position.set(0, -10, 0);
+  baseMesh.rotation.z -= Math.PI / 4;
+
+  this.mesh = scale;
+  this.baseMesh = baseMesh;
+}
+
+Scale.prototype.addTo = function(scene) {
+  scene.add(this.mesh);
+};
+
+Scale.prototype.updateForMasses = function(leftMess, rightMass) {
+  if (leftMess < rightMass) {
+    this.rotateAnimated(-Math.PI / 10);
+  }
+  else if (leftMess > rightMass) {
+    this.rotateAnimated(Math.PI / 10);
+  }
+  else {
+    this.rotateAnimated(0);
+  }
+};
+
+Scale.prototype.rotateAnimated = function(rz, steps) {
+  if (!steps) steps = 60;
+
+  var mesh = this.mesh;
+  var diff = (rz - mesh.rotation.z) / steps;
+  if (diff === 0) return;
+
+  var count = 0;
+  rot();
+  function rot() {
+    if (count < steps) {
+      mesh.rotation.z += diff;
+      count += 1;
+      setTimeout(rot, 20);
+    }
+  }
+};
+
+},{}],20:[function(require,module,exports){
+
 module.exports = Spit;
 
 function Spit() {
@@ -3013,7 +3109,7 @@ Spit.prototype.addTo = function(scene) {
   scene.add(this.mesh);
 };
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 
 var BodyPart = require('./bodypart');
 var recruiterManager = require('./recruiter-manager');
@@ -3035,7 +3131,7 @@ Shirt.prototype = Object.create(BodyPart.prototype);
 
 Shirt.prototype.createMesh = function(callback) {
   if (this.mass === undefined) {
-    this.mass = 20;
+    this.mass = Math.random() * 20 + 5;
   }
 
   var texture = THREE.ImageUtils.loadTexture(recruiterManager.getCompanyShirt(this.company));
