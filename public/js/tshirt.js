@@ -10,7 +10,7 @@ function Shirt(startPos, scale, company) {
   this.startY = startPos.y;
   this.startZ = startPos.z;
 
-  this.scale = scale || 2;
+  this.scale = scale || 15;
 
   this.company = company || 'facebook';
 }
@@ -26,10 +26,13 @@ Shirt.prototype.createMesh = function(callback) {
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
 
-  var material = Physijs.createMaterial(new THREE.MeshBasicMaterial({map: texture}), 0.4, 0.6);
-  var geometry = new THREE.BoxGeometry(1, 2.5, 0.25);
-  var mesh = new Physijs.ConvexMesh(geometry, material, this.mass);
+  this.material = Physijs.createMaterial(new THREE.MeshBasicMaterial({
+    map: texture,
+    transparent: true,
+    opacity: 1.0
+  }), 0.4, 0.6);
+  this.geometry = new THREE.BoxGeometry(1, 2.5, 0.25);
+  this.mesh = new Physijs.ConvexMesh(this.geometry, this.material, this.mass);
 
-  this.mesh = mesh;
   callback();
 };

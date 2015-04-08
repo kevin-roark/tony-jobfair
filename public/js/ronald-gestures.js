@@ -1,5 +1,6 @@
 
 var kt = require('./lib/kutility');
+var distanceUtil = require('./distance-util');
 var Cellphone = require('./cellphone');
 var Money = require('./money');
 var Spit = require('./spit');
@@ -14,8 +15,8 @@ module.exports.spitToRecruiter = function(scene, booths, currentBooth, kevinRona
   var recruiterPos = booths[currentBooth].recruiter.faceMesh.position;
   var target = {x: recruiterPos.x + (currentBooth % 2 === 0 ? -5 : 5), y: recruiterPos.y - 2, z: recruiterPos.z - 20};
   var spitInterval = setInterval(function() {
-    moveTowardsTarget(spit.mesh.position, target, {x: 0.75, y: 0.25, z: 1.4});
-    if (distanceMagnitude(spit.mesh.position, target) <= 2) {
+    distanceUtil.moveTowardsTarget(spit.mesh.position, target, {x: 0.75, y: 0.25, z: 1.4});
+    if (distanceUtil.distanceMagnitude(spit.mesh.position, target) <= 2) {
       clearInterval(spitInterval);
       scene.remove(spit.mesh);
       callback();
@@ -190,27 +191,3 @@ module.exports.bribeRecruiter = function(scene, booths, currentBooth, kevinRonal
     }
   }
 };
-
-function moveTowardsTarget(pos, target, amt) {
-  if (pos.x < target.x) {
-    pos.x += amt.x;
-  } else if (pos.x > target.x) {
-    pos.x -= amt.x;
-  }
-
-  if (pos.y < target.y) {
-    pos.y += amt.y;
-  } else if (pos.y > target.y) {
-    pos.y -= amt.y;
-  }
-
-  if (pos.z < target.z) {
-    pos.z += amt.z;
-  } else if (pos.z > target.z) {
-    pos.z -= amt.z;
-  }
-}
-
-function distanceMagnitude(pos1, pos2) {
-  return Math.abs(pos1.x - pos2.x) + Math.abs(pos1.y - pos2.y) + Math.abs(pos1.z - pos2.z);
-}

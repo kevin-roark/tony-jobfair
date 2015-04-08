@@ -9,6 +9,8 @@ $(function() {
   var Shirt = require('./tshirt');
   var recruiterManager = require('./recruiter-manager');
   var ronaldGestures = require('./ronald-gestures');
+  var distanceUtil = require('./distance-util');
+  var meshGestures = require('./mesh-gestures');
 
   var TEST_MODE = true;
   var START_WITH_SCALE = true;
@@ -122,6 +124,12 @@ $(function() {
       }
       else if (ev.which === 118) { // v
         jobfairState.ronaldPerformedAction('bribe');
+      }
+      else if (ev.which === 107) { // k
+        weighingState.ronaldPerformedThrow('kevin', 'left');
+      }
+      else if (ev.which === 108) { // l
+        weighingState.ronaldPerformedThrow('kevin', 'right');
       }
       else if (ev.which === 113) { // q
         moveCameraPosition(0, 1, 0);
@@ -274,7 +282,7 @@ $(function() {
         if (success) {
           showSuccessfulResponse(kevinRonald.position.z + 72);
 
-          var shirt = new Shirt(null, 4, recruiterManager.companies[jobfairState.currentBooth]);
+          var shirt = new Shirt(null, null, recruiterManager.companies[jobfairState.currentBooth]);
           jobfairState.collectedTokens.push(shirt);
         }
         else {
@@ -337,6 +345,8 @@ $(function() {
   }
 
   function enterWeighingState(tokens) {
+    var FRAMES_FOR_THROW = 150;
+
     flash('CHOOSE YOUR ROLE');
 
     if (!tokens) {
@@ -344,11 +354,13 @@ $(function() {
       for (var i = 0; i < recruiterManager.companies.length; i++) {
         if (Math.random() < 0.5) {
           var company = recruiterManager.companies[i];
-          var shirt = new Shirt(null, 4, company);
+          var shirt = new Shirt(null, null, company);
           tokens.push(shirt);
         }
       }
     }
+
+    console.log('tokens length: ' + tokens.length);
 
     active.ronalds = true;
     active.weighing = true;
@@ -361,33 +373,123 @@ $(function() {
     kevinRonald.moveTo(-70, 0, -140);
     dylanRonald.moveTo(70, 0, -140);
 
+    var tokenMeshes = [];
+    tokens.forEach(function(token) {
+      token.addTo(scene, function() {
+        token.moveTo(negrand(200), Math.random() * 10 + 20, -kt.randInt(250, 140));
+        tokenMeshes.push(token.mesh);
+      });
+    });
+
     var scale = new Scale();
     scale.addTo(scene);
-    scale.mesh.position.set(0, 45, -290);
+    scale.mesh.position.set(0, 45, -300);
+
+    var scaleWidth = 210; // messy
+    var leftScaleTarget = {x: scale.mesh.position.x - scaleWidth / 2, y: scale.mesh.position.y + 4, z: scale.mesh.position.z};
+    var rightScaletarget = {x: scale.mesh.position.x + scaleWidth / 2, y: scale.mesh.position.y + 4, z: scale.mesh.position.z};
 
     var scaleText = new RonaldText({
       phrase: 'YOU HAVE TO WEIGH YOUR JOB OPTIONS',
-      position: {x: 40, y: 90, z: -115},
+      position: {x: 50, y: 75, z: -115},
       decay: 10000000,
       color: 0x4444ff
     });
+    scaleText.geometry.center();
     scaleText.addTo(scene);
 
-    setTimeout(function() {
-      scale.updateForMasses(-1, 0);
-      setTimeout(function() {
-        scale.updateForMasses(1, 0);
-        setTimeout(function() {
-          scale.updateForMasses(0, 0);
-        }, 4000);
-      }, 4000);
-    }, 2000);
+    weighingState.kevinRenderer = new WeighingStateRonaldRenderer('kevin');
+    weighingState.dylanRenderer = new WeighingStateRonaldRenderer('dylan');
 
     weighingState.render = function() {
       var ronPos = kevinRonald.torso.mesh.position;
       var dylPos = dylanRonald.torso.mesh.position;
       cameraFollowState.target = {x: (ronPos.x + dylPos.x) / 2, y: 0, z: (ronPos.z + dylPos.z) / 2};
-      cameraFollowState.offset = {x: 0, y: 72, z: 170};
+      cameraFollowState.offset = {x: 0, y: 72, z: 150};
+
+      scaleText.render();
+
+      this.kevinRenderer.render();
+      this.dylanRenderer.render();
+    };
+
+    weighingState.ronaldPerformedThrow = function(ronaldName, direction) {
+      if (!ronaldName) ronaldName = 'kevin';
+      if (!direction) direction = 'left';
+
+      if (ronaldName === 'kevin') {
+        this.kevinRenderer.performedThrow(direction);
+      } else {
+        this.dylanRenderer.performedThrow(direction);
+      }
+    };
+
+    function WeighingStateRonaldRenderer(name) {
+      this.name = name;
+      this.ronald = name === 'kevin' ? kevinRonald : dylanRonald;
+      this.frameCount = 0;
+      this.mode = 'seeking';
+    }
+    WeighingStateRonaldRenderer.prototype.render = function() {
+      this.frameCount += 1;
+      var self = this;
+
+      var ronaldHead = this.ronald.head.mesh;
+
+      if (this.mode === 'seeking' && this.frameCount % 10 === 0) {
+        var nearest = distanceUtil.nearest(ronaldHead, tokenMeshes);
+        if (nearest.distance < 24) {
+          this.mode = 'placing';
+          this.activeTokenMesh = nearest.object;
+        }
+      }
+      else if (this.mode === 'placing') {
+        this.activeTokenMesh.position.set(ronaldHead.position.x + 2, ronaldHead.position.y - 15, ronaldHead.position.z + 5);
+      }
+      else if (this.mode === 'throwing') {
+        this.activeTokenMesh.position.x += this.throwIncrement.x;
+        this.activeTokenMesh.position.y += this.throwIncrement.y;
+        this.activeTokenMesh.position.z += this.throwIncrement.z;
+        this.activeTokenMesh.__dirtyPosition = true;
+
+        this.currentThrowFrames += 1;
+        if (this.currentThrowFrames >= FRAMES_FOR_THROW) {
+          var scaleSetter = this.throwDirection === 'left' ? scale.setLeftObject.bind(scale) : scale.setRightObject.bind(scale);
+          scaleSetter(this.activeTokenMesh);
+
+          self.mode = 'waiting';
+          setTimeout(function() {
+            scale.clearLightestObject(function(lightestObject) {
+              if (!lightestObject) {
+                self.mode = 'seeking';
+                return;
+              }
+
+              meshGestures.sendFlying(lightestObject, {steps: 100}, function() {
+                self.mode = 'seeking';
+              });
+            });
+          }, 500);
+        }
+      }
+    };
+    WeighingStateRonaldRenderer.prototype.performedThrow = function(direction) {
+      if (this.mode !== 'placing') {
+        return;
+      }
+
+      var missingObject = scale.missingObject();
+      console.log('missing object: ' + missingObject);
+      if (missingObject === 'left' || missingObject === 'right') {
+        direction = missingObject;
+      }
+
+      this.mode = 'throwing';
+
+      this.throwDirection = direction;
+      this.throwTarget = direction === 'left' ? leftScaleTarget : rightScaletarget;
+      this.throwIncrement = distanceUtil.positionDeltaIncrement(this.activeTokenMesh.position, this.throwTarget, FRAMES_FOR_THROW);
+      this.currentThrowFrames = 0;
     };
   }
 
@@ -463,10 +565,6 @@ $(function() {
   function calculateGeometryThings(geometry) {
     geometry.computeFaceNormals();
     geometry.computeVertexNormals();
-  }
-
-  function middlePosition(p1, p2) {
-    return {x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2, z: (p1.z + p2.z) / 2};
   }
 
   function negrand(scalar) {

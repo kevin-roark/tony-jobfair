@@ -30,7 +30,7 @@ module.exports.getRecruiterImage = function(company) {
 };
 
 module.exports.getCompanyShirt = function(company) {
-  return '/media/tshirts/' + company + '.jpg';
+  return '/media/shirts/' + company + '.jpg';
 };
 
 var riddles = {};
