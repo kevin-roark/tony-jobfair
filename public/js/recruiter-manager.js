@@ -40,7 +40,7 @@ module.exports.actionIsSuccessful = function(action, boothIndex) {
 };
 
 module.exports.distanceBetweenBooths = 400;
-module.exports.closeToRecruiterDistance = 120;
+module.exports.closeToRecruiterDistance = 95;
 
 module.exports.createBooths = function(scene) {
   var booths = [];

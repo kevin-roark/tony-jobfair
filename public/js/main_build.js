@@ -1939,6 +1939,7 @@ $(function() {
   var Cellphone = require('./cellphone');
   var Shirt = require('./tshirt');
   var recruiterManager = require('./recruiter-manager');
+  var ronaldGestures = require('./ronald-gestures');
 
   var TEST_MODE = true;
 
@@ -2130,6 +2131,7 @@ $(function() {
       console.log('current booth: ' + index);
       jobfairState.currentBooth = index;
       io.mode = io.INTERVIEW;
+      flash(recruiterManager.companies[index]);
     }
 
     function flashOverlay(color) {
@@ -2174,205 +2176,19 @@ $(function() {
       });
     }
 
-    jobfairState.spitToRecruiter = function(callback) {
-      var spit = new Spit();
-      spit.addTo(scene);
-
-      spit.mesh.position.copy(kevinRonald.head.mesh.position);
-      spit.mesh.position.z -= 1;
-
-      var recruiterPos = jobfairState.booths[jobfairState.currentBooth].recruiter.faceMesh.position;
-      var target = {x: recruiterPos.x + (jobfairState.currentBooth % 2 === 0 ? -5 : 5), y: recruiterPos.y - 2, z: recruiterPos.z - 20};
-      var spitInterval = setInterval(function() {
-        moveTowardsTarget(spit.mesh.position, target, {x: 0.75, y: 0.25, z: 1.4});
-        if (distanceMagnitude(spit.mesh.position, target) <= 2) {
-          clearInterval(spitInterval);
-          scene.remove(spit.mesh);
-          callback();
-        }
-      }, 30);
-    };
-
-    jobfairState.shakeHandsWithRecruiter = function(callback) {
-      var hand = this.currentBooth % 2 === 0 ? kevinRonald.leftArm : kevinRonald.rightArm;
-      hand.rotate(Math.PI / 2, 0, 0);
-      hand.move(0, 0, -7);
-      cycle();
-
-      var count = 0;
-      function cycle() {
-        fullShake(function() {
-          count += 1;
-          if (count > 4) {
-            hand.rotate(-Math.PI / 2, 0 , 0);
-            hand.move(0, 0, 7);
-            callback();
-          } else {
-            cycle();
-          }
-        });
-      }
-
-      function fullShake(callback) {
-        moveDown(function() {
-          moveUp(function() {
-            moveDown(function() {
-              callback();
-            });
-          });
-        });
-      }
-
-      function moveDown(callback, limit) {
-        if (!limit) limit = 12;
-        var downCount = 0;
-        var interval = setInterval(function() {
-          hand.move(0, -1.25, 0);
-          downCount += 1;
-          if (downCount >= limit) {
-            clearInterval(interval);
-            callback();
-          }
-        }, 30);
-      }
-
-      function moveUp(callback, limit) {
-        if (!limit) limit = 24;
-        var upCount = 0;
-        var interval = setInterval(function() {
-          hand.move(0, 1.25, 0);
-          upCount += 1;
-          if (upCount >= limit) {
-            clearInterval(interval);
-            callback();
-          }
-        }, 30);
-      }
-    };
-
-    jobfairState.kneelToRecruiter = function(callback) {
-      var rotIncrement = 0.05;
-      var headYIncrement = 0.75;
-      var headZIncrement = 1.25;
-
-      var head = kevinRonald.head;
-      var kneelParts = [head, kevinRonald.torso, kevinRonald.leftArm, kevinRonald.rightArm];
-
-      cycle();
-
-      var count = 0;
-      function cycle() {
-        fullKneel(function() {
-          count += 1;
-          if (count >= 3) {
-            callback();
-          } else {
-            cycle();
-          }
-        });
-      }
-
-      function fullKneel(cb) {
-        kneelDown(function() {
-          comeBackUp(function() {
-            cb();
-          });
-        });
-      }
-
-      function kneelDown(cb) {
-        var totalRot = 0;
-        var interval = setInterval(function() {
-          for (var i = 0; i < kneelParts.length; i++) {
-            kneelParts[i].rotate(-rotIncrement, 0, 0);
-          }
-          head.move(0, -headYIncrement, -headZIncrement);
-
-          totalRot -= rotIncrement;
-          if (totalRot <= -Math.PI / 2) {
-            clearInterval(interval);
-            cb();
-          }
-        }, 30);
-      }
-
-      function comeBackUp(cb) {
-        var totalRot = 0;
-        var interval = setInterval(function() {
-          for (var i = 0; i < kneelParts.length; i++) {
-            kneelParts[i].rotate(rotIncrement, 0, 0);
-          }
-          head.move(0, headYIncrement, headZIncrement);
-
-          totalRot += rotIncrement;
-          if (totalRot >= Math.PI / 2) {
-            clearInterval(interval);
-            cb();
-          }
-        }, 30);
-      }
-    };
-
-    jobfairState.bribeRecruiter = function(callback) {
-      var recruiterPos = this.booths[this.currentBooth].recruiter.faceMesh.position;
-      var xOffset = this.currentBooth % 2 === 0 ? -20 : 14;
-      var torsoPos = kevinRonald.torso.mesh.position;
-
-      var moneys = [];
-      var phone = new Cellphone({x: torsoPos.x + this.currentBooth % 2 === 0 ? 65 : 0, y: recruiterPos.y + 20, z: recruiterPos.z});
-      phone.addTo(scene, function() {
-        addMoneys();
-        rainMoneys(function() {
-          removeMoneys();
-          phone.removeFrom(scene);
-          callback();
-        });
-      });
-
-      function addMoneys() {
-        for (var i = 0; i < 20; i++) {
-          var money = Money.create();
-          money.position.set(recruiterPos.x + xOffset + kt.randInt(15, -15), recruiterPos.y + kt.randInt(20, 8), recruiterPos.z + kt.randInt(80, 40));
-          scene.add(money);
-          moneys.push(money);
-        }
-      }
-
-      function rainMoneys(cb) {
-        var intCount = 0;
-        var moneyInterval = setInterval(function() {
-          for (var i = 0; i < moneys.length; i++) {
-            moneys[i].translateY(-0.1);
-            moneys[i].translateZ(-0.4);
-          }
-          phone.move(Math.random() - 0.5, 0, 0);
-          intCount += 1;
-          if (intCount > 250) {
-            clearInterval(moneyInterval);
-            cb();
-          }
-        }, 30);
-      }
-
-      function removeMoneys() {
-        for (var i = 0; i < moneys.length; i++) {
-          scene.remove(moneys[i]);
-        }
-      }
-    };
-
     jobfairState.ronaldPerformedAction = function(action) {
       // here would want to do UI and shit yum
       console.log('ronald performed: ' + action);
       var behaviorMap = {
-        spit: this.spitToRecruiter.bind(this),
-        handshake: this.shakeHandsWithRecruiter.bind(this),
-        kneel: this.kneelToRecruiter.bind(this),
-        bribe: this.bribeRecruiter.bind(this)
+        spit: ronaldGestures.spitToRecruiter,
+        handshake: ronaldGestures.shakeHandsWithRecruiter,
+        kneel: ronaldGestures.kneelToRecruiter,
+        bribe: ronaldGestures.bribeRecruiter
       };
 
       if (behaviorMap[action]) {
-        behaviorMap[action](showResults);
+        console.log('bribing');
+        behaviorMap[action](scene, this.booths, this.currentBooth, kevinRonald, showResults);
       } else {
         showResults();
       }
@@ -2446,7 +2262,7 @@ $(function() {
   }
 
   function enterWeighingState(tokens) {
-    flash('RONALD IS BORN');
+    flash('CHOOSE YOUR FATE');
 
     active.ronalds = true;
     active.weighing = true;
@@ -2551,33 +2367,9 @@ $(function() {
     return (Math.random() - 0.5) * scalar;
   }
 
-  function moveTowardsTarget(pos, target, amt) {
-    if (pos.x < target.x) {
-      pos.x += amt.x;
-    } else if (pos.x > target.x) {
-      pos.x -= amt.x;
-    }
-
-    if (pos.y < target.y) {
-      pos.y += amt.y;
-    } else if (pos.y > target.y) {
-      pos.y -= amt.y;
-    }
-
-    if (pos.z < target.z) {
-      pos.z += amt.z;
-    } else if (pos.z > target.z) {
-      pos.z -= amt.z;
-    }
-  }
-
-  function distanceMagnitude(pos1, pos2) {
-    return Math.abs(pos1.x - pos2.x) + Math.abs(pos1.y - pos2.y) + Math.abs(pos1.z - pos2.z);
-  }
-
 });
 
-},{"./cellphone":4,"./character":5,"./io":8,"./lib/kutility":11,"./money":14,"./recruiter-manager":15,"./ronald-text":17,"./spit":18,"./tshirt":19}],13:[function(require,module,exports){
+},{"./cellphone":4,"./character":5,"./io":8,"./lib/kutility":11,"./money":14,"./recruiter-manager":15,"./ronald-gestures":17,"./ronald-text":18,"./spit":19,"./tshirt":20}],13:[function(require,module,exports){
 
 var prefix = '/js/models/';
 
@@ -2689,7 +2481,7 @@ module.exports.actionIsSuccessful = function(action, boothIndex) {
 };
 
 module.exports.distanceBetweenBooths = 400;
-module.exports.closeToRecruiterDistance = 120;
+module.exports.closeToRecruiterDistance = 95;
 
 module.exports.createBooths = function(scene) {
   var booths = [];
@@ -2877,6 +2669,224 @@ Recruiter.prototype.updateFaceImage = function(image) {
 };
 
 },{"./model_names":13}],17:[function(require,module,exports){
+
+var kt = require('./lib/kutility');
+var Cellphone = require('./cellphone');
+var Money = require('./money');
+var Spit = require('./spit');
+
+module.exports.spitToRecruiter = function(scene, booths, currentBooth, kevinRonald, callback) {
+  var spit = new Spit();
+  spit.addTo(scene);
+
+  spit.mesh.position.copy(kevinRonald.head.mesh.position);
+  spit.mesh.position.z -= 1;
+
+  var recruiterPos = booths[currentBooth].recruiter.faceMesh.position;
+  var target = {x: recruiterPos.x + (currentBooth % 2 === 0 ? -5 : 5), y: recruiterPos.y - 2, z: recruiterPos.z - 20};
+  var spitInterval = setInterval(function() {
+    moveTowardsTarget(spit.mesh.position, target, {x: 0.75, y: 0.25, z: 1.4});
+    if (distanceMagnitude(spit.mesh.position, target) <= 2) {
+      clearInterval(spitInterval);
+      scene.remove(spit.mesh);
+      callback();
+    }
+  }, 30);
+};
+
+module.exports.shakeHandsWithRecruiter = function(scene, booths, currentBooth, kevinRonald, callback) {
+  var hand = currentBooth % 2 === 0 ? kevinRonald.leftArm : kevinRonald.rightArm;
+  hand.rotate(Math.PI / 2, 0, 0);
+  hand.move(0, 0, -7);
+  cycle();
+
+  var count = 0;
+  function cycle() {
+    fullShake(function() {
+      count += 1;
+      if (count > 4) {
+        hand.rotate(-Math.PI / 2, 0 , 0);
+        hand.move(0, 0, 7);
+        callback();
+      } else {
+        cycle();
+      }
+    });
+  }
+
+  function fullShake(callback) {
+    moveDown(function() {
+      moveUp(function() {
+        moveDown(function() {
+          callback();
+        });
+      });
+    });
+  }
+
+  function moveDown(callback, limit) {
+    if (!limit) limit = 12;
+    var downCount = 0;
+    var interval = setInterval(function() {
+      hand.move(0, -1.25, 0);
+      downCount += 1;
+      if (downCount >= limit) {
+        clearInterval(interval);
+        callback();
+      }
+    }, 30);
+  }
+
+  function moveUp(callback, limit) {
+    if (!limit) limit = 24;
+    var upCount = 0;
+    var interval = setInterval(function() {
+      hand.move(0, 1.25, 0);
+      upCount += 1;
+      if (upCount >= limit) {
+        clearInterval(interval);
+        callback();
+      }
+    }, 30);
+  }
+};
+
+module.exports.kneelToRecruiter = function(scene, booths, currentBooth, kevinRonald, callback) {
+  var rotIncrement = 0.05;
+  var headYIncrement = 0.75;
+  var headZIncrement = 1.25;
+
+  var head = kevinRonald.head;
+  var kneelParts = [head, kevinRonald.torso, kevinRonald.leftArm, kevinRonald.rightArm];
+
+  cycle();
+
+  var count = 0;
+  function cycle() {
+    fullKneel(function() {
+      count += 1;
+      if (count >= 3) {
+        callback();
+      } else {
+        cycle();
+      }
+    });
+  }
+
+  function fullKneel(cb) {
+    kneelDown(function() {
+      comeBackUp(function() {
+        cb();
+      });
+    });
+  }
+
+  function kneelDown(cb) {
+    var totalRot = 0;
+    var interval = setInterval(function() {
+      for (var i = 0; i < kneelParts.length; i++) {
+        kneelParts[i].rotate(-rotIncrement, 0, 0);
+      }
+      head.move(0, -headYIncrement, -headZIncrement);
+
+      totalRot -= rotIncrement;
+      if (totalRot <= -Math.PI / 2) {
+        clearInterval(interval);
+        cb();
+      }
+    }, 30);
+  }
+
+  function comeBackUp(cb) {
+    var totalRot = 0;
+    var interval = setInterval(function() {
+      for (var i = 0; i < kneelParts.length; i++) {
+        kneelParts[i].rotate(rotIncrement, 0, 0);
+      }
+      head.move(0, headYIncrement, headZIncrement);
+
+      totalRot += rotIncrement;
+      if (totalRot >= Math.PI / 2) {
+        clearInterval(interval);
+        cb();
+      }
+    }, 30);
+  }
+};
+
+module.exports.bribeRecruiter = function(scene, booths, currentBooth, kevinRonald, callback) {
+  var recruiterPos = booths[currentBooth].recruiter.faceMesh.position;
+  var xOffset = currentBooth % 2 === 0 ? -20 : 14;
+  var torsoPos = kevinRonald.torso.mesh.position;
+
+  var moneys = [];
+  var phone = new Cellphone({x: torsoPos.x + currentBooth % 2 === 0 ? 65 : 0, y: recruiterPos.y + 20, z: recruiterPos.z});
+  phone.addTo(scene, function() {
+    addMoneys();
+    rainMoneys(function() {
+      removeMoneys();
+      phone.removeFrom(scene);
+      callback();
+    });
+  });
+
+  function addMoneys() {
+    for (var i = 0; i < 20; i++) {
+      var money = Money.create();
+      money.position.set(recruiterPos.x + xOffset + kt.randInt(15, -15), recruiterPos.y + kt.randInt(20, 8), recruiterPos.z + kt.randInt(80, 40));
+      scene.add(money);
+      moneys.push(money);
+    }
+  }
+
+  function rainMoneys(cb) {
+    var intCount = 0;
+    var moneyInterval = setInterval(function() {
+      for (var i = 0; i < moneys.length; i++) {
+        moneys[i].translateY(-0.1);
+        moneys[i].translateZ(-0.4);
+      }
+      phone.move(Math.random() - 0.5, 0, 0);
+      intCount += 1;
+      if (intCount > 250) {
+        clearInterval(moneyInterval);
+        cb();
+      }
+    }, 30);
+  }
+
+  function removeMoneys() {
+    for (var i = 0; i < moneys.length; i++) {
+      scene.remove(moneys[i]);
+    }
+  }
+};
+
+function moveTowardsTarget(pos, target, amt) {
+  if (pos.x < target.x) {
+    pos.x += amt.x;
+  } else if (pos.x > target.x) {
+    pos.x -= amt.x;
+  }
+
+  if (pos.y < target.y) {
+    pos.y += amt.y;
+  } else if (pos.y > target.y) {
+    pos.y -= amt.y;
+  }
+
+  if (pos.z < target.z) {
+    pos.z += amt.z;
+  } else if (pos.z > target.z) {
+    pos.z -= amt.z;
+  }
+}
+
+function distanceMagnitude(pos1, pos2) {
+  return Math.abs(pos1.x - pos2.x) + Math.abs(pos1.y - pos2.y) + Math.abs(pos1.z - pos2.z);
+}
+
+},{"./cellphone":4,"./lib/kutility":11,"./money":14,"./spit":19}],18:[function(require,module,exports){
 var kt = require('./lib/kutility');
 
 module.exports = RonaldText;
@@ -2974,7 +2984,7 @@ RonaldText.prototype.addTo = function(scene, addCallback, decayCallback) {
   }, this.decay);
 };
 
-},{"./lib/kutility":11}],18:[function(require,module,exports){
+},{"./lib/kutility":11}],19:[function(require,module,exports){
 
 module.exports = Spit;
 
@@ -3003,7 +3013,7 @@ Spit.prototype.addTo = function(scene) {
   scene.add(this.mesh);
 };
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 
 var BodyPart = require('./bodypart');
 var recruiterManager = require('./recruiter-manager');
