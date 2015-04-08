@@ -40,7 +40,7 @@ Arm.prototype.collisonHandle = function() {
   if (this.collisionHandler) this.collisionHandler();
 }
 
-},{"./bodypart":3,"./lib/kutility":13,"./model_names":16}],2:[function(require,module,exports){
+},{"./bodypart":3,"./lib/kutility":14,"./model_names":17}],2:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 
@@ -72,7 +72,7 @@ Body.prototype.additionalInit = function() {
   }
 };
 
-},{"./bodypart":3,"./lib/kutility":13,"./model_names":16}],3:[function(require,module,exports){
+},{"./bodypart":3,"./lib/kutility":14,"./model_names":17}],3:[function(require,module,exports){
 var kt = require('./lib/kutility');
 
 var modelNames = require('./model_names');
@@ -350,7 +350,7 @@ BodyPart.prototype.additionalInit = function() {};
 BodyPart.prototype.additionalRender = function() {};
 BodyPart.prototype.collisonHandle = function() {}
 
-},{"./lib/kutility":13,"./model_names":16}],4:[function(require,module,exports){
+},{"./lib/kutility":14,"./model_names":17}],4:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 var modelNames = require('./model_names');
@@ -396,7 +396,7 @@ Phone.prototype.move = function(dx, dy, dz) {
   this.screenMesh.position.set(this.mesh.position.x - 34, this.mesh.position.y - 17.5, this.mesh.position.z - 20);
 };
 
-},{"./bodypart":3,"./lib/kutility":13,"./model_names":16}],5:[function(require,module,exports){
+},{"./bodypart":3,"./lib/kutility":14,"./model_names":17}],5:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 
@@ -601,7 +601,7 @@ function posNegRandom() {
   return (Math.random() - 0.5) * 2;
 }
 
-},{"./arm":1,"./body":2,"./hand":8,"./head":9,"./leg":12,"./lib/kutility":13,"./model_names":16}],6:[function(require,module,exports){
+},{"./arm":1,"./body":2,"./hand":9,"./head":10,"./leg":13,"./lib/kutility":14,"./model_names":17}],6:[function(require,module,exports){
 
 
 module.exports.nearest = function(object, targetObjects) {
@@ -658,13 +658,60 @@ module.exports.positionDeltaIncrement = function(pos1, pos2, steps) {
 
 },{}],7:[function(require,module,exports){
 
+var modelNames = require('./model_names');
+
+var BodyPart = require('./bodypart');
+
+module.exports = Garbage;
+
+function Garbage(startPos, scale, type) {
+  if (!startPos) startPos = {x: 0, y: 0, z: 0};
+  this.startX = startPos.x;
+  this.startY = startPos.y;
+  this.startZ = startPos.z;
+
+  this.scale = scale || Math.random() * 9 + 2;
+
+  this.modelChoices = [
+    modelNames.TRASH_BANANA,
+    modelNames.GARBAGE_CAN
+  ];
+
+  this.type = type;
+  if (type === 'banana') {
+    this.specificModelName = modelNames.TRASH_BANANA;
+  } else if (type === 'garbage') {
+    this.specificModelName = modelNames.GARBAGE_CAN;
+    this.scale *= 4;
+  }
+}
+
+Garbage.prototype = Object.create(BodyPart.prototype);
+
+Garbage.prototype.createMesh = function(callback) {
+  var self = this;
+  BodyPart.prototype.createMesh.call(this, function() {
+    if (self.type === 'banana') {
+      self.materials.forEach(function(material) {
+        material.color = new THREE.Color(0xded827);
+        material.emissive = new THREE.Color(0xded827);
+        material.needsUpdate = true;
+      });
+    }
+
+    callback();
+  });
+};
+
+},{"./bodypart":3,"./model_names":17}],8:[function(require,module,exports){
+
 
 module.exports.calculateGeometryThings = function(geometry) {
   geometry.computeFaceNormals();
   geometry.computeVertexNormals();
 };
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 
@@ -741,7 +788,7 @@ Hand.prototype.collisonHandle = function() {
   }
 };
 
-},{"./bodypart":3,"./lib/kutility":13,"./model_names":16}],9:[function(require,module,exports){
+},{"./bodypart":3,"./lib/kutility":14,"./model_names":17}],10:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 
@@ -786,7 +833,7 @@ Head.prototype.render = function() {
   }
 }
 
-},{"./bodypart":3,"./lib/kutility":13}],10:[function(require,module,exports){
+},{"./bodypart":3,"./lib/kutility":14}],11:[function(require,module,exports){
 
 // CONTROLS::::
 
@@ -1340,7 +1387,7 @@ function handsBetweenElbows(playerNum) {
   return (leftHand.x > leftElbow.x) && (rightHand.x < rightElbow.x);
 }
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 
 var Recruiter = require('./recruiter');
 
@@ -1393,7 +1440,7 @@ function makePoster(imageURL) {
   return poster;
 }
 
-},{"./recruiter":19}],12:[function(require,module,exports){
+},{"./recruiter":20}],13:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 
@@ -1425,7 +1472,7 @@ Leg.prototype.additionalInit = function() {
   }
 };
 
-},{"./bodypart":3,"./lib/kutility":13,"./model_names":16}],13:[function(require,module,exports){
+},{"./bodypart":3,"./lib/kutility":14,"./model_names":17}],14:[function(require,module,exports){
 /* export something */
 module.exports = new Kutility;
 
@@ -1990,22 +2037,28 @@ Kutility.prototype.blur = function(el, x) {
   this.setFilter(el, cf + f);
 }
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 
 $(function() {
 
   var kt = require('./lib/kutility');
+  var distanceUtil = require('./distance-util');
+  var geometryUtil = require('./geometry-util');
+  var sceneUtil = require('./scene-util');
+  var ronaldUI = require('./ronald-ui');
+
+  var ronaldGestures = require('./ronald-gestures');
+  var meshGestures = require('./mesh-gestures');
+
   var io = require('./io');
+
+  var mn = require('./model_names');
   var Character = require('./character');
   var RonaldText = require('./ronald-text');
   var Scale = require('./scale');
   var Shirt = require('./tshirt');
+  var Garbage = require('./garbage');
   var recruiterManager = require('./recruiter-manager');
-  var ronaldGestures = require('./ronald-gestures');
-  var distanceUtil = require('./distance-util');
-  var geometryUtil = require('./geometry-util');
-  var sceneUtil = require('./scene-util');
-  var meshGestures = require('./mesh-gestures');
 
   var TEST_MODE = true;
   var START_WITH_SCALE = true;
@@ -2071,10 +2124,13 @@ $(function() {
   dylanRonald.addTo(scene);
   var ronalds = [kevinRonald, dylanRonald];
 
+
+
   /*
    * * * * * STARTIN AND RENDERIN * * * * *
    */
 
+  mn.loadModel(mn.GARBAGE_CAN);
   setTimeout(start, 2000);
   function start() {
     if (!TEST_MODE) {
@@ -2158,6 +2214,9 @@ $(function() {
     if (active.weighing) {
       weighingState.render();
     }
+    if (active.trash) {
+      garbageState.render();
+    }
 
     if (cameraFollowState.target) {
       camera.position.copy(cameraFollowState.target).add(cameraFollowState.offset);
@@ -2211,7 +2270,7 @@ $(function() {
       console.log('current booth: ' + index);
       jobfairState.currentBooth = index;
       io.mode = io.INTERVIEW;
-      flash(recruiterManager.companies[index]);
+      ronaldUI.flash(recruiterManager.companies[index]);
     }
 
     function flashOverlay(color) {
@@ -2325,7 +2384,7 @@ $(function() {
     };
 
     jobfairState.endScene = function() {
-      fadeOverlay(true, function() {
+      ronaldUI.fadeOverlay(true, function() {
         var meshes = [jobfairState.ground];
         jobfairState.booths.forEach(function(booth) {
           booth.meshes.forEach(function(mesh) {
@@ -2336,7 +2395,7 @@ $(function() {
 
         active.jobfair = false;
         enterWeighingState();
-        fadeOverlay(false);
+        ronaldUI.fadeOverlay(false);
       });
     };
   }
@@ -2344,7 +2403,7 @@ $(function() {
   function enterWeighingState(tokens) {
     var FRAMES_FOR_THROW = 150;
 
-    flash('CHOOSE YOUR ROLE');
+    ronaldUI.flash('CHOOSE YOUR ROLE');
 
     if (!tokens) {
       tokens = [];
@@ -2367,9 +2426,9 @@ $(function() {
     active.weighing = true;
     io.mode = io.WEIGHING;
 
-    mainLight.position.set(0, 20, 0);
-    mainLight.target.position.set(0, 5, -100);
-    mainLight.intensity = 5.0;
+    mainLight.position.set(0, 100, 0);
+    mainLight.target.position.set(0, 5, -50);
+    mainLight.intensity = 2.0;
 
     kevinRonald.moveTo(-70, 0, -140);
     dylanRonald.moveTo(70, 0, -140);
@@ -2402,6 +2461,7 @@ $(function() {
     weighingState.kevinRenderer = new WeighingStateRonaldRenderer('kevin');
     weighingState.dylanRenderer = new WeighingStateRonaldRenderer('dylan');
     weighingState.tokensDestroyed = 0;
+    weighingState.scale = scale;
 
     weighingState.render = function() {
       var ronPos = kevinRonald.torso.mesh.position;
@@ -2430,12 +2490,55 @@ $(function() {
       console.log('beginning garbage transition');
       scale.updateForMasses(0, 0);
       setTimeout(function() {
+        var fallingObjects = [];
         var multiplier = 0.1;
         var interval = setInterval(function() {
           scale.mesh.rotation.z += Math.random() * multiplier;
-
-          multiplier *= 1.02;
+          multiplier *= 1.015;
+          for (var i = 0; i < fallingObjects.length; i++) {
+            if (fallingObjects[i].mesh.position.y > 0 || fallingObjects[i]._keepFallingAtGround) {
+              fallingObjects[i].move(0, - (Math.random() + 0.25), 0);
+            }
+          }
         }, 40);
+
+        function addGarbage(garbage) {
+          garbage.addTo(scene, function() {
+            garbage.rotate(0, Math.PI, 0);
+            fallingObjects.push(garbage);
+          });
+        }
+
+        function addBanana() {
+          var banana = new Garbage({x: (Math.random() - 0.5) * 240, y: Math.random() * 80 + 30, z: - (kt.randInt(350, 120))}, null, 'banana');
+          banana._keepFallingAtGround = true;
+          banana.addTo(scene, function() {
+            fallingObjects.push(banana);
+          });
+        }
+
+        function addTruck() {
+
+        }
+
+        setTimeout(function() {
+          addGarbage(new Garbage({x: 70, y: 100, z: -170}, null, 'garbage'));
+          setTimeout(function() {
+            addGarbage(new Garbage({x: -40, y: 70, z: -130}, 8, 'garbage'));
+            setTimeout(function() {
+              var bananaCount = 0;
+              var bananaInterval = setInterval(function() {
+                addBanana();
+                bananaCount += 1;
+                if (bananaCount >= 40) {
+                  clearInterval(bananaInterval);
+                  addTruck();
+                }
+              }, 900);
+            }, 3000);
+          }, 3000);
+        }, 1000); /// 6666
+
       }, 2500);
     };
 
@@ -2529,17 +2632,6 @@ $(function() {
     });
   }
 
-  function flash(text, timeout) {
-    if (!text) return;
-    if (!timeout) timeout = 275;
-
-    $('#flash').text(text);
-    $('#flash').show();
-    setTimeout(function() {
-      $('#flash').hide();
-    }, timeout);
-  }
-
   function shakeCamera() {
     var dx = (Math.random() - 0.5) * 1;
     var dy = (Math.random() - 0.5) * 0.5;
@@ -2560,26 +2652,9 @@ $(function() {
     camera.position.z = z;
   }
 
-  function fadeOverlay(fadein, callback, color, time) {
-    if (!color) color = 'rgb(255, 255, 255)';
-    if (!time) time = 4000;
-    if (!callback) callback = function(){};
-
-    if (fadein) {
-      $('.overlay').css('background-color', color);
-      $('.overlay').fadeIn(time, function() {
-        callback();
-      });
-    } else {
-      $('.overlay').fadeOut(time, function() {
-        callback();
-      });
-    }
-  }
-
 });
 
-},{"./character":5,"./distance-util":6,"./geometry-util":7,"./io":10,"./lib/kutility":13,"./mesh-gestures":15,"./recruiter-manager":18,"./ronald-gestures":20,"./ronald-text":21,"./scale":22,"./scene-util":23,"./tshirt":25}],15:[function(require,module,exports){
+},{"./character":5,"./distance-util":6,"./garbage":7,"./geometry-util":8,"./io":11,"./lib/kutility":14,"./mesh-gestures":16,"./model_names":17,"./recruiter-manager":19,"./ronald-gestures":21,"./ronald-text":22,"./ronald-ui":23,"./scale":24,"./scene-util":25,"./tshirt":27}],16:[function(require,module,exports){
 
 
 module.exports.sendFlying = function(mesh, options, callback) {
@@ -2605,7 +2680,7 @@ module.exports.sendFlying = function(mesh, options, callback) {
   }, 25);
 };
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 
 var prefix = '/js/models/';
 
@@ -2654,17 +2729,37 @@ module.exports.BOY = pre('chubby.js');
 
 module.exports.PHONE = pre('phone.js');
 
+/* GARBAGE */
+
+module.exports.GARBAGE_CAN = pre('garbage_can.json');
+module.exports.METAL_TRASH_CAN = pre('metal_trash_can.json');
+module.exports.LOW_POLY_TRASH_CAN = pre('low_poly_trash_can.json');
+module.exports.TRASH_ORANGE = pre('trash_orange.json');
+module.exports.TRASH_BANANA = pre('trash_banana.json');
+
 /* FUNCTIONS */
 
+var loader = new THREE.JSONLoader();
+var cache = {};
 module.exports.loadModel = function(modelName, callback) {
-  var loader = new THREE.JSONLoader;
+  if (cache[modelName]) {
+    var geo = cache[modelName].geometry.clone();
+    var materials = cache[modelName].materials;
+    var clonedMaterials = [];
+    materials.forEach(function(material) {
+      clonedMaterials.push(material.clone());
+    });
+    if (callback) callback(geo, clonedMaterials);
+    return;
+  }
 
   loader.load(modelName, function (geometry, materials) {
-    callback(geometry, materials);
+    cache[modelName] = {geometry: geometry, materials: materials};
+    if (callback) callback(geometry, materials);
   });
-}
+};
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 
 module.exports.create = function() {
   var geometry = new THREE.BoxGeometry(8, 3.5, 0.8);
@@ -2674,7 +2769,7 @@ module.exports.create = function() {
   return new THREE.Mesh(geometry, material);
 };
 
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 
 var JobBooth = require('./job-booth');
 
@@ -2748,7 +2843,7 @@ module.exports.boothIndexForZ = function(z) {
   return Math.floor(Math.max(pos - module.exports.closeToRecruiterDistance, 0) / module.exports.distanceBetweenBooths);
 };
 
-},{"./job-booth":11}],19:[function(require,module,exports){
+},{"./job-booth":12}],20:[function(require,module,exports){
 
 // requirements
 var mn = require('./model_names');
@@ -2904,7 +2999,7 @@ Recruiter.prototype.updateFaceImage = function(image) {
   this.faceMaterial.needsUpdate = true;
 };
 
-},{"./model_names":16}],20:[function(require,module,exports){
+},{"./model_names":17}],21:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 var distanceUtil = require('./distance-util');
@@ -3099,7 +3194,7 @@ module.exports.bribeRecruiter = function(scene, booths, currentBooth, kevinRonal
   }
 };
 
-},{"./cellphone":4,"./distance-util":6,"./lib/kutility":13,"./money":17,"./spit":24}],21:[function(require,module,exports){
+},{"./cellphone":4,"./distance-util":6,"./lib/kutility":14,"./money":18,"./spit":26}],22:[function(require,module,exports){
 var kt = require('./lib/kutility');
 
 module.exports = RonaldText;
@@ -3197,7 +3292,37 @@ RonaldText.prototype.addTo = function(scene, addCallback, decayCallback) {
   }, this.decay);
 };
 
-},{"./lib/kutility":13}],22:[function(require,module,exports){
+},{"./lib/kutility":14}],23:[function(require,module,exports){
+
+module.exports.flash = function(text, timeout) {
+  if (!text) return;
+  if (!timeout) timeout = 275;
+
+  $('#flash').text(text);
+  $('#flash').show();
+  setTimeout(function() {
+    $('#flash').hide();
+  }, timeout);
+};
+
+module.exports.fadeOverlay = function(fadein, callback, color, time) {
+  if (!color) color = 'rgb(255, 255, 255)';
+  if (!time) time = 4000;
+  if (!callback) callback = function(){};
+
+  if (fadein) {
+    $('.overlay').css('background-color', color);
+    $('.overlay').fadeIn(time, function() {
+      callback();
+    });
+  } else {
+    $('.overlay').fadeOut(time, function() {
+      callback();
+    });
+  }
+};
+
+},{}],24:[function(require,module,exports){
 
 module.exports = Scale;
 
@@ -3373,7 +3498,7 @@ Scale.prototype.rotateAnimated = function(rz, steps) {
   }
 };
 
-},{}],23:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 
 module.exports.clearScene = function(scene, meshes, exemptions) {
   if (!meshes) meshes = scene.children;
@@ -3386,7 +3511,7 @@ module.exports.clearScene = function(scene, meshes, exemptions) {
   }
 };
 
-},{}],24:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 
 module.exports = Spit;
 
@@ -3415,7 +3540,7 @@ Spit.prototype.addTo = function(scene) {
   scene.add(this.mesh);
 };
 
-},{}],25:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 
 var BodyPart = require('./bodypart');
 var recruiterManager = require('./recruiter-manager');
@@ -3455,4 +3580,4 @@ Shirt.prototype.createMesh = function(callback) {
   callback();
 };
 
-},{"./bodypart":3,"./recruiter-manager":18}]},{},[14]);
+},{"./bodypart":3,"./recruiter-manager":19}]},{},[15]);

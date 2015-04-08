@@ -2,17 +2,23 @@
 $(function() {
 
   var kt = require('./lib/kutility');
+  var distanceUtil = require('./distance-util');
+  var geometryUtil = require('./geometry-util');
+  var sceneUtil = require('./scene-util');
+  var ronaldUI = require('./ronald-ui');
+
+  var ronaldGestures = require('./ronald-gestures');
+  var meshGestures = require('./mesh-gestures');
+
   var io = require('./io');
+
+  var mn = require('./model_names');
   var Character = require('./character');
   var RonaldText = require('./ronald-text');
   var Scale = require('./scale');
   var Shirt = require('./tshirt');
+  var Garbage = require('./garbage');
   var recruiterManager = require('./recruiter-manager');
-  var ronaldGestures = require('./ronald-gestures');
-  var distanceUtil = require('./distance-util');
-  var geometryUtil = require('./geometry-util');
-  var sceneUtil = require('./scene-util');
-  var meshGestures = require('./mesh-gestures');
 
   var TEST_MODE = true;
   var START_WITH_SCALE = true;
@@ -78,10 +84,13 @@ $(function() {
   dylanRonald.addTo(scene);
   var ronalds = [kevinRonald, dylanRonald];
 
+
+
   /*
    * * * * * STARTIN AND RENDERIN * * * * *
    */
 
+  mn.loadModel(mn.GARBAGE_CAN);
   setTimeout(start, 2000);
   function start() {
     if (!TEST_MODE) {
@@ -165,6 +174,9 @@ $(function() {
     if (active.weighing) {
       weighingState.render();
     }
+    if (active.trash) {
+      garbageState.render();
+    }
 
     if (cameraFollowState.target) {
       camera.position.copy(cameraFollowState.target).add(cameraFollowState.offset);
@@ -218,7 +230,7 @@ $(function() {
       console.log('current booth: ' + index);
       jobfairState.currentBooth = index;
       io.mode = io.INTERVIEW;
-      flash(recruiterManager.companies[index]);
+      ronaldUI.flash(recruiterManager.companies[index]);
     }
 
     function flashOverlay(color) {
@@ -332,7 +344,7 @@ $(function() {
     };
 
     jobfairState.endScene = function() {
-      fadeOverlay(true, function() {
+      ronaldUI.fadeOverlay(true, function() {
         var meshes = [jobfairState.ground];
         jobfairState.booths.forEach(function(booth) {
           booth.meshes.forEach(function(mesh) {
@@ -343,7 +355,7 @@ $(function() {
 
         active.jobfair = false;
         enterWeighingState();
-        fadeOverlay(false);
+        ronaldUI.fadeOverlay(false);
       });
     };
   }
@@ -351,7 +363,7 @@ $(function() {
   function enterWeighingState(tokens) {
     var FRAMES_FOR_THROW = 150;
 
-    flash('CHOOSE YOUR ROLE');
+    ronaldUI.flash('CHOOSE YOUR ROLE');
 
     if (!tokens) {
       tokens = [];
@@ -374,9 +386,9 @@ $(function() {
     active.weighing = true;
     io.mode = io.WEIGHING;
 
-    mainLight.position.set(0, 20, 0);
-    mainLight.target.position.set(0, 5, -100);
-    mainLight.intensity = 5.0;
+    mainLight.position.set(0, 100, 0);
+    mainLight.target.position.set(0, 5, -50);
+    mainLight.intensity = 2.0;
 
     kevinRonald.moveTo(-70, 0, -140);
     dylanRonald.moveTo(70, 0, -140);
@@ -409,6 +421,7 @@ $(function() {
     weighingState.kevinRenderer = new WeighingStateRonaldRenderer('kevin');
     weighingState.dylanRenderer = new WeighingStateRonaldRenderer('dylan');
     weighingState.tokensDestroyed = 0;
+    weighingState.scale = scale;
 
     weighingState.render = function() {
       var ronPos = kevinRonald.torso.mesh.position;
@@ -437,12 +450,55 @@ $(function() {
       console.log('beginning garbage transition');
       scale.updateForMasses(0, 0);
       setTimeout(function() {
+        var fallingObjects = [];
         var multiplier = 0.1;
         var interval = setInterval(function() {
           scale.mesh.rotation.z += Math.random() * multiplier;
-
-          multiplier *= 1.02;
+          multiplier *= 1.015;
+          for (var i = 0; i < fallingObjects.length; i++) {
+            if (fallingObjects[i].mesh.position.y > 0 || fallingObjects[i]._keepFallingAtGround) {
+              fallingObjects[i].move(0, - (Math.random() + 0.25), 0);
+            }
+          }
         }, 40);
+
+        function addGarbage(garbage) {
+          garbage.addTo(scene, function() {
+            garbage.rotate(0, Math.PI, 0);
+            fallingObjects.push(garbage);
+          });
+        }
+
+        function addBanana() {
+          var banana = new Garbage({x: (Math.random() - 0.5) * 240, y: Math.random() * 80 + 30, z: - (kt.randInt(350, 120))}, null, 'banana');
+          banana._keepFallingAtGround = true;
+          banana.addTo(scene, function() {
+            fallingObjects.push(banana);
+          });
+        }
+
+        function addTruck() {
+
+        }
+
+        setTimeout(function() {
+          addGarbage(new Garbage({x: 70, y: 100, z: -170}, null, 'garbage'));
+          setTimeout(function() {
+            addGarbage(new Garbage({x: -40, y: 70, z: -130}, 8, 'garbage'));
+            setTimeout(function() {
+              var bananaCount = 0;
+              var bananaInterval = setInterval(function() {
+                addBanana();
+                bananaCount += 1;
+                if (bananaCount >= 40) {
+                  clearInterval(bananaInterval);
+                  addTruck();
+                }
+              }, 900);
+            }, 3000);
+          }, 3000);
+        }, 1000); /// 6666
+
       }, 2500);
     };
 
@@ -536,17 +592,6 @@ $(function() {
     });
   }
 
-  function flash(text, timeout) {
-    if (!text) return;
-    if (!timeout) timeout = 275;
-
-    $('#flash').text(text);
-    $('#flash').show();
-    setTimeout(function() {
-      $('#flash').hide();
-    }, timeout);
-  }
-
   function shakeCamera() {
     var dx = (Math.random() - 0.5) * 1;
     var dy = (Math.random() - 0.5) * 0.5;
@@ -565,23 +610,6 @@ $(function() {
     camera.position.x = x;
     camera.position.y = y;
     camera.position.z = z;
-  }
-
-  function fadeOverlay(fadein, callback, color, time) {
-    if (!color) color = 'rgb(255, 255, 255)';
-    if (!time) time = 4000;
-    if (!callback) callback = function(){};
-
-    if (fadein) {
-      $('.overlay').css('background-color', color);
-      $('.overlay').fadeIn(time, function() {
-        callback();
-      });
-    } else {
-      $('.overlay').fadeOut(time, function() {
-        callback();
-      });
-    }
   }
 
 });
