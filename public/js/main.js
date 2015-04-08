@@ -2,16 +2,28 @@
 $(function() {
 
   var kt = require('./lib/kutility');
+  var distanceUtil = require('./distance-util');
+  var geometryUtil = require('./geometry-util');
+  var sceneUtil = require('./scene-util');
+  var ronaldUI = require('./ronald-ui');
+
+  var ronaldGestures = require('./ronald-gestures');
+  var meshGestures = require('./mesh-gestures');
+
   var io = require('./io');
+
   var Character = require('./character');
   var RonaldText = require('./ronald-text');
-  var Spit = require('./spit');
-  var Money = require('./money');
-  var Cellphone = require('./cellphone');
+  var Scale = require('./scale');
   var Shirt = require('./tshirt');
+  var Garbage = require('./garbage');
+  var Computer = require('./computer');
+  var skybox = require('./skybox');
   var recruiterManager = require('./recruiter-manager');
 
   var TEST_MODE = true;
+  var START_WITH_SCALE = true;
+  var SPEED_TO_TRASH = true;
 
   /*
    * * * * * RENDERIN AND LIGHTIN * * * * *
@@ -51,10 +63,11 @@ $(function() {
    * * * * * STATE OBJECTS * * * * *
    */
 
-  var active = {ronalds: false, lighting: false, camera: false, jobfair: false, weighing: false};
+  var active = {ronalds: false, lighting: false, camera: false, jobfair: false, weighing: false, trash: false};
 
   var jobfairState = {};
   var weighingState = {};
+  var garbageState = {};
 
   var cameraFollowState = {
     target: null,
@@ -72,6 +85,8 @@ $(function() {
   dylanRonald.addTo(scene);
   var ronalds = [kevinRonald, dylanRonald];
 
+
+
   /*
    * * * * * STARTIN AND RENDERIN * * * * *
    */
@@ -82,7 +97,12 @@ $(function() {
       io.begin(kevinRonald, dylanRonald, camera);
     }
 
-    enterJobfairState();
+    if (START_WITH_SCALE) {
+      enterWeighingState();
+    }
+    else {
+      enterJobfairState();
+    }
 
     render();
     scene.simulate();
@@ -95,16 +115,16 @@ $(function() {
         resetRonaldPositions();
       }
       else if (ev.which === 97)  { // a
-        if (io.mode === io.JOBFAIR) kevinRonald.move(-1, 0, 0);
+        kevinRonald.move(-1, 0, 0);
       }
       else if (ev.which === 119)  { // w
-        if (io.mode === io.JOBFAIR) kevinRonald.move(0, 0, -1);
+        kevinRonald.move(0, 0, -1);
       }
       else if (ev.which === 100)  { // d
-        if (io.mode === io.JOBFAIR) kevinRonald.move(1, 0, 0);
+        kevinRonald.move(1, 0, 0);
       }
       else if (ev.which === 115)  { // s
-        if (io.mode === io.JOBFAIR) kevinRonald.move(0, 0, 1);
+        kevinRonald.move(0, 0, 1);
       }
       else if (ev.which === 122) { // z
         jobfairState.ronaldPerformedAction('spit');
@@ -117,6 +137,12 @@ $(function() {
       }
       else if (ev.which === 118) { // v
         jobfairState.ronaldPerformedAction('bribe');
+      }
+      else if (ev.which === 107) { // k
+        weighingState.ronaldPerformedThrow('kevin', 'left');
+      }
+      else if (ev.which === 108) { // l
+        weighingState.ronaldPerformedThrow('kevin', 'right');
       }
       else if (ev.which === 113) { // q
         moveCameraPosition(0, 1, 0);
@@ -148,6 +174,9 @@ $(function() {
     if (active.weighing) {
       weighingState.render();
     }
+    if (active.trash) {
+      garbageState.render();
+    }
 
     if (cameraFollowState.target) {
       camera.position.copy(cameraFollowState.target).add(cameraFollowState.offset);
@@ -176,7 +205,7 @@ $(function() {
     );
 
     jobfairState.ground_geometry = new THREE.PlaneGeometry(140, 2000);
-    calculateGeometryThings(jobfairState.ground_geometry);
+    geometryUtil.calculateGeometryThings(jobfairState.ground_geometry);
 
     jobfairState.ground = new Physijs.BoxMesh(jobfairState.ground_geometry, jobfairState.ground_material, 0);
     jobfairState.ground.rotation.x = -Math.PI / 2;
@@ -201,6 +230,7 @@ $(function() {
       console.log('current booth: ' + index);
       jobfairState.currentBooth = index;
       io.mode = io.INTERVIEW;
+      ronaldUI.flash(recruiterManager.companies[index]);
     }
 
     function flashOverlay(color) {
@@ -245,205 +275,19 @@ $(function() {
       });
     }
 
-    jobfairState.spitToRecruiter = function(callback) {
-      var spit = new Spit();
-      spit.addTo(scene);
-
-      spit.mesh.position.copy(kevinRonald.head.mesh.position);
-      spit.mesh.position.z -= 1;
-
-      var recruiterPos = jobfairState.booths[jobfairState.currentBooth].recruiter.faceMesh.position;
-      var target = {x: recruiterPos.x + (jobfairState.currentBooth % 2 === 0 ? -5 : 5), y: recruiterPos.y - 2, z: recruiterPos.z - 20};
-      var spitInterval = setInterval(function() {
-        moveTowardsTarget(spit.mesh.position, target, {x: 0.75, y: 0.25, z: 1.4});
-        if (distanceMagnitude(spit.mesh.position, target) <= 2) {
-          clearInterval(spitInterval);
-          scene.remove(spit.mesh);
-          callback();
-        }
-      }, 30);
-    };
-
-    jobfairState.shakeHandsWithRecruiter = function(callback) {
-      var hand = this.currentBooth % 2 === 0 ? kevinRonald.leftArm : kevinRonald.rightArm;
-      hand.rotate(Math.PI / 2, 0, 0);
-      hand.move(0, 0, -7);
-      cycle();
-
-      var count = 0;
-      function cycle() {
-        fullShake(function() {
-          count += 1;
-          if (count > 4) {
-            hand.rotate(-Math.PI / 2, 0 , 0);
-            hand.move(0, 0, 7);
-            callback();
-          } else {
-            cycle();
-          }
-        });
-      }
-
-      function fullShake(callback) {
-        moveDown(function() {
-          moveUp(function() {
-            moveDown(function() {
-              callback();
-            });
-          });
-        });
-      }
-
-      function moveDown(callback, limit) {
-        if (!limit) limit = 12;
-        var downCount = 0;
-        var interval = setInterval(function() {
-          hand.move(0, -1.25, 0);
-          downCount += 1;
-          if (downCount >= limit) {
-            clearInterval(interval);
-            callback();
-          }
-        }, 30);
-      }
-
-      function moveUp(callback, limit) {
-        if (!limit) limit = 24;
-        var upCount = 0;
-        var interval = setInterval(function() {
-          hand.move(0, 1.25, 0);
-          upCount += 1;
-          if (upCount >= limit) {
-            clearInterval(interval);
-            callback();
-          }
-        }, 30);
-      }
-    };
-
-    jobfairState.kneelToRecruiter = function(callback) {
-      var rotIncrement = 0.05;
-      var headYIncrement = 0.75;
-      var headZIncrement = 1.25;
-
-      var head = kevinRonald.head;
-      var kneelParts = [head, kevinRonald.torso, kevinRonald.leftArm, kevinRonald.rightArm];
-
-      cycle();
-
-      var count = 0;
-      function cycle() {
-        fullKneel(function() {
-          count += 1;
-          if (count >= 3) {
-            callback();
-          } else {
-            cycle();
-          }
-        });
-      }
-
-      function fullKneel(cb) {
-        kneelDown(function() {
-          comeBackUp(function() {
-            cb();
-          });
-        });
-      }
-
-      function kneelDown(cb) {
-        var totalRot = 0;
-        var interval = setInterval(function() {
-          for (var i = 0; i < kneelParts.length; i++) {
-            kneelParts[i].rotate(-rotIncrement, 0, 0);
-          }
-          head.move(0, -headYIncrement, -headZIncrement);
-
-          totalRot -= rotIncrement;
-          if (totalRot <= -Math.PI / 2) {
-            clearInterval(interval);
-            cb();
-          }
-        }, 30);
-      }
-
-      function comeBackUp(cb) {
-        var totalRot = 0;
-        var interval = setInterval(function() {
-          for (var i = 0; i < kneelParts.length; i++) {
-            kneelParts[i].rotate(rotIncrement, 0, 0);
-          }
-          head.move(0, headYIncrement, headZIncrement);
-
-          totalRot += rotIncrement;
-          if (totalRot >= Math.PI / 2) {
-            clearInterval(interval);
-            cb();
-          }
-        }, 30);
-      }
-    };
-
-    jobfairState.bribeRecruiter = function(callback) {
-      var recruiterPos = this.booths[this.currentBooth].recruiter.faceMesh.position;
-      var xOffset = this.currentBooth % 2 === 0 ? -20 : 14;
-      var torsoPos = kevinRonald.torso.mesh.position;
-
-      var moneys = [];
-      var phone = new Cellphone({x: torsoPos.x + this.currentBooth % 2 === 0 ? 65 : 0, y: recruiterPos.y + 20, z: recruiterPos.z});
-      phone.addTo(scene, function() {
-        addMoneys();
-        rainMoneys(function() {
-          removeMoneys();
-          phone.removeFrom(scene);
-          callback();
-        });
-      });
-
-      function addMoneys() {
-        for (var i = 0; i < 20; i++) {
-          var money = Money.create();
-          money.position.set(recruiterPos.x + xOffset + kt.randInt(15, -15), recruiterPos.y + kt.randInt(20, 8), recruiterPos.z + kt.randInt(80, 40));
-          scene.add(money);
-          moneys.push(money);
-        }
-      }
-
-      function rainMoneys(cb) {
-        var intCount = 0;
-        var moneyInterval = setInterval(function() {
-          for (var i = 0; i < moneys.length; i++) {
-            moneys[i].translateY(-0.1);
-            moneys[i].translateZ(-0.4);
-          }
-          phone.move(Math.random() - 0.5, 0, 0);
-          intCount += 1;
-          if (intCount > 250) {
-            clearInterval(moneyInterval);
-            cb();
-          }
-        }, 30);
-      }
-
-      function removeMoneys() {
-        for (var i = 0; i < moneys.length; i++) {
-          scene.remove(moneys[i]);
-        }
-      }
-    };
-
     jobfairState.ronaldPerformedAction = function(action) {
       // here would want to do UI and shit yum
       console.log('ronald performed: ' + action);
       var behaviorMap = {
-        spit: this.spitToRecruiter.bind(this),
-        handshake: this.shakeHandsWithRecruiter.bind(this),
-        kneel: this.kneelToRecruiter.bind(this),
-        bribe: this.bribeRecruiter.bind(this)
+        spit: ronaldGestures.spitToRecruiter,
+        handshake: ronaldGestures.shakeHandsWithRecruiter,
+        kneel: ronaldGestures.kneelToRecruiter,
+        bribe: ronaldGestures.bribeRecruiter
       };
 
       if (behaviorMap[action]) {
-        behaviorMap[action](showResults);
+        console.log('bribing');
+        behaviorMap[action](scene, this.booths, this.currentBooth, kevinRonald, showResults);
       } else {
         showResults();
       }
@@ -454,7 +298,7 @@ $(function() {
         if (success) {
           showSuccessfulResponse(kevinRonald.position.z + 72);
 
-          var shirt = new Shirt(null, 4, recruiterManager.companies[jobfairState.currentBooth]);
+          var shirt = new Shirt(null, null, recruiterManager.companies[jobfairState.currentBooth]);
           jobfairState.collectedTokens.push(shirt);
         }
         else {
@@ -500,43 +344,320 @@ $(function() {
     };
 
     jobfairState.endScene = function() {
-      fadeOverlay(true, function() {
+      ronaldUI.fadeOverlay(true, function() {
         var meshes = [jobfairState.ground];
         jobfairState.booths.forEach(function(booth) {
           booth.meshes.forEach(function(mesh) {
             meshes.push(mesh);
           });
         });
-        clearScene(meshes);
+        sceneUtil.clearScene(scene, meshes, [camera, mainLight]);
 
         active.jobfair = false;
         enterWeighingState();
-        fadeOverlay(false);
+        ronaldUI.fadeOverlay(false);
       });
     };
   }
 
   function enterWeighingState(tokens) {
-    flash('RONALD IS BORN');
+    var FRAMES_FOR_THROW = 150;
+
+    ronaldUI.flash('CHOOSE YOUR ROLE');
+
+    if (!tokens) {
+      tokens = [];
+      for (var i = 0; i < recruiterManager.companies.length; i++) {
+        if (Math.random() < 0.5) {
+          var company = recruiterManager.companies[i];
+          var shirt = new Shirt(null, null, company);
+          tokens.push(shirt);
+        }
+      }
+    }
+
+    if (SPEED_TO_TRASH) {
+      tokens = tokens.slice(0, 2);
+    }
+
+    console.log('tokens length: ' + tokens.length);
 
     active.ronalds = true;
     active.weighing = true;
     io.mode = io.WEIGHING;
 
-    setCameraPosition(0, 0, 0);
+    mainLight.position.set(0, 100, 0);
+    mainLight.target.position.set(0, 5, -50);
+    mainLight.intensity = 2.0;
 
-    mainLight.position.set(0, 20, 0);
-    mainLight.target.position.set(0, 5, -100);
-    mainLight.intensity = 5.0;
+    kevinRonald.moveTo(-70, 0, -140);
+    dylanRonald.moveTo(70, 0, -140);
 
-    kevinRonald.moveTo(-80, 8, -140);
-    kevinRonald.rotate(0, Math.PI/4, 0);
+    var tokenMeshes = [];
+    tokens.forEach(function(token) {
+      token.addTo(scene, function() {
+        token.moveTo((Math.random() - 0.5) * 240, Math.random() * 10 + 8, -kt.randInt(250, 140));
+        tokenMeshes.push(token.mesh);
+      });
+    });
 
-    dylanRonald.moveTo(80, 8, -140);
-    dylanRonald.rotate(0, -Math.PI/4, 0);
+    var scale = new Scale();
+    scale.addTo(scene);
+    scale.mesh.position.set(0, 45, -300);
+
+    var scaleWidth = 210; // messy
+    var leftScaleTarget = {x: scale.mesh.position.x - scaleWidth / 2, y: scale.mesh.position.y + 4, z: scale.mesh.position.z};
+    var rightScaletarget = {x: scale.mesh.position.x + scaleWidth / 2, y: scale.mesh.position.y + 4, z: scale.mesh.position.z};
+
+    var scaleText = new RonaldText({
+      phrase: 'YOU HAVE TO WEIGH YOUR JOB OPTIONS',
+      position: {x: 50, y: 75, z: -115},
+      decay: 10000000,
+      color: 0x4444ff
+    });
+    scaleText.geometry.center();
+    scaleText.addTo(scene);
+
+    weighingState.kevinRenderer = new WeighingStateRonaldRenderer('kevin');
+    weighingState.dylanRenderer = new WeighingStateRonaldRenderer('dylan');
+    weighingState.tokensDestroyed = 0;
+    weighingState.scale = scale;
 
     weighingState.render = function() {
+      var ronPos = kevinRonald.torso.mesh.position;
+      var dylPos = dylanRonald.torso.mesh.position;
+      cameraFollowState.target = {x: (ronPos.x + dylPos.x) / 2, y: 0, z: (ronPos.z + dylPos.z) / 2};
+      cameraFollowState.offset = {x: 0, y: 72, z: 150};
 
+      scaleText.render();
+
+      this.kevinRenderer.render();
+      this.dylanRenderer.render();
+    };
+
+    weighingState.ronaldPerformedThrow = function(ronaldName, direction) {
+      if (!ronaldName) ronaldName = 'kevin';
+      if (!direction) direction = 'left';
+
+      if (ronaldName === 'kevin') {
+        this.kevinRenderer.performedThrow(direction);
+      } else {
+        this.dylanRenderer.performedThrow(direction);
+      }
+    };
+
+    weighingState.beginGarbageTransition = function() {
+      console.log('beginning garbage transition');
+      scale.updateForMasses(0, 0);
+      setTimeout(function() {
+        var fallingObjects = [];
+        var multiplier = 0.1;
+        var interval = setInterval(function() {
+          scale.mesh.rotation.z += Math.random() * multiplier;
+          multiplier *= 1.015;
+          for (var i = 0; i < fallingObjects.length; i++) {
+            if (fallingObjects[i].mesh.position.y > 0 || fallingObjects[i]._keepFallingAtGround) {
+              fallingObjects[i].move(0, - (Math.random() + 0.25), 0);
+            }
+          }
+        }, 40);
+
+        function addGarbage(garbage) {
+          garbage.addTo(scene, function() {
+            garbage.rotate(0, Math.PI, 0);
+            fallingObjects.push(garbage);
+          });
+        }
+
+        function addBanana() {
+          var banana = new Garbage({x: (Math.random() - 0.5) * 240, y: Math.random() * 80 + 30, z: - (kt.randInt(350, 120))}, null, 'banana');
+          banana._keepFallingAtGround = true;
+          banana.addTo(scene, function() {
+            fallingObjects.push(banana);
+          });
+        }
+
+        function addTruck() {
+          clearInterval(interval);
+          var geometry = new THREE.BoxGeometry(175, 125, 60);
+          var material = new THREE.MeshBasicMaterial({
+            map: THREE.ImageUtils.loadTexture('/media/textures/garbage_truck.jpg'),
+            side: THREE.DoubleSide
+          });
+          var truck = new THREE.Mesh(geometry, material);
+          truck.position.set(0, 100, -300);
+          scene.add(truck);
+          var truckInterval = setInterval(function() {
+            if (truck.position.y > 4) truck.position.y -= 0.5;
+          }, 30);
+          setTimeout(function() {
+            clearInterval(truckInterval);
+            exitState(truck);
+          }, SPEED_TO_TRASH? 2000 : 10000);
+        }
+
+        function exitState(truck) {
+          ronaldUI.fadeOverlay(true, function() {
+            var lameMeshes = [scaleText, scale.mesh];
+            tokenMeshes.forEach(function(mesh) {
+              lameMeshes.push(mesh);
+            });
+            fallingObjects.forEach(function(obj) {
+              lameMeshes.push(obj.mesh);
+            });
+            sceneUtil.clearScene(scene, lameMeshes, [camera, mainLight]);
+
+            active.weighing = false;
+            enterTrashState(truck);
+            ronaldUI.fadeOverlay(false);
+          });
+        }
+
+        setTimeout(function() {
+          addGarbage(new Garbage({x: 70, y: 100, z: -170}, null, 'garbage'));
+          setTimeout(function() {
+            addGarbage(new Garbage({x: -40, y: 70, z: -130}, 8, 'garbage'));
+            setTimeout(function() {
+              var bananaCount = 0;
+              var bananaInterval = setInterval(function() {
+                addBanana();
+                bananaCount += 1;
+                if (bananaCount >= (SPEED_TO_TRASH? 5 : 40)) {
+                  clearInterval(bananaInterval);
+                  addTruck();
+                }
+              }, 900);
+            }, 3000);
+          }, SPEED_TO_TRASH? 500 : 33333);
+        }, SPEED_TO_TRASH? 500 : 6666);
+
+      }, 2500);
+    };
+
+    function WeighingStateRonaldRenderer(name) {
+      this.name = name;
+      this.ronald = name === 'kevin' ? kevinRonald : dylanRonald;
+      this.frameCount = 0;
+      this.mode = 'seeking';
+    }
+    WeighingStateRonaldRenderer.prototype.render = function() {
+      this.frameCount += 1;
+      var self = this;
+
+      var ronaldHead = this.ronald.head.mesh;
+
+      if (this.mode === 'seeking' && this.frameCount % 10 === 0) {
+        var nearest = distanceUtil.nearest(ronaldHead, tokenMeshes);
+        if (nearest.distance < 24) {
+          this.mode = 'placing';
+          this.activeTokenMesh = nearest.object;
+        }
+      }
+      else if (this.mode === 'placing') {
+        this.activeTokenMesh.position.set(ronaldHead.position.x + 2, ronaldHead.position.y - 15, ronaldHead.position.z + 5);
+      }
+      else if (this.mode === 'throwing') {
+        this.activeTokenMesh.position.x += this.throwIncrement.x;
+        this.activeTokenMesh.position.y += this.throwIncrement.y;
+        this.activeTokenMesh.position.z += this.throwIncrement.z;
+        this.activeTokenMesh.__dirtyPosition = true;
+
+        this.currentThrowFrames += 1;
+        if (this.currentThrowFrames >= FRAMES_FOR_THROW) {
+          var scaleSetter = this.throwDirection === 'left' ? scale.setLeftObject.bind(scale) : scale.setRightObject.bind(scale);
+          scaleSetter(this.activeTokenMesh);
+
+          console.log('ended throw: ' + weighingState.tokensDestroyed);
+
+          // if scale is filled with last two things
+          if (weighingState.tokensDestroyed === tokens.length - 1 && scale.numberOfObjects() == 2) {
+            self.mode = 'waitingForGarbage';
+            setTimeout(function() {
+              weighingState.beginGarbageTransition();
+            }, 1200);
+            return;
+          }
+
+          self.mode = 'waiting';
+          setTimeout(function() {
+            scale.clearLightestObject(function(lightestObject) {
+              meshGestures.sendFlying(lightestObject, {steps: 100}, function() {
+                self.mode = 'seeking';
+                weighingState.tokensDestroyed += 1;
+              });
+            });
+          }, 500);
+        }
+      }
+    };
+    WeighingStateRonaldRenderer.prototype.performedThrow = function(direction) {
+      if (this.mode !== 'placing') {
+        return;
+      }
+
+      var missingObject = scale.missingObject();
+      if (missingObject === 'left' || missingObject === 'right') {
+        direction = missingObject;
+      }
+
+      this.mode = 'throwing';
+
+      this.throwDirection = direction;
+      this.throwTarget = direction === 'left' ? leftScaleTarget : rightScaletarget;
+      this.throwIncrement = distanceUtil.positionDeltaIncrement(this.activeTokenMesh.position, this.throwTarget, FRAMES_FOR_THROW);
+      this.currentThrowFrames = 0;
+    };
+  }
+
+  function enterTrashState(truck) {
+    io.mode = io.TRASH;
+    active.trash = true;
+
+    mainLight.position.set(0, 100, 0);
+    mainLight.target.position.set(0, 5, -50);
+    mainLight.intensity = 2.0;
+
+    truck.position.set(0, 0, -30);
+    truck.rotation.y -= Math.PI / 2;
+
+    kevinRonald.moveTo(-50, 20, -100);
+    dylanRonald.moveTo(50, 20, -100);
+
+    var computerLab = skybox.create(null, '/media/textures/computer_lab.jpg');
+    scene.add(computerLab);
+
+    var computers = [];
+    var compZOffset = 20;
+    for (var i = 0; i < 100; i++) {
+      var comp = new Computer({x: (Math.random() - 0.5) * 40, y: 10, z: -(i + 1) * compZOffset});
+      computers.push(comp);
+      comp.addTo(scene);
+    }
+
+    garbageState.nextComputerToShatterIndex = 0;
+    garbageState.mode = 'waiting';
+
+    ronaldUI.flash('YOU ARE GARBAGE', 2000);
+    setTimeout(function() {
+      garbageState.mode = 'driving';
+    }, 3500);
+
+    garbageState.render = function() {
+      cameraFollowState.target = {x: truck.position.x, y: truck.position.y, z: truck.position.z};
+      cameraFollowState.offset = {x: 0, y: 40, z: 100};
+
+      if (this.mode === 'driving') {
+        var inc = 1.0;
+        truck.position.z += inc;
+        kevinRonald.move(0, 0, inc);
+        dylanRonald.move(0, 0, inc);
+
+        if (this.nextComputerToShatterIndex < computers.length &&
+            truck.position.z < (this.nextComputerToShatterIndex + 1) * -compZOffset) {
+          computers[this.nextComputerToShatterIndex].shatter();
+          this.nextComputerToShatterIndex += 1;
+        }
+      }
     };
   }
 
@@ -544,32 +665,10 @@ $(function() {
    * * * * * UTILITY * * * * *
    */
 
-  function clearScene(meshes) {
-    if (!meshes) meshes = scene.children;
-
-    for (var i = meshes.length - 1; i >= 0; i--) {
-      var obj = meshes[ i ];
-      if (obj !== camera && obj !== mainLight) {
-        scene.remove(obj);
-      }
-    }
-  }
-
   function resetRonaldPositions() {
     ronalds.forEach(function(ronald) {
       ronald.reset();
     });
-  }
-
-  function flash(text, timeout) {
-    if (!text) return;
-    if (!timeout) timeout = 275;
-
-    $('#flash').text(text);
-    $('#flash').show();
-    setTimeout(function() {
-      $('#flash').hide();
-    }, timeout);
   }
 
   function shakeCamera() {
@@ -590,60 +689,6 @@ $(function() {
     camera.position.x = x;
     camera.position.y = y;
     camera.position.z = z;
-  }
-
-  function fadeOverlay(fadein, callback, color, time) {
-    if (!color) color = 'rgb(255, 255, 255)';
-    if (!time) time = 4000;
-    if (!callback) callback = function(){};
-
-    if (fadein) {
-      $('.overlay').css('background-color', color);
-      $('.overlay').fadeIn(time, function() {
-        callback();
-      });
-    } else {
-      $('.overlay').fadeOut(time, function() {
-        callback();
-      });
-    }
-  }
-
-  function calculateGeometryThings(geometry) {
-    geometry.computeFaceNormals();
-    geometry.computeVertexNormals();
-  }
-
-  function middlePosition(p1, p2) {
-    return {x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2, z: (p1.z + p2.z) / 2};
-  }
-
-  function negrand(scalar) {
-    return (Math.random() - 0.5) * scalar;
-  }
-
-  function moveTowardsTarget(pos, target, amt) {
-    if (pos.x < target.x) {
-      pos.x += amt.x;
-    } else if (pos.x > target.x) {
-      pos.x -= amt.x;
-    }
-
-    if (pos.y < target.y) {
-      pos.y += amt.y;
-    } else if (pos.y > target.y) {
-      pos.y -= amt.y;
-    }
-
-    if (pos.z < target.z) {
-      pos.z += amt.z;
-    } else if (pos.z > target.z) {
-      pos.z -= amt.z;
-    }
-  }
-
-  function distanceMagnitude(pos1, pos2) {
-    return Math.abs(pos1.x - pos2.x) + Math.abs(pos1.y - pos2.y) + Math.abs(pos1.z - pos2.z);
   }
 
 });

@@ -46,12 +46,33 @@ module.exports.BOY = pre('chubby.js');
 
 module.exports.PHONE = pre('phone.js');
 
+/* GARBAGE */
+
+module.exports.GARBAGE_CAN = pre('garbage_can.json');
+module.exports.METAL_TRASH_CAN = pre('metal_trash_can.json');
+module.exports.LOW_POLY_TRASH_CAN = pre('low_poly_trash_can.json');
+module.exports.TRASH_ORANGE = pre('trash_orange.json');
+module.exports.TRASH_BANANA = pre('trash_banana.json');
+module.exports.CATERPILLAR = pre('caterpillar.json');
+
 /* FUNCTIONS */
 
+var loader = new THREE.JSONLoader();
+var cache = {};
 module.exports.loadModel = function(modelName, callback) {
-  var loader = new THREE.JSONLoader;
+  if (cache[modelName]) {
+    var geo = cache[modelName].geometry.clone();
+    var materials = cache[modelName].materials;
+    var clonedMaterials = [];
+    materials.forEach(function(material) {
+      clonedMaterials.push(material.clone());
+    });
+    if (callback) callback(geo, clonedMaterials);
+    return;
+  }
 
   loader.load(modelName, function (geometry, materials) {
-    callback(geometry, materials);
+    cache[modelName] = {geometry: geometry, materials: materials};
+    if (callback) callback(geometry, materials);
   });
-}
+};

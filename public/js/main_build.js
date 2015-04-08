@@ -40,7 +40,7 @@ Arm.prototype.collisonHandle = function() {
   if (this.collisionHandler) this.collisionHandler();
 }
 
-},{"./bodypart":3,"./lib/kutility":11,"./model_names":13}],2:[function(require,module,exports){
+},{"./bodypart":3,"./lib/kutility":15,"./model_names":18}],2:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 
@@ -72,7 +72,7 @@ Body.prototype.additionalInit = function() {
   }
 };
 
-},{"./bodypart":3,"./lib/kutility":11,"./model_names":13}],3:[function(require,module,exports){
+},{"./bodypart":3,"./lib/kutility":15,"./model_names":18}],3:[function(require,module,exports){
 var kt = require('./lib/kutility');
 
 var modelNames = require('./model_names');
@@ -350,7 +350,7 @@ BodyPart.prototype.additionalInit = function() {};
 BodyPart.prototype.additionalRender = function() {};
 BodyPart.prototype.collisonHandle = function() {}
 
-},{"./lib/kutility":11,"./model_names":13}],4:[function(require,module,exports){
+},{"./lib/kutility":15,"./model_names":18}],4:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 var modelNames = require('./model_names');
@@ -396,7 +396,7 @@ Phone.prototype.move = function(dx, dy, dz) {
   this.screenMesh.position.set(this.mesh.position.x - 34, this.mesh.position.y - 17.5, this.mesh.position.z - 20);
 };
 
-},{"./bodypart":3,"./lib/kutility":11,"./model_names":13}],5:[function(require,module,exports){
+},{"./bodypart":3,"./lib/kutility":15,"./model_names":18}],5:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 
@@ -601,7 +601,208 @@ function posNegRandom() {
   return (Math.random() - 0.5) * 2;
 }
 
-},{"./arm":1,"./body":2,"./hand":6,"./head":7,"./leg":10,"./lib/kutility":11,"./model_names":13}],6:[function(require,module,exports){
+},{"./arm":1,"./body":2,"./hand":10,"./head":11,"./leg":14,"./lib/kutility":15,"./model_names":18}],6:[function(require,module,exports){
+
+var kt = require('./lib/kutility');
+
+var modelNames = require('./model_names');
+
+var BodyPart = require('./bodypart');
+
+module.exports = Computer;
+
+var MAC = '/images/mac_monitor.jpg';
+var PC = '/images/pc_monitor.jpg';
+var LINUX = '/images/linux_monitor.jpg';
+
+module.exports.computerNames = [MAC, PC, LINUX];
+var computerNames = module.exports.computerNames;
+var computerIndex = 0;
+
+var allComputers = [];
+
+function Computer(startPos, scale, mass) {
+  if (!startPos) startPos = {x: 0, y: 0, z: 0};
+  this.startX = startPos.x;
+  this.startY = startPos.y;
+  this.startZ = startPos.z;
+
+  this.textureName = computerNames[computerIndex % computerNames.length];
+  computerIndex += 1;
+
+  this.scale = scale || 20;
+  this.mass = mass || 0;
+
+  this.ignoreCollisons = true;
+
+  this.meltIntensity = 0.5;
+  this.twitchIntensity = 3;
+
+  allComputers.push(this);
+}
+
+Computer.prototype = Object.create(BodyPart.prototype);
+
+Computer.prototype.createMesh = function(callback) {
+  this.geometry = new THREE.BoxGeometry(1, 0.75, 0.1);
+
+  this.material = new THREE.MeshBasicMaterial({transparent: true, opacity: 1.0});
+  this.material.map = THREE.ImageUtils.loadTexture(this.textureName);
+  this.material = Physijs.createMaterial(this.material, 0.4, 0.6);
+
+  this.mesh = new Physijs.BoxMesh(this.geometry, this.material, this.mass);
+
+  this.knockable = true;
+  this.shatterable = false;
+
+  callback();
+};
+
+Computer.prototype.becomeTransparent = function(delta, thresh, shatterAfter) {
+  var self = this;
+
+  if (!delta) delta = 0.01;
+  if (!thresh) thresh = 0.5;
+
+  var int = setInterval(function() {
+    self.material.opacity -= delta;
+    if (self.material.opacity <= thresh) {
+      clearInterval(int);
+      if (shatterAfter) {
+        self.shatterable = true;
+      }
+    }
+  }, 30);
+};
+
+function negrand(scalar, min) {
+  var r = (Math.random() - 0.5) * scalar;
+  if (r < 0) return r - min;
+  else return r + min;
+}
+
+Computer.prototype.shatter = function() {
+  if (this.shattering) {
+    return;
+  }
+  
+  this.shattering = true;
+  this.ignoreCollisons = false;
+  this.mesh.setLinearVelocity({x: negrand(36, 15), y: Math.random() * 36, z: negrand(36, 15)});
+  this.mesh.setAngularVelocity({x: negrand(36, 15), y: Math.random() * 36, z: negrand(36, 15)});
+};
+
+},{"./bodypart":3,"./lib/kutility":15,"./model_names":18}],7:[function(require,module,exports){
+
+
+module.exports.nearest = function(object, targetObjects) {
+  var nearest;
+  var minDist = 1000000000000;
+
+  for (var i = 0; i < targetObjects.length; i++) {
+    var target = targetObjects[i];
+    var dist = distanceMagnitude(object.position, target.position);
+    if (dist < minDist) {
+      minDist = dist;
+      nearest = target;
+    }
+  }
+
+  return {object: nearest, distance: minDist};
+};
+
+var distanceMagnitude = module.exports.distanceMagnitude = function(pos1, pos2) {
+  return Math.abs(pos1.x - pos2.x) + Math.abs(pos1.y - pos2.y) + Math.abs(pos1.z - pos2.z);
+};
+
+module.exports.middlePosition = function(p1, p2) {
+  return {x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2, z: (p1.z + p2.z) / 2};
+};
+
+module.exports.moveTowardsTarget = function(pos, target, amt) {
+  if (pos.x < target.x) {
+    pos.x += amt.x;
+  } else if (pos.x > target.x) {
+    pos.x -= amt.x;
+  }
+
+  if (pos.y < target.y) {
+    pos.y += amt.y;
+  } else if (pos.y > target.y) {
+    pos.y -= amt.y;
+  }
+
+  if (pos.z < target.z) {
+    pos.z += amt.z;
+  } else if (pos.z > target.z) {
+    pos.z -= amt.z;
+  }
+};
+
+module.exports.positionDeltaIncrement = function(pos1, pos2, steps) {
+  return {
+    x: (pos2.x - pos1.x) / steps,
+    y: (pos2.y - pos1.y) / steps,
+    z: (pos2.z - pos1.z) / steps
+  };
+};
+
+},{}],8:[function(require,module,exports){
+
+var modelNames = require('./model_names');
+
+var BodyPart = require('./bodypart');
+
+module.exports = Garbage;
+
+function Garbage(startPos, scale, type) {
+  if (!startPos) startPos = {x: 0, y: 0, z: 0};
+  this.startX = startPos.x;
+  this.startY = startPos.y;
+  this.startZ = startPos.z;
+
+  this.scale = scale || Math.random() * 9 + 2;
+
+  this.modelChoices = [
+    modelNames.TRASH_BANANA,
+    modelNames.GARBAGE_CAN
+  ];
+
+  this.type = type;
+  if (type === 'banana') {
+    this.specificModelName = modelNames.TRASH_BANANA;
+  } else if (type === 'garbage') {
+    this.specificModelName = modelNames.GARBAGE_CAN;
+    this.scale *= 4;
+  }
+}
+
+Garbage.prototype = Object.create(BodyPart.prototype);
+
+Garbage.prototype.createMesh = function(callback) {
+  var self = this;
+  BodyPart.prototype.createMesh.call(this, function() {
+    if (self.type === 'banana') {
+      self.materials.forEach(function(material) {
+        material.color = new THREE.Color(0xded827);
+        material.emissive = new THREE.Color(0xded827);
+        material.needsUpdate = true;
+      });
+    }
+
+    callback();
+  });
+};
+
+},{"./bodypart":3,"./model_names":18}],9:[function(require,module,exports){
+
+
+module.exports.calculateGeometryThings = function(geometry) {
+  geometry.computeFaceNormals();
+  geometry.computeVertexNormals();
+};
+
+},{}],10:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 
@@ -678,7 +879,7 @@ Hand.prototype.collisonHandle = function() {
   }
 };
 
-},{"./bodypart":3,"./lib/kutility":11,"./model_names":13}],7:[function(require,module,exports){
+},{"./bodypart":3,"./lib/kutility":15,"./model_names":18}],11:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 
@@ -723,7 +924,7 @@ Head.prototype.render = function() {
   }
 }
 
-},{"./bodypart":3,"./lib/kutility":11}],8:[function(require,module,exports){
+},{"./bodypart":3,"./lib/kutility":15}],12:[function(require,module,exports){
 
 // CONTROLS::::
 
@@ -771,6 +972,7 @@ var MIN_DISTANCE_BETWEEN_WRESTLERS = 30;
 module.exports.JOBFAIR = 1;
 module.exports.WEIGHING = 2;
 module.exports.INTERVIEW = 3;
+module.exports.TRASH = 4;
 
 module.exports.mode = module.exports.JOBFAIR;
 
@@ -1276,7 +1478,7 @@ function handsBetweenElbows(playerNum) {
   return (leftHand.x > leftElbow.x) && (rightHand.x < rightElbow.x);
 }
 
-},{}],9:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 
 var Recruiter = require('./recruiter');
 
@@ -1329,7 +1531,7 @@ function makePoster(imageURL) {
   return poster;
 }
 
-},{"./recruiter":16}],10:[function(require,module,exports){
+},{"./recruiter":21}],14:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 
@@ -1361,7 +1563,7 @@ Leg.prototype.additionalInit = function() {
   }
 };
 
-},{"./bodypart":3,"./lib/kutility":11,"./model_names":13}],11:[function(require,module,exports){
+},{"./bodypart":3,"./lib/kutility":15,"./model_names":18}],15:[function(require,module,exports){
 /* export something */
 module.exports = new Kutility;
 
@@ -1926,21 +2128,33 @@ Kutility.prototype.blur = function(el, x) {
   this.setFilter(el, cf + f);
 }
 
-},{}],12:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 
 $(function() {
 
   var kt = require('./lib/kutility');
+  var distanceUtil = require('./distance-util');
+  var geometryUtil = require('./geometry-util');
+  var sceneUtil = require('./scene-util');
+  var ronaldUI = require('./ronald-ui');
+
+  var ronaldGestures = require('./ronald-gestures');
+  var meshGestures = require('./mesh-gestures');
+
   var io = require('./io');
+
   var Character = require('./character');
   var RonaldText = require('./ronald-text');
-  var Spit = require('./spit');
-  var Money = require('./money');
-  var Cellphone = require('./cellphone');
+  var Scale = require('./scale');
   var Shirt = require('./tshirt');
+  var Garbage = require('./garbage');
+  var Computer = require('./computer');
+  var skybox = require('./skybox');
   var recruiterManager = require('./recruiter-manager');
 
   var TEST_MODE = true;
+  var START_WITH_SCALE = true;
+  var SPEED_TO_TRASH = true;
 
   /*
    * * * * * RENDERIN AND LIGHTIN * * * * *
@@ -1980,10 +2194,11 @@ $(function() {
    * * * * * STATE OBJECTS * * * * *
    */
 
-  var active = {ronalds: false, lighting: false, camera: false, jobfair: false, weighing: false};
+  var active = {ronalds: false, lighting: false, camera: false, jobfair: false, weighing: false, trash: false};
 
   var jobfairState = {};
   var weighingState = {};
+  var garbageState = {};
 
   var cameraFollowState = {
     target: null,
@@ -2001,6 +2216,8 @@ $(function() {
   dylanRonald.addTo(scene);
   var ronalds = [kevinRonald, dylanRonald];
 
+
+
   /*
    * * * * * STARTIN AND RENDERIN * * * * *
    */
@@ -2011,7 +2228,12 @@ $(function() {
       io.begin(kevinRonald, dylanRonald, camera);
     }
 
-    enterJobfairState();
+    if (START_WITH_SCALE) {
+      enterWeighingState();
+    }
+    else {
+      enterJobfairState();
+    }
 
     render();
     scene.simulate();
@@ -2024,16 +2246,16 @@ $(function() {
         resetRonaldPositions();
       }
       else if (ev.which === 97)  { // a
-        if (io.mode === io.JOBFAIR) kevinRonald.move(-1, 0, 0);
+        kevinRonald.move(-1, 0, 0);
       }
       else if (ev.which === 119)  { // w
-        if (io.mode === io.JOBFAIR) kevinRonald.move(0, 0, -1);
+        kevinRonald.move(0, 0, -1);
       }
       else if (ev.which === 100)  { // d
-        if (io.mode === io.JOBFAIR) kevinRonald.move(1, 0, 0);
+        kevinRonald.move(1, 0, 0);
       }
       else if (ev.which === 115)  { // s
-        if (io.mode === io.JOBFAIR) kevinRonald.move(0, 0, 1);
+        kevinRonald.move(0, 0, 1);
       }
       else if (ev.which === 122) { // z
         jobfairState.ronaldPerformedAction('spit');
@@ -2046,6 +2268,12 @@ $(function() {
       }
       else if (ev.which === 118) { // v
         jobfairState.ronaldPerformedAction('bribe');
+      }
+      else if (ev.which === 107) { // k
+        weighingState.ronaldPerformedThrow('kevin', 'left');
+      }
+      else if (ev.which === 108) { // l
+        weighingState.ronaldPerformedThrow('kevin', 'right');
       }
       else if (ev.which === 113) { // q
         moveCameraPosition(0, 1, 0);
@@ -2077,6 +2305,9 @@ $(function() {
     if (active.weighing) {
       weighingState.render();
     }
+    if (active.trash) {
+      garbageState.render();
+    }
 
     if (cameraFollowState.target) {
       camera.position.copy(cameraFollowState.target).add(cameraFollowState.offset);
@@ -2105,7 +2336,7 @@ $(function() {
     );
 
     jobfairState.ground_geometry = new THREE.PlaneGeometry(140, 2000);
-    calculateGeometryThings(jobfairState.ground_geometry);
+    geometryUtil.calculateGeometryThings(jobfairState.ground_geometry);
 
     jobfairState.ground = new Physijs.BoxMesh(jobfairState.ground_geometry, jobfairState.ground_material, 0);
     jobfairState.ground.rotation.x = -Math.PI / 2;
@@ -2130,6 +2361,7 @@ $(function() {
       console.log('current booth: ' + index);
       jobfairState.currentBooth = index;
       io.mode = io.INTERVIEW;
+      ronaldUI.flash(recruiterManager.companies[index]);
     }
 
     function flashOverlay(color) {
@@ -2174,205 +2406,19 @@ $(function() {
       });
     }
 
-    jobfairState.spitToRecruiter = function(callback) {
-      var spit = new Spit();
-      spit.addTo(scene);
-
-      spit.mesh.position.copy(kevinRonald.head.mesh.position);
-      spit.mesh.position.z -= 1;
-
-      var recruiterPos = jobfairState.booths[jobfairState.currentBooth].recruiter.faceMesh.position;
-      var target = {x: recruiterPos.x + (jobfairState.currentBooth % 2 === 0 ? -5 : 5), y: recruiterPos.y - 2, z: recruiterPos.z - 20};
-      var spitInterval = setInterval(function() {
-        moveTowardsTarget(spit.mesh.position, target, {x: 0.75, y: 0.25, z: 1.4});
-        if (distanceMagnitude(spit.mesh.position, target) <= 2) {
-          clearInterval(spitInterval);
-          scene.remove(spit.mesh);
-          callback();
-        }
-      }, 30);
-    };
-
-    jobfairState.shakeHandsWithRecruiter = function(callback) {
-      var hand = this.currentBooth % 2 === 0 ? kevinRonald.leftArm : kevinRonald.rightArm;
-      hand.rotate(Math.PI / 2, 0, 0);
-      hand.move(0, 0, -7);
-      cycle();
-
-      var count = 0;
-      function cycle() {
-        fullShake(function() {
-          count += 1;
-          if (count > 4) {
-            hand.rotate(-Math.PI / 2, 0 , 0);
-            hand.move(0, 0, 7);
-            callback();
-          } else {
-            cycle();
-          }
-        });
-      }
-
-      function fullShake(callback) {
-        moveDown(function() {
-          moveUp(function() {
-            moveDown(function() {
-              callback();
-            });
-          });
-        });
-      }
-
-      function moveDown(callback, limit) {
-        if (!limit) limit = 12;
-        var downCount = 0;
-        var interval = setInterval(function() {
-          hand.move(0, -1.25, 0);
-          downCount += 1;
-          if (downCount >= limit) {
-            clearInterval(interval);
-            callback();
-          }
-        }, 30);
-      }
-
-      function moveUp(callback, limit) {
-        if (!limit) limit = 24;
-        var upCount = 0;
-        var interval = setInterval(function() {
-          hand.move(0, 1.25, 0);
-          upCount += 1;
-          if (upCount >= limit) {
-            clearInterval(interval);
-            callback();
-          }
-        }, 30);
-      }
-    };
-
-    jobfairState.kneelToRecruiter = function(callback) {
-      var rotIncrement = 0.05;
-      var headYIncrement = 0.75;
-      var headZIncrement = 1.25;
-
-      var head = kevinRonald.head;
-      var kneelParts = [head, kevinRonald.torso, kevinRonald.leftArm, kevinRonald.rightArm];
-
-      cycle();
-
-      var count = 0;
-      function cycle() {
-        fullKneel(function() {
-          count += 1;
-          if (count >= 3) {
-            callback();
-          } else {
-            cycle();
-          }
-        });
-      }
-
-      function fullKneel(cb) {
-        kneelDown(function() {
-          comeBackUp(function() {
-            cb();
-          });
-        });
-      }
-
-      function kneelDown(cb) {
-        var totalRot = 0;
-        var interval = setInterval(function() {
-          for (var i = 0; i < kneelParts.length; i++) {
-            kneelParts[i].rotate(-rotIncrement, 0, 0);
-          }
-          head.move(0, -headYIncrement, -headZIncrement);
-
-          totalRot -= rotIncrement;
-          if (totalRot <= -Math.PI / 2) {
-            clearInterval(interval);
-            cb();
-          }
-        }, 30);
-      }
-
-      function comeBackUp(cb) {
-        var totalRot = 0;
-        var interval = setInterval(function() {
-          for (var i = 0; i < kneelParts.length; i++) {
-            kneelParts[i].rotate(rotIncrement, 0, 0);
-          }
-          head.move(0, headYIncrement, headZIncrement);
-
-          totalRot += rotIncrement;
-          if (totalRot >= Math.PI / 2) {
-            clearInterval(interval);
-            cb();
-          }
-        }, 30);
-      }
-    };
-
-    jobfairState.bribeRecruiter = function(callback) {
-      var recruiterPos = this.booths[this.currentBooth].recruiter.faceMesh.position;
-      var xOffset = this.currentBooth % 2 === 0 ? -20 : 14;
-      var torsoPos = kevinRonald.torso.mesh.position;
-
-      var moneys = [];
-      var phone = new Cellphone({x: torsoPos.x + this.currentBooth % 2 === 0 ? 65 : 0, y: recruiterPos.y + 20, z: recruiterPos.z});
-      phone.addTo(scene, function() {
-        addMoneys();
-        rainMoneys(function() {
-          removeMoneys();
-          phone.removeFrom(scene);
-          callback();
-        });
-      });
-
-      function addMoneys() {
-        for (var i = 0; i < 20; i++) {
-          var money = Money.create();
-          money.position.set(recruiterPos.x + xOffset + kt.randInt(15, -15), recruiterPos.y + kt.randInt(20, 8), recruiterPos.z + kt.randInt(80, 40));
-          scene.add(money);
-          moneys.push(money);
-        }
-      }
-
-      function rainMoneys(cb) {
-        var intCount = 0;
-        var moneyInterval = setInterval(function() {
-          for (var i = 0; i < moneys.length; i++) {
-            moneys[i].translateY(-0.1);
-            moneys[i].translateZ(-0.4);
-          }
-          phone.move(Math.random() - 0.5, 0, 0);
-          intCount += 1;
-          if (intCount > 250) {
-            clearInterval(moneyInterval);
-            cb();
-          }
-        }, 30);
-      }
-
-      function removeMoneys() {
-        for (var i = 0; i < moneys.length; i++) {
-          scene.remove(moneys[i]);
-        }
-      }
-    };
-
     jobfairState.ronaldPerformedAction = function(action) {
       // here would want to do UI and shit yum
       console.log('ronald performed: ' + action);
       var behaviorMap = {
-        spit: this.spitToRecruiter.bind(this),
-        handshake: this.shakeHandsWithRecruiter.bind(this),
-        kneel: this.kneelToRecruiter.bind(this),
-        bribe: this.bribeRecruiter.bind(this)
+        spit: ronaldGestures.spitToRecruiter,
+        handshake: ronaldGestures.shakeHandsWithRecruiter,
+        kneel: ronaldGestures.kneelToRecruiter,
+        bribe: ronaldGestures.bribeRecruiter
       };
 
       if (behaviorMap[action]) {
-        behaviorMap[action](showResults);
+        console.log('bribing');
+        behaviorMap[action](scene, this.booths, this.currentBooth, kevinRonald, showResults);
       } else {
         showResults();
       }
@@ -2383,7 +2429,7 @@ $(function() {
         if (success) {
           showSuccessfulResponse(kevinRonald.position.z + 72);
 
-          var shirt = new Shirt(null, 4, recruiterManager.companies[jobfairState.currentBooth]);
+          var shirt = new Shirt(null, null, recruiterManager.companies[jobfairState.currentBooth]);
           jobfairState.collectedTokens.push(shirt);
         }
         else {
@@ -2429,43 +2475,320 @@ $(function() {
     };
 
     jobfairState.endScene = function() {
-      fadeOverlay(true, function() {
+      ronaldUI.fadeOverlay(true, function() {
         var meshes = [jobfairState.ground];
         jobfairState.booths.forEach(function(booth) {
           booth.meshes.forEach(function(mesh) {
             meshes.push(mesh);
           });
         });
-        clearScene(meshes);
+        sceneUtil.clearScene(scene, meshes, [camera, mainLight]);
 
         active.jobfair = false;
         enterWeighingState();
-        fadeOverlay(false);
+        ronaldUI.fadeOverlay(false);
       });
     };
   }
 
   function enterWeighingState(tokens) {
-    flash('RONALD IS BORN');
+    var FRAMES_FOR_THROW = 150;
+
+    ronaldUI.flash('CHOOSE YOUR ROLE');
+
+    if (!tokens) {
+      tokens = [];
+      for (var i = 0; i < recruiterManager.companies.length; i++) {
+        if (Math.random() < 0.5) {
+          var company = recruiterManager.companies[i];
+          var shirt = new Shirt(null, null, company);
+          tokens.push(shirt);
+        }
+      }
+    }
+
+    if (SPEED_TO_TRASH) {
+      tokens = tokens.slice(0, 2);
+    }
+
+    console.log('tokens length: ' + tokens.length);
 
     active.ronalds = true;
     active.weighing = true;
     io.mode = io.WEIGHING;
 
-    setCameraPosition(0, 0, 0);
+    mainLight.position.set(0, 100, 0);
+    mainLight.target.position.set(0, 5, -50);
+    mainLight.intensity = 2.0;
 
-    mainLight.position.set(0, 20, 0);
-    mainLight.target.position.set(0, 5, -100);
-    mainLight.intensity = 5.0;
+    kevinRonald.moveTo(-70, 0, -140);
+    dylanRonald.moveTo(70, 0, -140);
 
-    kevinRonald.moveTo(-80, 8, -140);
-    kevinRonald.rotate(0, Math.PI/4, 0);
+    var tokenMeshes = [];
+    tokens.forEach(function(token) {
+      token.addTo(scene, function() {
+        token.moveTo((Math.random() - 0.5) * 240, Math.random() * 10 + 8, -kt.randInt(250, 140));
+        tokenMeshes.push(token.mesh);
+      });
+    });
 
-    dylanRonald.moveTo(80, 8, -140);
-    dylanRonald.rotate(0, -Math.PI/4, 0);
+    var scale = new Scale();
+    scale.addTo(scene);
+    scale.mesh.position.set(0, 45, -300);
+
+    var scaleWidth = 210; // messy
+    var leftScaleTarget = {x: scale.mesh.position.x - scaleWidth / 2, y: scale.mesh.position.y + 4, z: scale.mesh.position.z};
+    var rightScaletarget = {x: scale.mesh.position.x + scaleWidth / 2, y: scale.mesh.position.y + 4, z: scale.mesh.position.z};
+
+    var scaleText = new RonaldText({
+      phrase: 'YOU HAVE TO WEIGH YOUR JOB OPTIONS',
+      position: {x: 50, y: 75, z: -115},
+      decay: 10000000,
+      color: 0x4444ff
+    });
+    scaleText.geometry.center();
+    scaleText.addTo(scene);
+
+    weighingState.kevinRenderer = new WeighingStateRonaldRenderer('kevin');
+    weighingState.dylanRenderer = new WeighingStateRonaldRenderer('dylan');
+    weighingState.tokensDestroyed = 0;
+    weighingState.scale = scale;
 
     weighingState.render = function() {
+      var ronPos = kevinRonald.torso.mesh.position;
+      var dylPos = dylanRonald.torso.mesh.position;
+      cameraFollowState.target = {x: (ronPos.x + dylPos.x) / 2, y: 0, z: (ronPos.z + dylPos.z) / 2};
+      cameraFollowState.offset = {x: 0, y: 72, z: 150};
 
+      scaleText.render();
+
+      this.kevinRenderer.render();
+      this.dylanRenderer.render();
+    };
+
+    weighingState.ronaldPerformedThrow = function(ronaldName, direction) {
+      if (!ronaldName) ronaldName = 'kevin';
+      if (!direction) direction = 'left';
+
+      if (ronaldName === 'kevin') {
+        this.kevinRenderer.performedThrow(direction);
+      } else {
+        this.dylanRenderer.performedThrow(direction);
+      }
+    };
+
+    weighingState.beginGarbageTransition = function() {
+      console.log('beginning garbage transition');
+      scale.updateForMasses(0, 0);
+      setTimeout(function() {
+        var fallingObjects = [];
+        var multiplier = 0.1;
+        var interval = setInterval(function() {
+          scale.mesh.rotation.z += Math.random() * multiplier;
+          multiplier *= 1.015;
+          for (var i = 0; i < fallingObjects.length; i++) {
+            if (fallingObjects[i].mesh.position.y > 0 || fallingObjects[i]._keepFallingAtGround) {
+              fallingObjects[i].move(0, - (Math.random() + 0.25), 0);
+            }
+          }
+        }, 40);
+
+        function addGarbage(garbage) {
+          garbage.addTo(scene, function() {
+            garbage.rotate(0, Math.PI, 0);
+            fallingObjects.push(garbage);
+          });
+        }
+
+        function addBanana() {
+          var banana = new Garbage({x: (Math.random() - 0.5) * 240, y: Math.random() * 80 + 30, z: - (kt.randInt(350, 120))}, null, 'banana');
+          banana._keepFallingAtGround = true;
+          banana.addTo(scene, function() {
+            fallingObjects.push(banana);
+          });
+        }
+
+        function addTruck() {
+          clearInterval(interval);
+          var geometry = new THREE.BoxGeometry(175, 125, 60);
+          var material = new THREE.MeshBasicMaterial({
+            map: THREE.ImageUtils.loadTexture('/media/textures/garbage_truck.jpg'),
+            side: THREE.DoubleSide
+          });
+          var truck = new THREE.Mesh(geometry, material);
+          truck.position.set(0, 100, -300);
+          scene.add(truck);
+          var truckInterval = setInterval(function() {
+            if (truck.position.y > 4) truck.position.y -= 0.5;
+          }, 30);
+          setTimeout(function() {
+            clearInterval(truckInterval);
+            exitState(truck);
+          }, SPEED_TO_TRASH? 2000 : 10000);
+        }
+
+        function exitState(truck) {
+          ronaldUI.fadeOverlay(true, function() {
+            var lameMeshes = [scaleText, scale.mesh];
+            tokenMeshes.forEach(function(mesh) {
+              lameMeshes.push(mesh);
+            });
+            fallingObjects.forEach(function(obj) {
+              lameMeshes.push(obj.mesh);
+            });
+            sceneUtil.clearScene(scene, lameMeshes, [camera, mainLight]);
+
+            active.weighing = false;
+            enterTrashState(truck);
+            ronaldUI.fadeOverlay(false);
+          });
+        }
+
+        setTimeout(function() {
+          addGarbage(new Garbage({x: 70, y: 100, z: -170}, null, 'garbage'));
+          setTimeout(function() {
+            addGarbage(new Garbage({x: -40, y: 70, z: -130}, 8, 'garbage'));
+            setTimeout(function() {
+              var bananaCount = 0;
+              var bananaInterval = setInterval(function() {
+                addBanana();
+                bananaCount += 1;
+                if (bananaCount >= (SPEED_TO_TRASH? 5 : 40)) {
+                  clearInterval(bananaInterval);
+                  addTruck();
+                }
+              }, 900);
+            }, 3000);
+          }, SPEED_TO_TRASH? 500 : 33333);
+        }, SPEED_TO_TRASH? 500 : 6666);
+
+      }, 2500);
+    };
+
+    function WeighingStateRonaldRenderer(name) {
+      this.name = name;
+      this.ronald = name === 'kevin' ? kevinRonald : dylanRonald;
+      this.frameCount = 0;
+      this.mode = 'seeking';
+    }
+    WeighingStateRonaldRenderer.prototype.render = function() {
+      this.frameCount += 1;
+      var self = this;
+
+      var ronaldHead = this.ronald.head.mesh;
+
+      if (this.mode === 'seeking' && this.frameCount % 10 === 0) {
+        var nearest = distanceUtil.nearest(ronaldHead, tokenMeshes);
+        if (nearest.distance < 24) {
+          this.mode = 'placing';
+          this.activeTokenMesh = nearest.object;
+        }
+      }
+      else if (this.mode === 'placing') {
+        this.activeTokenMesh.position.set(ronaldHead.position.x + 2, ronaldHead.position.y - 15, ronaldHead.position.z + 5);
+      }
+      else if (this.mode === 'throwing') {
+        this.activeTokenMesh.position.x += this.throwIncrement.x;
+        this.activeTokenMesh.position.y += this.throwIncrement.y;
+        this.activeTokenMesh.position.z += this.throwIncrement.z;
+        this.activeTokenMesh.__dirtyPosition = true;
+
+        this.currentThrowFrames += 1;
+        if (this.currentThrowFrames >= FRAMES_FOR_THROW) {
+          var scaleSetter = this.throwDirection === 'left' ? scale.setLeftObject.bind(scale) : scale.setRightObject.bind(scale);
+          scaleSetter(this.activeTokenMesh);
+
+          console.log('ended throw: ' + weighingState.tokensDestroyed);
+
+          // if scale is filled with last two things
+          if (weighingState.tokensDestroyed === tokens.length - 1 && scale.numberOfObjects() == 2) {
+            self.mode = 'waitingForGarbage';
+            setTimeout(function() {
+              weighingState.beginGarbageTransition();
+            }, 1200);
+            return;
+          }
+
+          self.mode = 'waiting';
+          setTimeout(function() {
+            scale.clearLightestObject(function(lightestObject) {
+              meshGestures.sendFlying(lightestObject, {steps: 100}, function() {
+                self.mode = 'seeking';
+                weighingState.tokensDestroyed += 1;
+              });
+            });
+          }, 500);
+        }
+      }
+    };
+    WeighingStateRonaldRenderer.prototype.performedThrow = function(direction) {
+      if (this.mode !== 'placing') {
+        return;
+      }
+
+      var missingObject = scale.missingObject();
+      if (missingObject === 'left' || missingObject === 'right') {
+        direction = missingObject;
+      }
+
+      this.mode = 'throwing';
+
+      this.throwDirection = direction;
+      this.throwTarget = direction === 'left' ? leftScaleTarget : rightScaletarget;
+      this.throwIncrement = distanceUtil.positionDeltaIncrement(this.activeTokenMesh.position, this.throwTarget, FRAMES_FOR_THROW);
+      this.currentThrowFrames = 0;
+    };
+  }
+
+  function enterTrashState(truck) {
+    io.mode = io.TRASH;
+    active.trash = true;
+
+    mainLight.position.set(0, 100, 0);
+    mainLight.target.position.set(0, 5, -50);
+    mainLight.intensity = 2.0;
+
+    truck.position.set(0, 0, -30);
+    truck.rotation.y -= Math.PI / 2;
+
+    kevinRonald.moveTo(-50, 20, -100);
+    dylanRonald.moveTo(50, 20, -100);
+
+    var computerLab = skybox.create(null, '/media/textures/computer_lab.jpg');
+    scene.add(computerLab);
+
+    var computers = [];
+    var compZOffset = 20;
+    for (var i = 0; i < 100; i++) {
+      var comp = new Computer({x: (Math.random() - 0.5) * 40, y: 10, z: -(i + 1) * compZOffset});
+      computers.push(comp);
+      comp.addTo(scene);
+    }
+
+    garbageState.nextComputerToShatterIndex = 0;
+    garbageState.mode = 'waiting';
+
+    ronaldUI.flash('YOU ARE GARBAGE', 2000);
+    setTimeout(function() {
+      garbageState.mode = 'driving';
+    }, 3500);
+
+    garbageState.render = function() {
+      cameraFollowState.target = {x: truck.position.x, y: truck.position.y, z: truck.position.z};
+      cameraFollowState.offset = {x: 0, y: 40, z: 100};
+
+      if (this.mode === 'driving') {
+        var inc = 1.0;
+        truck.position.z += inc;
+        kevinRonald.move(0, 0, inc);
+        dylanRonald.move(0, 0, inc);
+
+        if (this.nextComputerToShatterIndex < computers.length &&
+            truck.position.z < (this.nextComputerToShatterIndex + 1) * -compZOffset) {
+          computers[this.nextComputerToShatterIndex].shatter();
+          this.nextComputerToShatterIndex += 1;
+        }
+      }
     };
   }
 
@@ -2473,32 +2796,10 @@ $(function() {
    * * * * * UTILITY * * * * *
    */
 
-  function clearScene(meshes) {
-    if (!meshes) meshes = scene.children;
-
-    for (var i = meshes.length - 1; i >= 0; i--) {
-      var obj = meshes[ i ];
-      if (obj !== camera && obj !== mainLight) {
-        scene.remove(obj);
-      }
-    }
-  }
-
   function resetRonaldPositions() {
     ronalds.forEach(function(ronald) {
       ronald.reset();
     });
-  }
-
-  function flash(text, timeout) {
-    if (!text) return;
-    if (!timeout) timeout = 275;
-
-    $('#flash').text(text);
-    $('#flash').show();
-    setTimeout(function() {
-      $('#flash').hide();
-    }, timeout);
   }
 
   function shakeCamera() {
@@ -2521,63 +2822,35 @@ $(function() {
     camera.position.z = z;
   }
 
-  function fadeOverlay(fadein, callback, color, time) {
-    if (!color) color = 'rgb(255, 255, 255)';
-    if (!time) time = 4000;
-    if (!callback) callback = function(){};
-
-    if (fadein) {
-      $('.overlay').css('background-color', color);
-      $('.overlay').fadeIn(time, function() {
-        callback();
-      });
-    } else {
-      $('.overlay').fadeOut(time, function() {
-        callback();
-      });
-    }
-  }
-
-  function calculateGeometryThings(geometry) {
-    geometry.computeFaceNormals();
-    geometry.computeVertexNormals();
-  }
-
-  function middlePosition(p1, p2) {
-    return {x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2, z: (p1.z + p2.z) / 2};
-  }
-
-  function negrand(scalar) {
-    return (Math.random() - 0.5) * scalar;
-  }
-
-  function moveTowardsTarget(pos, target, amt) {
-    if (pos.x < target.x) {
-      pos.x += amt.x;
-    } else if (pos.x > target.x) {
-      pos.x -= amt.x;
-    }
-
-    if (pos.y < target.y) {
-      pos.y += amt.y;
-    } else if (pos.y > target.y) {
-      pos.y -= amt.y;
-    }
-
-    if (pos.z < target.z) {
-      pos.z += amt.z;
-    } else if (pos.z > target.z) {
-      pos.z -= amt.z;
-    }
-  }
-
-  function distanceMagnitude(pos1, pos2) {
-    return Math.abs(pos1.x - pos2.x) + Math.abs(pos1.y - pos2.y) + Math.abs(pos1.z - pos2.z);
-  }
-
 });
 
-},{"./cellphone":4,"./character":5,"./io":8,"./lib/kutility":11,"./money":14,"./recruiter-manager":15,"./ronald-text":17,"./spit":18,"./tshirt":19}],13:[function(require,module,exports){
+},{"./character":5,"./computer":6,"./distance-util":7,"./garbage":8,"./geometry-util":9,"./io":12,"./lib/kutility":15,"./mesh-gestures":17,"./recruiter-manager":20,"./ronald-gestures":22,"./ronald-text":23,"./ronald-ui":24,"./scale":25,"./scene-util":26,"./skybox":27,"./tshirt":29}],17:[function(require,module,exports){
+
+
+module.exports.sendFlying = function(mesh, options, callback) {
+  if (!mesh) {
+    if (callback) callback();
+    return;
+  }
+
+  var delta = options.delta || {x: 1.2 * (Math.random() - 0.5), y: Math.random() * 0.2, z: -2 * (Math.random() + 0.5)};
+
+  var count = 0;
+  var interval = setInterval(function() {
+    mesh.position.x += delta.x;
+    mesh.position.y += delta.y;
+    mesh.position.z += delta.z;
+    mesh.__dirtyPosition = true;
+
+    count += 1;
+    if (count >= options.steps) {
+      clearInterval(interval);
+      if (callback) callback();
+    }
+  }, 25);
+};
+
+},{}],18:[function(require,module,exports){
 
 var prefix = '/js/models/';
 
@@ -2626,17 +2899,38 @@ module.exports.BOY = pre('chubby.js');
 
 module.exports.PHONE = pre('phone.js');
 
+/* GARBAGE */
+
+module.exports.GARBAGE_CAN = pre('garbage_can.json');
+module.exports.METAL_TRASH_CAN = pre('metal_trash_can.json');
+module.exports.LOW_POLY_TRASH_CAN = pre('low_poly_trash_can.json');
+module.exports.TRASH_ORANGE = pre('trash_orange.json');
+module.exports.TRASH_BANANA = pre('trash_banana.json');
+module.exports.CATERPILLAR = pre('caterpillar.json');
+
 /* FUNCTIONS */
 
+var loader = new THREE.JSONLoader();
+var cache = {};
 module.exports.loadModel = function(modelName, callback) {
-  var loader = new THREE.JSONLoader;
+  if (cache[modelName]) {
+    var geo = cache[modelName].geometry.clone();
+    var materials = cache[modelName].materials;
+    var clonedMaterials = [];
+    materials.forEach(function(material) {
+      clonedMaterials.push(material.clone());
+    });
+    if (callback) callback(geo, clonedMaterials);
+    return;
+  }
 
   loader.load(modelName, function (geometry, materials) {
-    callback(geometry, materials);
+    cache[modelName] = {geometry: geometry, materials: materials};
+    if (callback) callback(geometry, materials);
   });
-}
+};
 
-},{}],14:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 
 module.exports.create = function() {
   var geometry = new THREE.BoxGeometry(8, 3.5, 0.8);
@@ -2646,7 +2940,7 @@ module.exports.create = function() {
   return new THREE.Mesh(geometry, material);
 };
 
-},{}],15:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 
 var JobBooth = require('./job-booth');
 
@@ -2679,7 +2973,7 @@ module.exports.getRecruiterImage = function(company) {
 };
 
 module.exports.getCompanyShirt = function(company) {
-  return '/media/tshirts/' + company + '.jpg';
+  return '/media/shirts/' + company + '.jpg';
 };
 
 var riddles = {};
@@ -2689,7 +2983,7 @@ module.exports.actionIsSuccessful = function(action, boothIndex) {
 };
 
 module.exports.distanceBetweenBooths = 400;
-module.exports.closeToRecruiterDistance = 120;
+module.exports.closeToRecruiterDistance = 95;
 
 module.exports.createBooths = function(scene) {
   var booths = [];
@@ -2720,7 +3014,7 @@ module.exports.boothIndexForZ = function(z) {
   return Math.floor(Math.max(pos - module.exports.closeToRecruiterDistance, 0) / module.exports.distanceBetweenBooths);
 };
 
-},{"./job-booth":9}],16:[function(require,module,exports){
+},{"./job-booth":13}],21:[function(require,module,exports){
 
 // requirements
 var mn = require('./model_names');
@@ -2876,7 +3170,202 @@ Recruiter.prototype.updateFaceImage = function(image) {
   this.faceMaterial.needsUpdate = true;
 };
 
-},{"./model_names":13}],17:[function(require,module,exports){
+},{"./model_names":18}],22:[function(require,module,exports){
+
+var kt = require('./lib/kutility');
+var distanceUtil = require('./distance-util');
+var Cellphone = require('./cellphone');
+var Money = require('./money');
+var Spit = require('./spit');
+
+module.exports.spitToRecruiter = function(scene, booths, currentBooth, kevinRonald, callback) {
+  var spit = new Spit();
+  spit.addTo(scene);
+
+  spit.mesh.position.copy(kevinRonald.head.mesh.position);
+  spit.mesh.position.z -= 1;
+
+  var recruiterPos = booths[currentBooth].recruiter.faceMesh.position;
+  var target = {x: recruiterPos.x + (currentBooth % 2 === 0 ? -5 : 5), y: recruiterPos.y - 2, z: recruiterPos.z - 20};
+  var spitInterval = setInterval(function() {
+    distanceUtil.moveTowardsTarget(spit.mesh.position, target, {x: 0.75, y: 0.25, z: 1.4});
+    if (distanceUtil.distanceMagnitude(spit.mesh.position, target) <= 2) {
+      clearInterval(spitInterval);
+      scene.remove(spit.mesh);
+      callback();
+    }
+  }, 30);
+};
+
+module.exports.shakeHandsWithRecruiter = function(scene, booths, currentBooth, kevinRonald, callback) {
+  var hand = currentBooth % 2 === 0 ? kevinRonald.leftArm : kevinRonald.rightArm;
+  hand.rotate(Math.PI / 2, 0, 0);
+  hand.move(0, 0, -7);
+  cycle();
+
+  var count = 0;
+  function cycle() {
+    fullShake(function() {
+      count += 1;
+      if (count > 4) {
+        hand.rotate(-Math.PI / 2, 0 , 0);
+        hand.move(0, 0, 7);
+        callback();
+      } else {
+        cycle();
+      }
+    });
+  }
+
+  function fullShake(callback) {
+    moveDown(function() {
+      moveUp(function() {
+        moveDown(function() {
+          callback();
+        });
+      });
+    });
+  }
+
+  function moveDown(callback, limit) {
+    if (!limit) limit = 12;
+    var downCount = 0;
+    var interval = setInterval(function() {
+      hand.move(0, -1.25, 0);
+      downCount += 1;
+      if (downCount >= limit) {
+        clearInterval(interval);
+        callback();
+      }
+    }, 30);
+  }
+
+  function moveUp(callback, limit) {
+    if (!limit) limit = 24;
+    var upCount = 0;
+    var interval = setInterval(function() {
+      hand.move(0, 1.25, 0);
+      upCount += 1;
+      if (upCount >= limit) {
+        clearInterval(interval);
+        callback();
+      }
+    }, 30);
+  }
+};
+
+module.exports.kneelToRecruiter = function(scene, booths, currentBooth, kevinRonald, callback) {
+  var rotIncrement = 0.05;
+  var headYIncrement = 0.75;
+  var headZIncrement = 1.25;
+
+  var head = kevinRonald.head;
+  var kneelParts = [head, kevinRonald.torso, kevinRonald.leftArm, kevinRonald.rightArm];
+
+  cycle();
+
+  var count = 0;
+  function cycle() {
+    fullKneel(function() {
+      count += 1;
+      if (count >= 3) {
+        callback();
+      } else {
+        cycle();
+      }
+    });
+  }
+
+  function fullKneel(cb) {
+    kneelDown(function() {
+      comeBackUp(function() {
+        cb();
+      });
+    });
+  }
+
+  function kneelDown(cb) {
+    var totalRot = 0;
+    var interval = setInterval(function() {
+      for (var i = 0; i < kneelParts.length; i++) {
+        kneelParts[i].rotate(-rotIncrement, 0, 0);
+      }
+      head.move(0, -headYIncrement, -headZIncrement);
+
+      totalRot -= rotIncrement;
+      if (totalRot <= -Math.PI / 2) {
+        clearInterval(interval);
+        cb();
+      }
+    }, 30);
+  }
+
+  function comeBackUp(cb) {
+    var totalRot = 0;
+    var interval = setInterval(function() {
+      for (var i = 0; i < kneelParts.length; i++) {
+        kneelParts[i].rotate(rotIncrement, 0, 0);
+      }
+      head.move(0, headYIncrement, headZIncrement);
+
+      totalRot += rotIncrement;
+      if (totalRot >= Math.PI / 2) {
+        clearInterval(interval);
+        cb();
+      }
+    }, 30);
+  }
+};
+
+module.exports.bribeRecruiter = function(scene, booths, currentBooth, kevinRonald, callback) {
+  var recruiterPos = booths[currentBooth].recruiter.faceMesh.position;
+  var xOffset = currentBooth % 2 === 0 ? -20 : 14;
+  var torsoPos = kevinRonald.torso.mesh.position;
+
+  var moneys = [];
+  var phone = new Cellphone({x: torsoPos.x + currentBooth % 2 === 0 ? 65 : 0, y: recruiterPos.y + 20, z: recruiterPos.z});
+  phone.addTo(scene, function() {
+    addMoneys();
+    rainMoneys(function() {
+      removeMoneys();
+      phone.removeFrom(scene);
+      callback();
+    });
+  });
+
+  function addMoneys() {
+    for (var i = 0; i < 20; i++) {
+      var money = Money.create();
+      money.position.set(recruiterPos.x + xOffset + kt.randInt(15, -15), recruiterPos.y + kt.randInt(20, 8), recruiterPos.z + kt.randInt(80, 40));
+      scene.add(money);
+      moneys.push(money);
+    }
+  }
+
+  function rainMoneys(cb) {
+    var intCount = 0;
+    var moneyInterval = setInterval(function() {
+      for (var i = 0; i < moneys.length; i++) {
+        moneys[i].translateY(-0.1);
+        moneys[i].translateZ(-0.4);
+      }
+      phone.move(Math.random() - 0.5, 0, 0);
+      intCount += 1;
+      if (intCount > 250) {
+        clearInterval(moneyInterval);
+        cb();
+      }
+    }, 30);
+  }
+
+  function removeMoneys() {
+    for (var i = 0; i < moneys.length; i++) {
+      scene.remove(moneys[i]);
+    }
+  }
+};
+
+},{"./cellphone":4,"./distance-util":7,"./lib/kutility":15,"./money":19,"./spit":28}],23:[function(require,module,exports){
 var kt = require('./lib/kutility');
 
 module.exports = RonaldText;
@@ -2974,7 +3463,294 @@ RonaldText.prototype.addTo = function(scene, addCallback, decayCallback) {
   }, this.decay);
 };
 
-},{"./lib/kutility":11}],18:[function(require,module,exports){
+},{"./lib/kutility":15}],24:[function(require,module,exports){
+
+module.exports.flash = function(text, timeout) {
+  if (!text) return;
+  if (!timeout) timeout = 275;
+
+  $('#flash').text(text);
+  $('#flash').show();
+  setTimeout(function() {
+    $('#flash').hide();
+  }, timeout);
+};
+
+module.exports.fadeOverlay = function(fadein, callback, color, time) {
+  if (!color) color = 'rgb(255, 255, 255)';
+  if (!time) time = 4000;
+  if (!callback) callback = function(){};
+
+  if (fadein) {
+    $('.overlay').css('background-color', color);
+    $('.overlay').fadeIn(time, function() {
+      callback();
+    });
+  } else {
+    $('.overlay').fadeOut(time, function() {
+      callback();
+    });
+  }
+};
+
+},{}],25:[function(require,module,exports){
+
+module.exports = Scale;
+
+function Scale(options) {
+  if (!options) options = {};
+
+  var material = new THREE.MeshBasicMaterial({
+    color: options.color || 0xe9dc45
+  });
+  var geometry = new THREE.BoxGeometry(210, 5, 15);
+  var scale = new THREE.Mesh(geometry, material);
+
+  var baseMaterial = new THREE.MeshBasicMaterial({
+    color: options.baseColor || 0x000000
+  });
+  var baseGeometry = new THREE.TetrahedronGeometry(10);
+  var baseMesh = new THREE.Mesh(baseGeometry, baseMaterial);
+
+  scale.add(baseMesh);
+  baseMesh.position.set(0, -10, 0);
+  baseMesh.rotation.z -= Math.PI / 4;
+
+  this.mesh = scale;
+  this.baseMesh = baseMesh;
+  this.leftObject = null;
+  this.rightObject = null;
+}
+
+Scale.prototype.addTo = function(scene) {
+  scene.add(this.mesh);
+};
+
+Scale.prototype.setLeftObject = function(obj) {
+  if (obj) {
+    this.mesh.add(obj);
+    obj.position.set(-105, 5, 0);
+  }
+
+  this.leftObject = obj;
+  this.didSetObject();
+};
+
+Scale.prototype.setRightObject = function(obj) {
+  if (obj) {
+    this.mesh.add(obj);
+    obj.position.set(105, 5, 0);
+  }
+
+  this.rightObject = obj;
+  this.didSetObject();
+};
+
+Scale.prototype.didSetObject = function() {
+  var leftMass = this.leftObject ? this.leftObject.mass : -Math.random() * 1000 - 1000;
+  var rightMass = this.rightObject ? this.rightObject.mass : -Math.random() * 1000 - 1000;
+  this.updateForMasses(leftMass, rightMass);
+};
+
+Scale.prototype.numberOfObjects = function() {
+  var count = 0;
+  if (this.leftObject) count += 1;
+  if (this.rightObject) count += 1;
+  return count;
+};
+
+Scale.prototype.missingObject = function() {
+  if (this.numberOfObjects() === 2) {
+    return 'both';
+  }
+
+  if (!this.leftObject) {
+    return 'left';
+  }
+  else if (!this.rightObject) {
+    return 'right';
+  }
+
+  return null;
+};
+
+Scale.prototype.lightestObject = function() {
+  if (this.leftObject.mass < this.rightObject.mass) {
+    return this.leftObject;
+  }
+
+  return this.rightObject;
+};
+
+Scale.prototype.clearLightestObject = function(callback) {
+  if (this.numberOfObjects() !== 2) {
+    callback(null);
+    return;
+  }
+
+  var self = this;
+  var obj = this.lightestObject();
+  var isLeft = obj === this.leftObject;
+  var flame = addFlame();
+
+  var alphaInterval = setInterval(function() {
+    obj.material.opacity -= 0.01;
+    flame.material.opacity += 0.01;
+    if (obj.material.opacity <= 0.18) {
+      clearInterval(alphaInterval);
+      igniteFlame();
+    }
+  }, 20);
+
+  function igniteFlame() {
+    var interval = setInterval(function() {
+      flame.material.opacity -= 0.0075;
+      flame.position.x += (Math.random() - 0.5);
+      flame.position.y += (Math.random() - 0.5);
+      flame.position.z += (Math.random() - 0.5);
+
+      if (flame.material.opacity <= 0.12) {
+        clearInterval(interval);
+        self.mesh.remove(flame);
+        if (isLeft) {
+          self.setLeftObject(null);
+        } else {
+          self.setRightObject(null);
+        }
+        callback(obj);
+      }
+    }, 20);
+  }
+
+  function addFlame() {
+    var flame = new THREE.Mesh(
+      new THREE.PlaneGeometry(20, 20),
+      new THREE.MeshBasicMaterial({
+        map: THREE.ImageUtils.loadTexture('/media/textures/flame.jpg'),
+        transparent: true,
+        opacity: 0.0
+      })
+    );
+    self.mesh.add(flame);
+
+    flame.position.copy(obj.position);
+    flame.position.z -= 5;
+
+    return flame;
+  }
+};
+
+Scale.prototype.updateForMasses = function(leftMass, rightMass) {
+  if (leftMass < rightMass) {
+    this.rotateAnimated(-Math.PI / 12);
+  }
+  else if (leftMass > rightMass) {
+    this.rotateAnimated(Math.PI / 12);
+  }
+  else {
+    this.rotateAnimated(0);
+  }
+};
+
+Scale.prototype.rotateAnimated = function(rz, steps) {
+  if (!steps) steps = 60;
+
+  var mesh = this.mesh;
+  var diff = (rz - mesh.rotation.z) / steps;
+
+  var count = 0;
+  rot();
+  function rot() {
+    if (count < steps) {
+      mesh.rotation.z += diff;
+      count += 1;
+      setTimeout(rot, 20);
+    }
+  }
+};
+
+},{}],26:[function(require,module,exports){
+
+module.exports.clearScene = function(scene, meshes, exemptions) {
+  if (!meshes) meshes = scene.children;
+
+  for (var i = meshes.length - 1; i >= 0; i--) {
+    var obj = meshes[ i ];
+    if (exemptions.indexOf(obj) === -1) {
+      scene.remove(obj);
+    }
+  }
+};
+
+},{}],27:[function(require,module,exports){
+
+var kt = require('./lib/kutility');
+
+var girlRoomPath = '/images/girl_room.jpg';
+
+function cubify(url) {
+  return [url, url, url, url, url, url];
+}
+
+function makeCubemap(textureURL, repeatX, repeatY) {
+  if (!textureURL) return;
+  if (!repeatX) repeatX = 4;
+  if (!repeatY) repeatY = 4;
+
+  var textureCube = cubify(textureURL);
+
+  var cubemap = THREE.ImageUtils.loadTextureCube(textureCube); // load textures
+  cubemap.format = THREE.RGBFormat;
+  cubemap.wrapS = THREE.RepeatWrapping;
+  cubemap.wrapT = THREE.RepeatWrapping;
+  cubemap.repeat.set(repeatX, repeatY);
+
+  return cubemap;
+}
+
+function makeShader(cubemap) {
+  var shader = THREE.ShaderLib['cube']; // init cube shader from built-in lib
+  shader.uniforms['tCube'].value = cubemap; // apply textures to shader
+  return shader;
+}
+
+function skyboxMaterial(textureURL) {
+  var cubemap = makeCubemap(textureURL);
+  var shader = makeShader(cubemap);
+
+  return new THREE.ShaderMaterial({
+    fragmentShader: shader.fragmentShader,
+    vertexShader: shader.vertexShader,
+    uniforms: shader.uniforms,
+    depthWrite: false,
+    side: THREE.BackSide,
+    opacity: 0.5
+  });
+}
+
+module.exports.create = function(size, textureURL) {
+  if (!size) size = {x: 1000, y: 1000, z: 1000};
+  if (!textureURL) textureURL = girlRoomPath;
+
+  var geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
+  var material = skyboxMaterial(textureURL);
+  return new THREE.Mesh(geometry, material);
+}
+
+module.exports.blocker = function(size) {
+  if (!size) size = {x: 19500, y: 19500, z: 19500};
+
+  var geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
+  var material = new THREE.MeshBasicMaterial({
+      color: 0x000000
+    , side: THREE.DoubleSide
+    , opacity: 1.0
+    , transparent: true
+  });
+  return new THREE.Mesh(geometry, material);
+}
+
+},{"./lib/kutility":15}],28:[function(require,module,exports){
 
 module.exports = Spit;
 
@@ -3003,7 +3779,7 @@ Spit.prototype.addTo = function(scene) {
   scene.add(this.mesh);
 };
 
-},{}],19:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 
 var BodyPart = require('./bodypart');
 var recruiterManager = require('./recruiter-manager');
@@ -3016,7 +3792,7 @@ function Shirt(startPos, scale, company) {
   this.startY = startPos.y;
   this.startZ = startPos.z;
 
-  this.scale = scale || 2;
+  this.scale = scale || 15;
 
   this.company = company || 'facebook';
 }
@@ -3025,19 +3801,22 @@ Shirt.prototype = Object.create(BodyPart.prototype);
 
 Shirt.prototype.createMesh = function(callback) {
   if (this.mass === undefined) {
-    this.mass = 20;
+    this.mass = Math.random() * 20 + 5;
   }
 
   var texture = THREE.ImageUtils.loadTexture(recruiterManager.getCompanyShirt(this.company));
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
 
-  var material = Physijs.createMaterial(new THREE.MeshBasicMaterial({map: texture}), 0.4, 0.6);
-  var geometry = new THREE.BoxGeometry(1, 2.5, 0.25);
-  var mesh = new Physijs.ConvexMesh(geometry, material, this.mass);
+  this.material = Physijs.createMaterial(new THREE.MeshBasicMaterial({
+    map: texture,
+    transparent: true,
+    opacity: 1.0
+  }), 0.4, 0.6);
+  this.geometry = new THREE.BoxGeometry(1, 2.5, 0.25);
+  this.mesh = new Physijs.ConvexMesh(this.geometry, this.material, this.mass);
 
-  this.mesh = mesh;
   callback();
 };
 
-},{"./bodypart":3,"./recruiter-manager":15}]},{},[12]);
+},{"./bodypart":3,"./recruiter-manager":20}]},{},[16]);

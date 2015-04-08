@@ -45,6 +45,7 @@ var MIN_DISTANCE_BETWEEN_WRESTLERS = 30;
 module.exports.JOBFAIR = 1;
 module.exports.WEIGHING = 2;
 module.exports.INTERVIEW = 3;
+module.exports.TRASH = 4;
 
 module.exports.mode = module.exports.JOBFAIR;
 
