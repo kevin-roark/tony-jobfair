@@ -23,9 +23,9 @@ function Computer(startPos, scale, mass) {
   computerIndex += 1;
 
   this.scale = scale || 20;
-  this.mass = mass || 0;
+  this.mass = mass || 20;
 
-  this.ignoreCollisons = true;
+  this.ignoreCollisons = false;
 
   this.meltIntensity = 0.5;
   this.twitchIntensity = 3;
@@ -43,9 +43,6 @@ Computer.prototype.createMesh = function(callback) {
   this.material = Physijs.createMaterial(this.material, 0.4, 0.6);
 
   this.mesh = new Physijs.BoxMesh(this.geometry, this.material, this.mass);
-
-  this.knockable = true;
-  this.shatterable = false;
 
   callback();
 };

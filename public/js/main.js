@@ -654,11 +654,11 @@ $(function() {
 
         shakeMesh(truck);
 
-        if (this.nextComputerToShatterIndex >= computers.length && !this.isFadingLinkedin) {
+        if (this.nextComputerToShatterIndex >= 75 && !this.isFadingLinkedin) {
           this.fadeLinkedIn();
         }
 
-        if (this.nextComputerToShatterIndex < computers.length && truck.position.z < (this.nextComputerToShatterIndex + 1) * -compZOffset) {
+        if (this.nextComputerToShatterIndex < computers.length && truck.position.z < -50 + (this.nextComputerToShatterIndex + 1) * -compZOffset) {
           computers[this.nextComputerToShatterIndex].shatter();
           this.nextComputerToShatterIndex += 1;
         }
@@ -667,6 +667,8 @@ $(function() {
 
     garbageState.fadeLinkedIn = function() {
       this.isFadingLinkedin = true;
+
+      $('#endgame-overlay').fadeIn(10000);
     };
   }
 

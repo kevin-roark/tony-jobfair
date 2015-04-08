@@ -627,9 +627,9 @@ function Computer(startPos, scale, mass) {
   computerIndex += 1;
 
   this.scale = scale || 20;
-  this.mass = mass || 0;
+  this.mass = mass || 20;
 
-  this.ignoreCollisons = true;
+  this.ignoreCollisons = false;
 
   this.meltIntensity = 0.5;
   this.twitchIntensity = 3;
@@ -647,9 +647,6 @@ Computer.prototype.createMesh = function(callback) {
   this.material = Physijs.createMaterial(this.material, 0.4, 0.6);
 
   this.mesh = new Physijs.BoxMesh(this.geometry, this.material, this.mass);
-
-  this.knockable = true;
-  this.shatterable = false;
 
   callback();
 };
@@ -2272,13 +2269,13 @@ $(function() {
         weighingState.ronaldPerformedThrow('kevin', 'right');
       }
       else if (ev.which === 113) { // q
-        moveCameraPosition(0, 1, 0);
+        moveMesh(camera, 0, 1, 0);
         if (cameraFollowState.offset) {
           cameraFollowState.offset.z += 1;
         }
       }
       else if (ev.which === 101) { // e
-        moveCameraPosition(0, -1, 0);
+        moveMesh(camera, 0, -1, 0);
         if (cameraFollowState.offset) {
           cameraFollowState.offset.z += -1;
         }
@@ -2779,14 +2776,23 @@ $(function() {
         kevinRonald.move(0, 0, inc);
         dylanRonald.move(0, 0, inc);
 
-        if (this.nextComputerToShatterIndex >= computers.length) {
+        shakeMesh(truck);
 
+        if (this.nextComputerToShatterIndex >= 75 && !this.isFadingLinkedin) {
+          this.fadeLinkedIn();
         }
-        else if (truck.position.z < (this.nextComputerToShatterIndex + 1) * -compZOffset) {
+
+        if (this.nextComputerToShatterIndex < computers.length && truck.position.z < -50 + (this.nextComputerToShatterIndex + 1) * -compZOffset) {
           computers[this.nextComputerToShatterIndex].shatter();
           this.nextComputerToShatterIndex += 1;
         }
       }
+    };
+
+    garbageState.fadeLinkedIn = function() {
+      this.isFadingLinkedin = true;
+
+      $('#endgame-overlay').fadeIn(10000);
     };
   }
 
@@ -2800,24 +2806,18 @@ $(function() {
     });
   }
 
-  function shakeCamera() {
+  function shakeMesh(mesh) {
     var dx = (Math.random() - 0.5) * 1;
     var dy = (Math.random() - 0.5) * 0.5;
     var dz = (Math.random() - 0.5) * 1;
 
-    moveCameraPosition(dx, dy, dz);
+    moveMesh(mesh, dx, dy, dz);
   }
 
-  function moveCameraPosition(dx, dy, dz) {
-    camera.position.x += dx;
-    camera.position.y += dy;
-    camera.position.z += dz;
-  }
-
-  function setCameraPosition(x, y, z) {
-    camera.position.x = x;
-    camera.position.y = y;
-    camera.position.z = z;
+  function moveMesh(mesh, dx, dy, dz) {
+    mesh.position.x += dx;
+    mesh.position.y += dy;
+    mesh.position.z += dz;
   }
 
 });
