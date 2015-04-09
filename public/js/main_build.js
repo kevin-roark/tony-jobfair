@@ -1479,7 +1479,7 @@ function kneeDeltaActionBehavior(positionDelta, kneeNumber) {
       eventsWithKneelingKnees[eventsKey] -= 1;
     }
 
-    console.log(eventsWithKneelingKnees[eventsKey]);
+    //console.log(eventsWithKneelingKnees[eventsKey]);
 
     if (eventsWithKneelingKnees[eventsKey] >= KNEEL_GESTURE_CONSECUTIVE_EVENTS) {
       module.exports.eventHandler('kneel', {});
@@ -2342,16 +2342,16 @@ $(function() {
         resetRonaldPositions();
       }
       else if (ev.which === 97)  { // a
-        if (io.mode !== io.INTERVIEW || TEST_MODE) kevinRonald.move(-2, 0, 0);
+         kevinRonald.move(-2, 0, 0);
       }
       else if (ev.which === 119)  { // w
-        if (io.mode !== io.INTERVIEW || TEST_MODE) kevinRonald.move(0, 0, -2);
+         kevinRonald.move(0, 0, -2);
       }
       else if (ev.which === 100)  { // d
-        if (io.mode !== io.INTERVIEW || TEST_MODE) kevinRonald.move(2, 0, 0);
+       kevinRonald.move(2, 0, 0);
       }
       else if (ev.which === 115)  { // s
-        if (io.mode !== io.INTERVIEW || TEST_MODE) kevinRonald.move(0, 0, 2);
+         kevinRonald.move(0, 0, 2);
       }
       else if (ev.which === 122) { // z
         jobfairState.ronaldPerformedAction('spit');
@@ -3081,7 +3081,8 @@ module.exports.loadModel = function(modelName, callback) {
   }
 
   loader.load(modelName, function (geometry, materials) {
-    cache[modelName] = {geometry: geometry, materials: materials};
+    // TODO: cache broken
+    //cache[modelName] = {geometry: geometry, materials: materials};
     if (callback) callback(geometry, materials);
   });
 };

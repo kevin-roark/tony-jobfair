@@ -503,7 +503,7 @@ function kneeDeltaActionBehavior(positionDelta, kneeNumber) {
       eventsWithKneelingKnees[eventsKey] -= 1;
     }
 
-    console.log(eventsWithKneelingKnees[eventsKey]);
+    //console.log(eventsWithKneelingKnees[eventsKey]);
 
     if (eventsWithKneelingKnees[eventsKey] >= KNEEL_GESTURE_CONSECUTIVE_EVENTS) {
       module.exports.eventHandler('kneel', {});

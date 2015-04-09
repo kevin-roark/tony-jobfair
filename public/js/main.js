@@ -122,16 +122,16 @@ $(function() {
         resetRonaldPositions();
       }
       else if (ev.which === 97)  { // a
-        if (io.mode !== io.INTERVIEW || TEST_MODE) kevinRonald.move(-2, 0, 0);
+         kevinRonald.move(-2, 0, 0);
       }
       else if (ev.which === 119)  { // w
-        if (io.mode !== io.INTERVIEW || TEST_MODE) kevinRonald.move(0, 0, -2);
+         kevinRonald.move(0, 0, -2);
       }
       else if (ev.which === 100)  { // d
-        if (io.mode !== io.INTERVIEW || TEST_MODE) kevinRonald.move(2, 0, 0);
+       kevinRonald.move(2, 0, 0);
       }
       else if (ev.which === 115)  { // s
-        if (io.mode !== io.INTERVIEW || TEST_MODE) kevinRonald.move(0, 0, 2);
+         kevinRonald.move(0, 0, 2);
       }
       else if (ev.which === 122) { // z
         jobfairState.ronaldPerformedAction('spit');

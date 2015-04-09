@@ -72,7 +72,8 @@ module.exports.loadModel = function(modelName, callback) {
   }
 
   loader.load(modelName, function (geometry, materials) {
-    cache[modelName] = {geometry: geometry, materials: materials};
+    // TODO: cache broken
+    //cache[modelName] = {geometry: geometry, materials: materials};
     if (callback) callback(geometry, materials);
   });
 };

@@ -50,6 +50,9 @@ module.exports.actionIsSuccessful = function(action, boothIndex) {
   if (company === 'apple') {
     return action === 'handshake';
   }
+  if (company === 'millersfantasy') {
+    return true;
+  }
 
   return Math.random() < 0.5;
 };
