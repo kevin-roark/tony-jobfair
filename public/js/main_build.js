@@ -1005,8 +1005,8 @@ var eventsWithFlexingArms = {one: 0, two: 0};
 
 var elbowHistory = {one: {rotUp: false, rotDown: false}, two: {rotUp: false, rotDown: false}};
 
-var BIG_HEAD_MAG = 15;
-var MAX_HEAD_SWELL = 20;
+var BIG_HEAD_MAG = 12;
+var MAX_HEAD_SWELL = 13;
 var TORSO_CLOSE_MAG = 11;
 
 var BIG_ARMDELTA_MAG = 10;
@@ -1284,18 +1284,12 @@ function headBehavior(position, headNumber) {
       var mag = totalMagnitude(positionChange);
 
       if (mag > BIG_HEAD_MAG) {
-        if (eventsWithRapidHeadVelocity[headVelocityKey] === 0) {
-          socket.emit('startSwell', headNumber);
-        }
-
         eventsWithRapidHeadVelocity[headVelocityKey] = Math.min(eventsWithRapidHeadVelocity[headVelocityKey] + 1, MAX_HEAD_SWELL);
       } else {
-        if (eventsWithRapidHeadVelocity[headVelocityKey] === 1) {
-          socket.emit('endSwell', headNumber);
-        }
-
         eventsWithRapidHeadVelocity[headVelocityKey] = Math.max(eventsWithRapidHeadVelocity[headVelocityKey] - 1, 0);
       }
+
+      console.log(eventsWithRapidHeadVelocity[headVelocityKey]);
 
       if (eventsWithRapidHeadVelocity[headVelocityKey] >= MAX_HEAD_SWELL) {
         if (module.exports.mode === module.exports.INTERVIEW) {
