@@ -240,7 +240,7 @@ $(function() {
       io.mode = io.INTERVIEW;
 
       if (!TEST_MODE) {
-        io.socket.emit('currentBooth', index);
+        io.socket.emit('boothIndex', index);
       }
 
       jobfairState.waitingForAction = true;
@@ -410,6 +410,10 @@ $(function() {
         });
         sceneUtil.clearScene(scene, meshes, [camera, mainLight]);
         scene.remove(jobfairState.ground);
+
+        if (!TEST_MODE) {
+          io.socket.emit('boothIndex', 15);
+        }
 
         active.jobfair = false;
         enterWeighingState(self.collectedTokens);

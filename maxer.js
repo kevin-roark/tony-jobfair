@@ -1,9 +1,9 @@
 
 var osc = require('node-osc');
+var config = require('./network-config');
 
-var PORT_MAX_SENDING = 12348;
 var PORT_MAX_LISTENING = 12349;
-var HOST = '127.0.0.1';
+var HOST = config.MAX_HOST;
 
 var START_SWELL_ADDRESS = '/startSwell';
 var END_SWELL_ADDRESS = '/endSwell';
@@ -88,7 +88,7 @@ module.exports.handDelta = function(player, mag) {
 /// Special Events
 
 module.exports.startedPitch = function(companyIndex) {
-  maxClient.send(START_PITCH_ADDRESS, companyIndex);
+  maxClient.send(START_PITCH_ADDRESS, 1);
 };
 
 module.exports.stoppedPitch = function() {

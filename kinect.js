@@ -3,9 +3,7 @@ var express = require('express');
 var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
-var osc = require('osc');
 var maxer = require('./maxer');
-
 
 app.use(express.static(__dirname + '/public'));
 
@@ -29,18 +27,18 @@ io.on('connection', function(socket) {
    */
 
   socket.on('rollcall', function(roll) {
-    if (roll == 'browser') {
+    if (roll === 'browser') {
       browserSocket = this;
       console.log('got the browser socket');
-    } else if (roll == 'forwarder') {
+    } else if (roll === 'forwarder') {
       forwarderSocket = this;
       setForwarderSocketEvents(forwarderSocket);
       console.log('got the forwarder socket');
-    } else if (roll == 'phone1') {
+    } else if (roll === 'phone1') {
       phoneSocket1 = this;
       setPhoneSocketEvents(phoneSocket1);
       console.log('got the first phone socket');
-    } else if (roll == 'phone2') {
+    } else if (roll === 'phone2') {
       phoneSocket2 = this;
       setPhoneSocketEvents(phoneSocket2);
       console.log('got the second phone socket');

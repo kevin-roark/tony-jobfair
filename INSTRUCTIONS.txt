@@ -1,15 +1,17 @@
 
-create local network - get IP from dylan and edit forwarder.js and phone.js
+terminology:
+  server computer runs web server
+  forwarding computer runs synapse and ideally max (but not necessary)
 
-open synapse_heartbeat patch on both computers
-
-connect to synapse on both computers
-
-run server on server computer
-
-connect other computer to server with node forwarder.js
-
-connect server's browser
+1. create local network on forwarding computer
+2. connect to local network from server computer
+3. get the fresh IP address of the server computer — edit all network-config things to fit that IP
+   dont forget to "make"
+4. open synapse_heartbeat on each computer ** very important **
+5. open synapse and make sure looks good on both computers
+6. "node server.js" on server computer
+7. "node forwarder.js" on forwarder computer — the logs should tell you if connected
+8. open chrome localhost three js from server computer. lets do this.
 
 to connect phone u gotta use sever_ip/8888:phone.html in safari
 

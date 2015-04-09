@@ -1,13 +1,13 @@
 
 var PORT_FROM_KINECT = 12345; // also 12347
-var HOST = '127.0.0.1';
+var LOCAL_HOST = '127.0.0.1';
 
 var osc = require('osc');
 
 var kinect = require('./kinect');
 
 var udpPort = new osc.UDPPort({
-    localAddress: HOST,
+    localAddress: LOCAL_HOST,
     localPort: PORT_FROM_KINECT
 });
 
