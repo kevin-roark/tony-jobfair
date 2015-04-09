@@ -1012,8 +1012,8 @@ var TORSO_CLOSE_MAG = 11;
 var HANDSHAKE_ARMDELTA_MAG = 25;
 var HANDSHAKE_ARMDELTA_FRAMES = 27;
 
-var KNEELING_KNEE_Y_MAG = 15;
-var KNEEL_GESTURE_CONSECUTIVE_EVENTS = 15;
+var KNEELING_KNEE_Y_MAG = 100;
+var KNEEL_GESTURE_CONSECUTIVE_EVENTS = 30;
 
 var FAR_ELBOW_MAG = 300;
 
@@ -1465,15 +1465,21 @@ function knee2DeltaAction(positionDelta) {
 
 function kneeDeltaActionBehavior(positionDelta, kneeNumber) {
   var eventsKey = kneeNumber === 1 ? 'one' : 'two';
+  var handDeltaKey = 'hand' + kneeNumber;
 
   if (module.exports.mode === module.exports.INTERVIEW) {
     var yMag = Math.abs(positionDelta.y);
     //console.log('knee delta mag: ' + yMag);
-    if (yMag >= KNEELING_KNEE_Y_MAG) {
+    if (positionDeltas[handDeltaKey]) {
+      //console.log('hand delta mag: ' + totalMagnitude(positionDeltas[handDeltaKey]));
+    }
+    if (yMag >= KNEELING_KNEE_Y_MAG && positionDeltas[handDeltaKey] && totalMagnitude(positionDeltas[handDeltaKey]) <= 2 * CLOSE_HANDS_MAG) {
       eventsWithKneelingKnees[eventsKey] += 1;
     } else if (eventsWithKneelingKnees[eventsKey] > 0) {
       eventsWithKneelingKnees[eventsKey] -= 1;
     }
+
+    console.log(eventsWithKneelingKnees[eventsKey]);
 
     if (eventsWithKneelingKnees[eventsKey] >= KNEEL_GESTURE_CONSECUTIVE_EVENTS) {
       module.exports.eventHandler('kneel', {});
