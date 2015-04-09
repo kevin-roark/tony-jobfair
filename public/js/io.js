@@ -16,6 +16,7 @@
 // guarantee that each wrestler will behave the same. please fix later.
 
 var socket = io('http://localhost:8888');
+module.exports.socket = socket;
 
 var previousPositions = {};
 var positionDeltas = {};
@@ -29,7 +30,7 @@ var eventsWithFlexingArms = {one: 0, two: 0};
 var elbowHistory = {one: {rotUp: false, rotDown: false}, two: {rotUp: false, rotDown: false}};
 
 var BIG_HEAD_MAG = 15;
-var MAX_HEAD_SWELL = 30;
+var MAX_HEAD_SWELL = 20;
 var TORSO_CLOSE_MAG = 11;
 
 var BIG_ARMDELTA_MAG = 10;
@@ -44,7 +45,7 @@ var FLEXING_HANDS_X_MAG = 15;
 var FLEX_GESTURE_CONSECUTIVE_EVENTS = 20;
 var CLOSE_HANDS_MAG = 100;
 
-var TORSO_MOVEMENT_MAG_MULT = 0.21;
+var TORSO_MOVEMENT_MAG_MULT = -0.05;
 
 module.exports.JOBFAIR = 1;
 module.exports.WEIGHING = 2;
@@ -119,7 +120,7 @@ module.exports.begin = function(w1, w2, cam, l) {
   });
 
   socket.on('rightKnee', function(data) {
-    if (data.wrestler == 1) {
+    if (data.wrestler === 1) {
       rightKnee1(data.position);
     } else {
       rightKnee2(data.position);
@@ -156,19 +157,6 @@ module.exports.begin = function(w1, w2, cam, l) {
     } else {
       wrestler2.reset();
     }
-  });
-
-  socket.on('endPhrases', function() {
-    module.exports.eventHandler('endPhrases');
-  });
-  socket.on('transparentComputers', function() {
-    module.exports.eventHandler('transparentComputers');
-  });
-  socket.on('phoneShatter', function() {
-    module.exports.eventHandler('phoneShatter');
-  });
-  socket.on('endPokes', function() {
-    module.exports.eventHandler('endPokes');
   });
 };
 
@@ -237,6 +225,7 @@ function rightHandBehavior(position, handNumber) {
       if (positionDeltas[rightHandKey] && totalMagnitude(positionDeltas[rightHandKey]) < BIG_ARMDELTA_MAG) {
         var positionChange = delta(position, previousPositions[rightHandKey]);
         var mag = totalMagnitude(positionChange);
+        console.log('total arm mag: ' + mag);
 
         if (mag > BIG_ARMDELTA_MAG) {
           eventsWithRapidRightArmVelocity[armVelocityKey] += 1;
@@ -250,11 +239,11 @@ function rightHandBehavior(position, handNumber) {
         }
       }
     }
-    else if (module.exports.mode === module.exports.JOBFAIR) {
-      var denom = 7;
-      var directions = {x: true, y: true, z: true};
-      moveDelta(wrestler.rightArm, position, previousPositions[rightHandKey], denom, directions);
-    }
+    // else if (module.exports.mode === module.exports.JOBFAIR) {
+    //   var denom = 12;
+    //   var directions = {x: true, y: true, z: true};
+    //   moveDelta(wrestler.rightArm, position, previousPositions[rightHandKey], denom, directions);
+    // }
     else if (module.exports.mode === module.exports.WEIGHING) {
       moveDelta(wrestler, position, previousPositions[rightHandKey], 2);
     }
@@ -284,11 +273,11 @@ function leftHandBehavior(position, handNumber, handDeltaAction) {
   }
 
   if (previousPositions[leftHandKey]) {
-    if (module.exports.mode === module.exports.JOBFAIR) {
-      var denom = 7;
-      var directions = {x: true, y: true, z: true};
-      moveDelta(wrestler.leftArm, position, previousPositions[leftHandKey], denom, directions);
-    }
+    // if (module.exports.mode === module.exports.JOBFAIR) {
+    //   var denom = 12;
+    //   var directions = {x: true, y: true, z: true};
+    //   moveDelta(wrestler.leftArm, position, previousPositions[leftHandKey], denom, directions);
+    // }
   }
 
   previousPositions[leftHandKey] = position;
@@ -365,6 +354,7 @@ function torsoBehavior(position, torsoNumber) {
       var d = delta(position, previousPositions[torsoKey]);
       var mag = totalMagnitude(d);
       var dist = TORSO_MOVEMENT_MAG_MULT * mag;
+      console.log(dist);
       wrestler.move(d.x / 50, 0, dist);
     }
 
@@ -397,9 +387,9 @@ function leftKneeBehavior(position, kneeNumber, deltaAction) {
   }
 
   if (previousPositions[leftKneeKey]) {
-    if (module.exports.mode === module.exports.JOBFAIR) {
-      moveDelta(wrestler.leftLeg, position, previousPositions[leftKneeKey], 8, {x: true, y: true, z: true});
-    }
+    // if (module.exports.mode === module.exports.JOBFAIR) {
+    //   moveDelta(wrestler.leftLeg, position, previousPositions[leftKneeKey], 20, {x: true, y: true, z: true});
+    // }
   }
 
   previousPositions[leftKneeKey] = position;
@@ -419,7 +409,7 @@ function rightKneeBehavior(position, kneeNumber) {
 
   if (previousPositions[rightKneeKey]) {
     if (module.exports.mode === module.exports.JOBFAIR) {
-      moveDelta(wrestler.rightLeg, position, previousPositions[rightKneeKey], 8, {x: true, y: true, z: true});
+      moveDelta(wrestler.rightLeg, position, previousPositions[rightKneeKey], 20, {x: true, y: true, z: true});
     }
   }
 
@@ -476,6 +466,7 @@ function handDeltaActionBehavior(positionDelta, handNumber) {
 
   if (module.exports.mode === module.exports.INTERVIEW) {
     var xMag = Math.abs(positionDelta.x);
+    console.log('total flex mag: ' + xMag);
     if (xMag >= FLEXING_HANDS_X_MAG && previousPositions[rightHandKey].y > previousPositions[rightElbow2]) {
       // hands are far apart and above elbows u feel
       eventsWithFlexingArms[eventsKey] += 1;
@@ -510,6 +501,7 @@ function kneeDeltaActionBehavior(positionDelta, kneeNumber) {
 
   if (module.exports.mode === module.exports.INTERVIEW) {
     var yMag = Math.abs(positionDelta.y);
+    console.log('knee delta mag: ' + yMag);
     if (yMag >= KNEELING_KNEE_Y_MAG) {
       eventsWithKneelingKnees[eventsKey] += 1;
     } else if (eventsWithKneelingKnees[eventsKey] > 0) {

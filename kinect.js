@@ -73,62 +73,11 @@ io.on('connection', function(socket) {
    * STUFF FOR SENDING DATAM TO MAX FROM BROWSER
    */
 
-  socket.on('startSwell', function(player) {
-    maxer.startSwell(player);
+  socket.on('startedPitch', function(companyIndex) {
+    maxer.startedPitch(companyIndex);
   });
-
-  socket.on('endSwell', function(player) {
-    maxer.endSwell(player);
-  });
-
-  socket.on('startKnees', function(player) {
-    maxer.startKnees(player);
-  });
-
-  socket.on('endKnees', function(player) {
-    maxer.endKnees(player);
-  });
-
-  socket.on('startElbowRotUp', function(player) {
-    maxer.startElbowRotUp(player);
-  });
-
-  socket.on('startElbowRotDown', function(player) {
-    maxer.startElbowRotDown(player);
-  });
-
-  socket.on('endElbowRotUp', function(player) {
-    maxer.endElbowRotUp(player);
-  });
-
-  socket.on('endElbowRotDown', function(player) {
-    maxer.endElbowRotDown(player);
-  });
-
-  socket.on('handDelta', function(player, mag) {
-    maxer.handDelta(player, mag);
-  });
-
-  socket.on('phrase', function(player, phraseIndex, velocity) {
-    maxer.phrase(player, phraseIndex, velocity);
-  });
-  socket.on('artifact', function(player) {
-    maxer.whoa(player);
-  });
-  socket.on('knock', function(player) {
-    maxer.knock(player);
-  });
-  socket.on('rock', function(index) {
-    maxer.rock(index);
-  });
-  socket.on('heaven', function() {
-    maxer.heaven();
-  });
-  socket.on('running', function() {
-    maxer.running();
-  });
-  socket.on('noHeaven', function() {
-    maxer.stopHeaven();
+  socket.on('stoppedPitch', function() {
+    maxer.stoppedPitch();
   });
 });
 
@@ -190,7 +139,7 @@ function setPhoneSocketEvents(phoneSocket) {
 
 module.exports.leftHand = function(argString, kinectNum) {
   emit('leftHand', argString, kinectNum);
-}
+};
 
 module.exports.rightHand = function(argString, kinectNum) {
   emit('rightHand', argString, kinectNum);
@@ -202,27 +151,27 @@ module.exports.head = function(argString, kinectNum) {
 
 module.exports.leftKnee = function(argString, kinectNum) {
   emit('leftKnee', argString, kinectNum);
-}
+};
 
 module.exports.rightKnee = function(argString, kinectNum) {
   emit('rightKnee', argString, kinectNum);
-}
+};
 
 module.exports.leftElbow = function(argString, kinectNum) {
   emit('leftElbow', argString, kinectNum);
-}
+};
 
 module.exports.rightElbow = function(argString, kinectNum) {
   emit('rightElbow', argString, kinectNum);
-}
+};
 
 module.exports.torso = function(argString, kinectNum) {
   emit('torso', argString, kinectNum);
-}
+};
 
 module.exports.closestHand = function(argString, kinectNum) {
   emit('closestHand', argString, kinectNum);
-}
+};
 
 function emit(name, argString, kinectNum) {
   if (!kinectNum) kinectNum = 1;

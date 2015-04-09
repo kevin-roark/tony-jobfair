@@ -15,13 +15,8 @@ var START_ROTDOWN_ADDRESS = '/startRotDown';
 var END_ROTDOWN_ADDRESS = '/endRotDown';
 var HAND_DELTA_ADDRESS = '/handDelta';
 
-var PHRASE_ADDRESS = '/phrase';
-var WHOA_ADDRESS = '/whoa';
-var KNOCK_ADDRESS = '/knock';
-var ROCK_ADDRESS = '/rock';
-var HEAVEN_ADDRESS = '/heaven';
-var RUNNING_ADDRESS = '/running';
-var HEAVEN_DONE = '/hotdog';
+var START_PITCH_ADDRESS = '/startpitch';
+var STOP_PITCH_ADDRESS = '/stoppitch';
 
 var signalMap = {};
 signalMap[playerize(START_SWELL_ADDRESS, 1)] = 1;
@@ -43,70 +38,54 @@ signalMap[playerize(END_ROTDOWN_ADDRESS, 2)] = 16;
 
 var maxClient = new osc.Client(HOST, PORT_MAX_LISTENING);
 
+/// Body parts
+
 module.exports.startSwell = function(player) {
   sendAddressSignalMapToMax(player, START_SWELL_ADDRESS);
-}
+};
 
 module.exports.endSwell = function(player) {
   sendAddressSignalMapToMax(player, END_SWELL_ADDRESS);
-}
+};
 
 module.exports.startKnees = function(player) {
   sendAddressSignalMapToMax(player, START_KNEES_ADDRESS);
-}
+};
 
 module.exports.endKnees = function(player) {
   sendAddressSignalMapToMax(player, END_KNEES_ADDRESS);
-}
+};
 
 module.exports.startElbowRotUp = function(player) {
   sendAddressSignalMapToMax(player, START_ROTUP_ADDRESS);
-}
+};
 
 module.exports.startElbowRotDown = function(player) {
   sendAddressSignalMapToMax(player, START_ROTDOWN_ADDRESS);
-}
+};
 
 module.exports.endElbowRotUp = function(player) {
   sendAddressSignalMapToMax(player, END_ROTUP_ADDRESS);
-}
+};
 
 module.exports.endElbowRotDown = function(player) {
   sendAddressSignalMapToMax(player, END_ROTDOWN_ADDRESS);
-}
+};
 
 module.exports.handDelta = function(player, mag) {
   var address = playerize(HAND_DELTA_ADDRESS, player);
   sendPacketToMax(address, mag);
-}
+};
 
-module.exports.phrase = function(playerIndex, phraseIndex, velocity) {
-  maxClient.send(PHRASE_ADDRESS, playerIndex - 1, phraseIndex, velocity.x, velocity.y, velocity.z);
-}
+/// Special Events
 
-module.exports.whoa = function(playerIndex) {
-  maxClient.send(WHOA_ADDRESS, playerIndex - 1);
-}
+module.exports.startedPitch = function(companyIndex) {
+  maxClient.send(START_PITCH_ADDRESS, companyIndex);
+};
 
-module.exports.knock = function(playerIndex) {
-  maxClient.send(KNOCK_ADDRESS, playerIndex - 1);
-}
-
-module.exports.rock = function(index) {
-  maxClient.send(ROCK_ADDRESS, index);
-}
-
-module.exports.heaven = function() {
-  maxClient.send(HEAVEN_ADDRESS, 1);
-}
-
-module.exports.running = function() {
-  maxClient.send(RUNNING_ADDRESS, 1);
-}
-
-module.exports.stopHeaven = function() {
-  maxClient.send(HEAVEN_DONE, 1);
-}
+module.exports.stoppedPitch = function(companyIndex) {
+  maxClient.send(STOP_PITCH_ADDRESS, companyIndex);
+};
 
 function playerize(address, player) {
   return address + '-' + player;

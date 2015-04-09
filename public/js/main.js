@@ -21,7 +21,7 @@ $(function() {
   var skybox = require('./skybox');
   var recruiterManager = require('./recruiter-manager');
 
-  var TEST_MODE = true;
+  var TEST_MODE = false;
   var START_WITH_SCALE = false;
   var SPEED_TO_TRASH = false;
 
@@ -150,6 +150,9 @@ $(function() {
       }
       else if (ev.which === 108) { // l
         weighingState.ronaldPerformedThrow('kevin', 'right');
+      }
+      else if (ev.which === 101) { // e
+        jobfairState.startPerformingPitch();
       }
       else if (ev.which === 113) { // q
         jobfairState.didFinishPerformingPitch();
@@ -287,7 +290,12 @@ $(function() {
       }, 5000);
     }
 
+    jobfairState.startPerformingPitch = function() {
+      io.socket.emit('startedPitch', this.currentBooth);
+    };
+
     jobfairState.didFinishPerformingPitch = function() {
+      io.socket.emit('finishedPitch');
       jobfairState.finishedPerformingPitch = true;
     };
 
