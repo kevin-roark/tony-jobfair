@@ -238,9 +238,19 @@ $(function() {
       console.log('current booth: ' + index);
       jobfairState.currentBooth = index;
       io.mode = io.INTERVIEW;
+
+      if (!TEST_MODE) {
+        io.socket.emit('currentBooth', index);
+      }
+
       jobfairState.waitingForAction = true;
       jobfairState.finishedPerformingPitch = false;
       ronaldUI.flash(recruiterManager.companies[index], 1000);
+      setTimeout(function() {
+        if (!TEST_MODE) {
+          io.socket.emit('recruiterEncountered');
+        }
+      }, 500);
     }
 
     function flashOverlay(color) {
@@ -291,11 +301,15 @@ $(function() {
     }
 
     jobfairState.startPerformingPitch = function() {
-      io.socket.emit('startedPitch', this.currentBooth);
+      if (!TEST_MODE) {
+        io.socket.emit('startedPitch', this.currentBooth);
+      }
     };
 
     jobfairState.didFinishPerformingPitch = function() {
-      io.socket.emit('finishedPitch');
+      if (!TEST_MODE) {
+        io.socket.emit('finishedPitch');
+      }
       jobfairState.finishedPerformingPitch = true;
     };
 
@@ -329,9 +343,17 @@ $(function() {
 
           var shirt = new Shirt(null, null, recruiterManager.companies[jobfairState.currentBooth]);
           jobfairState.collectedTokens.push(shirt);
+
+          if (!TEST_MODE) {
+            io.socket.emit('gestureSuccess');
+          }
         }
         else {
           showFailedResponse(kevinRonald.position.z + 72);
+
+          if (!TEST_MODE) {
+            io.socket.emit('gestureFailure');
+          }
         }
 
         setTimeout(function() {
@@ -343,6 +365,10 @@ $(function() {
         if (self.currentBooth < recruiterManager.recruiterCount - 1) {
           io.mode = io.JOBFAIR;
           waitingForNextBooth = true;
+          if (!TEST_MODE) {
+            io.socket.emit('beginWalking');
+          }
+
           jobfairState.hasPerformedActionForCurrentBooth = false;
           jobfairState.waitingForAction = false;
         }
@@ -396,6 +422,10 @@ $(function() {
     var FRAMES_FOR_THROW = 150;
 
     ronaldUI.flash('CHOOSE YOUR ROLE');
+
+    if (!TEST_MODE) {
+      io.socket.emit('reachedScale');
+    }
 
     if (!tokens) {
       tokens = [];
@@ -532,6 +562,10 @@ $(function() {
 
         function addTruck() {
           clearInterval(interval);
+          if (!TEST_MODE) {
+            io.socket.emit('garbageEmerges');
+          }
+
           var geometry = new THREE.BoxGeometry(175, 125, 60);
           var material = new THREE.MeshBasicMaterial({
             map: THREE.ImageUtils.loadTexture('/media/textures/garbage_truck.jpg'),
@@ -674,6 +708,9 @@ $(function() {
   function enterTrashState(truck) {
     io.mode = io.TRASH;
     active.trash = true;
+    if (!TEST_MODE) {
+      io.socket.emit('enteredLab');
+    }
 
     mainLight.position.set(0, 100, 0);
     mainLight.target.position.set(0, 5, -50);

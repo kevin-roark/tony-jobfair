@@ -15,8 +15,16 @@ var START_ROTDOWN_ADDRESS = '/startRotDown';
 var END_ROTDOWN_ADDRESS = '/endRotDown';
 var HAND_DELTA_ADDRESS = '/handDelta';
 
-var START_PITCH_ADDRESS = '/startpitch';
-var STOP_PITCH_ADDRESS = '/stoppitch';
+var START_PITCH_ADDRESS = '/startPitch';
+var STOP_PITCH_ADDRESS = '/stopPitch';
+var BOOTH_INDEX_ADDRESS = '/boothIndex';
+var BEGIN_WALKING_ADDRESS = '/beginWalking';
+var ENCOUNTER_RECRUITER_ADDRESS = '/encounterRecruiter';
+var GESTURE_SUCCESS_ADDRESS = '/gestureSuccess';
+var GESTURE_FAILURE_ADDRESS = '/gestureFailure';
+var REACHED_SCALE_ADDRESS = '/reachedScale';
+var GARBAGE_EMERGES_ADDRESS = '/garbageEmerges';
+var ENTER_LAB_ADDRESS = '/enterLab';
 
 var signalMap = {};
 signalMap[playerize(START_SWELL_ADDRESS, 1)] = 1;
@@ -83,8 +91,40 @@ module.exports.startedPitch = function(companyIndex) {
   maxClient.send(START_PITCH_ADDRESS, companyIndex);
 };
 
-module.exports.stoppedPitch = function(companyIndex) {
-  maxClient.send(STOP_PITCH_ADDRESS, companyIndex);
+module.exports.stoppedPitch = function() {
+  maxClient.send(STOP_PITCH_ADDRESS, 1);
+};
+
+module.exports.boothIndex = function(boothIndex) {
+  maxClient.send(BOOTH_INDEX_ADDRESS, boothIndex);
+};
+
+module.exports.beginWalking = function() {
+  maxClient.send(BEGIN_WALKING_ADDRESS, 1);
+};
+
+module.exports.encounterRecruiter = function() {
+  maxClient.send(ENCOUNTER_RECRUITER_ADDRESS, 1);
+};
+
+module.exports.gestureSuccess = function() {
+  maxClient.send(GESTURE_SUCCESS_ADDRESS, 1);
+};
+
+module.exports.gestureFailure = function() {
+  maxClient.send(GESTURE_FAILURE_ADDRESS, 1);
+};
+
+module.exports.reachedScale = function() {
+  maxClient.send(REACHED_SCALE_ADDRESS, 1);
+};
+
+module.exports.garbageEmerges = function() {
+  maxClient.send(GARBAGE_EMERGES_ADDRESS, 1);
+};
+
+module.exports.labEntered = function() {
+  maxClient.send(ENTER_LAB_ADDRESS, 1);
 };
 
 function playerize(address, player) {

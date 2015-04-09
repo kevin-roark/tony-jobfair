@@ -79,6 +79,30 @@ io.on('connection', function(socket) {
   socket.on('stoppedPitch', function() {
     maxer.stoppedPitch();
   });
+  socket.on('boothIndex', function(boothIndex) {
+    maxer.boothIndex(boothIndex);
+  });
+  socket.on('beginWalking', function() {
+    maxer.beginWalking();
+  });
+  socket.on('recruiterEncountered', function() {
+    maxer.encounterRecruiter();
+  });
+  socket.on('gestureSuccess', function() {
+    maxer.gestureSuccess();
+  });
+  socket.on('gestureFailure', function() {
+    maxer.gestureFailure();
+  });
+  socket.on('reachedScale', function() {
+    maxer.reachedScale();
+  });
+  socket.on('garbageEmerges', function() {
+    maxer.garbageEmerges();
+  });
+  socket.on('enteredLab', function() {
+    maxer.labEntered();
+  });
 });
 
 function setForwarderSocketEvents(forwarderSocket) {
