@@ -333,7 +333,7 @@ $(function() {
       }
 
       function showResults() {
-        var success = recruiterManager.actionIsSuccessful(action, this.currentBooth);
+        var success = recruiterManager.actionIsSuccessful(action, self.currentBooth);
 
         if (success) {
           showSuccessfulResponse(kevinRonald.position.z + 72);
