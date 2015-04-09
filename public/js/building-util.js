@@ -51,4 +51,4 @@ module.exports.ceiling = function() {
   var ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial, 0);
   ceiling.rotation.x = -Math.PI / 2;
   return ceiling;
-}
+};

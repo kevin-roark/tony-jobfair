@@ -3,7 +3,6 @@ $(function() {
 
   var kt = require('./lib/kutility');
   var distanceUtil = require('./distance-util');
-  var geometryUtil = require('./geometry-util');
   var sceneUtil = require('./scene-util');
   var buildingUtil = require('./building-util');
   var ronaldUI = require('./ronald-ui');
@@ -421,7 +420,7 @@ $(function() {
     var tokenMeshes = [];
     tokens.forEach(function(token) {
       token.addTo(scene, function() {
-        token.moveTo((Math.random() - 0.5) * 360, Math.random() * 10 + 8, -kt.randInt(250, 160));
+        token.moveTo((Math.random() - 0.5) * 300, Math.random() * 10, -kt.randInt(250, 160));
         token.mesh.__company = token.company;
         tokenMeshes.push(token.mesh);
       });
@@ -444,6 +443,18 @@ $(function() {
     scaleText.geometry.center();
     scaleText.addTo(scene);
 
+    var justice = new THREE.Mesh(
+      new THREE.PlaneGeometry(150, 75),
+      new THREE.MeshBasicMaterial({
+        side: THREE.DoubleSide,
+        map: THREE.ImageUtils.loadTexture('/media/textures/blind_justice.jpg')
+      })
+    );
+    justice.position.set(-250, 85, -600);
+    justice.__movingForward = true;
+    justice.__stepsToGo = 140;
+    scene.add(justice);
+
     weighingState.kevinRenderer = new WeighingStateRonaldRenderer('kevin');
     weighingState.dylanRenderer = new WeighingStateRonaldRenderer('dylan');
     weighingState.tokensDestroyed = 0;
@@ -454,7 +465,14 @@ $(function() {
       var ronPos = kevinRonald.torso.mesh.position;
       var dylPos = dylanRonald.torso.mesh.position;
       cameraFollowState.target = {x: (ronPos.x + dylPos.x) / 2, y: 0, z: (ronPos.z + dylPos.z) / 2};
-      cameraFollowState.offset = {x: 0, y: 72, z: 150};
+      cameraFollowState.offset = {x: 0, y: 80, z: 150};
+
+      justice.position.z += (justice.__movingForward? -Math.random() * 2.5 : Math.random() * 2.5);
+      justice.__stepsToGo -= 1;
+      if (justice.__stepsToGo === 0) {
+        justice.__movingForward  = !justice.__movingForward;
+        justice.__stepsToGo = 140;
+      }
 
       scaleText.render();
 
