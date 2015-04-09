@@ -38,6 +38,95 @@
 		"subpatcher_template" : "",
 		"boxes" : [ 			{
 				"box" : 				{
+					"id" : "obj-20",
+					"maxclass" : "newobj",
+					"numinlets" : 2,
+					"numoutlets" : 1,
+					"outlettype" : [ "int" ],
+					"patching_rect" : [ 471.75, 70.0, 29.5, 22.0 ],
+					"style" : "",
+					"text" : "+ 1"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-21",
+					"maxclass" : "newobj",
+					"numinlets" : 2,
+					"numoutlets" : 1,
+					"outlettype" : [ "int" ],
+					"patching_rect" : [ 471.75, 46.0, 31.0, 22.0 ],
+					"style" : "",
+					"text" : "% 7"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"comment" : "",
+					"id" : "obj-14",
+					"maxclass" : "inlet",
+					"numinlets" : 0,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 735.5, 28.0, 30.0, 30.0 ],
+					"style" : ""
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"comment" : "",
+					"id" : "obj-13",
+					"maxclass" : "outlet",
+					"numinlets" : 1,
+					"numoutlets" : 0,
+					"patching_rect" : [ 221.666672, 552.0, 30.0, 30.0 ],
+					"style" : ""
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"comment" : "",
+					"id" : "obj-7",
+					"maxclass" : "outlet",
+					"numinlets" : 1,
+					"numoutlets" : 0,
+					"patching_rect" : [ 149.0, 552.0, 30.0, 30.0 ],
+					"style" : ""
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"comment" : "",
+					"id" : "obj-5",
+					"maxclass" : "inlet",
+					"numinlets" : 0,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 182.0, 28.0, 30.0, 30.0 ],
+					"style" : ""
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"comment" : "",
+					"id" : "obj-4",
+					"maxclass" : "inlet",
+					"numinlets" : 0,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 129.0, 28.0, 30.0, 30.0 ],
+					"style" : ""
+				}
+
+			}
+, 			{
+				"box" : 				{
 					"id" : "obj-43",
 					"maxclass" : "comment",
 					"numinlets" : 1,
@@ -82,8 +171,7 @@
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 182.0, 53.0, 51.0, 22.0 ],
-					"presentation_rect" : [ 182.0, 54.0, 0.0, 0.0 ],
+					"patching_rect" : [ 182.0, 72.0, 51.0, 22.0 ],
 					"style" : "",
 					"text" : "resume"
 				}
@@ -96,7 +184,7 @@
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 129.0, 53.0, 43.0, 22.0 ],
+					"patching_rect" : [ 129.0, 72.0, 43.0, 22.0 ],
 					"style" : "",
 					"text" : "pause"
 				}
@@ -167,7 +255,7 @@
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 725.0, 476.0, 86.0, 23.0 ],
 					"style" : "",
-					"text" : "0.501386 30"
+					"text" : "0. 30"
 				}
 
 			}
@@ -320,9 +408,9 @@
 					"numinlets" : 0,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 172.0, 438.0, 40.0, 22.0 ],
+					"patching_rect" : [ 172.0, 438.0, 71.0, 22.0 ],
 					"style" : "",
-					"text" : "r mult"
+					"text" : "r pumpmult"
 				}
 
 			}
@@ -332,9 +420,9 @@
 					"maxclass" : "newobj",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 651.0, 513.0, 43.0, 22.0 ],
+					"patching_rect" : [ 651.0, 513.0, 73.0, 22.0 ],
 					"style" : "",
-					"text" : "s mult"
+					"text" : "s pumpmult"
 				}
 
 			}
@@ -447,184 +535,173 @@
 			}
 , 			{
 				"box" : 				{
-					"id" : "obj-14",
-					"maxclass" : "ezdac~",
-					"numinlets" : 2,
-					"numoutlets" : 0,
-					"patching_rect" : [ 146.0, 562.0, 45.0, 45.0 ],
-					"style" : ""
-				}
-
-			}
-, 			{
-				"box" : 				{
 					"clipheight" : 40.714287,
 					"data" : 					{
 						"clips" : [ 							{
 								"filename" : "/Users/Dylan/Documents/Projects/tony-jobfair/public/media/pumpup/pumpup1.wav",
 								"filekind" : "audiofile",
-								"loop" : 0,
+								"loop" : 1,
 								"content_state" : 								{
-									"timestretch" : [ 0 ],
-									"slurtime" : [ 0.0 ],
-									"pitchshiftcent" : [ 0 ],
-									"speed" : [ 1.0 ],
-									"originallengthms" : [ 0.0 ],
-									"originallength" : [ 0.0, "ticks" ],
-									"mode" : [ "basic" ],
-									"play" : [ 0 ],
-									"pitchshift" : [ 1.0 ],
-									"originaltempo" : [ 120.0 ],
-									"formant" : [ 1.0 ],
-									"followglobaltempo" : [ 0 ],
-									"quality" : [ "basic" ],
 									"basictuning" : [ 440 ],
+									"play" : [ 0 ],
+									"pitchshiftcent" : [ 0 ],
+									"slurtime" : [ 0.0 ],
+									"formant" : [ 1.0 ],
+									"originaltempo" : [ 120.0 ],
+									"mode" : [ "basic" ],
+									"originallength" : [ 0.0, "ticks" ],
+									"pitchcorrection" : [ 0 ],
+									"speed" : [ 1.0 ],
+									"pitchshift" : [ 1.0 ],
+									"quality" : [ "basic" ],
 									"formantcorrection" : [ 0 ],
-									"pitchcorrection" : [ 0 ]
+									"timestretch" : [ 0 ],
+									"followglobaltempo" : [ 0 ],
+									"originallengthms" : [ 0.0 ]
 								}
 
 							}
 , 							{
 								"filename" : "/Users/Dylan/Documents/Projects/tony-jobfair/public/media/pumpup/pumpup2.wav",
 								"filekind" : "audiofile",
-								"loop" : 0,
+								"loop" : 1,
 								"content_state" : 								{
-									"timestretch" : [ 0 ],
-									"slurtime" : [ 0.0 ],
-									"pitchshiftcent" : [ 0 ],
-									"speed" : [ 1.0 ],
-									"originallengthms" : [ 0.0 ],
-									"originallength" : [ 0.0, "ticks" ],
-									"mode" : [ "basic" ],
-									"play" : [ 0 ],
-									"pitchshift" : [ 1.0 ],
-									"originaltempo" : [ 120.0 ],
-									"formant" : [ 1.0 ],
-									"followglobaltempo" : [ 0 ],
-									"quality" : [ "basic" ],
 									"basictuning" : [ 440 ],
+									"play" : [ 0 ],
+									"pitchshiftcent" : [ 0 ],
+									"slurtime" : [ 0.0 ],
+									"formant" : [ 1.0 ],
+									"originaltempo" : [ 120.0 ],
+									"mode" : [ "basic" ],
+									"originallength" : [ 0.0, "ticks" ],
+									"pitchcorrection" : [ 0 ],
+									"speed" : [ 1.0 ],
+									"pitchshift" : [ 1.0 ],
+									"quality" : [ "basic" ],
 									"formantcorrection" : [ 0 ],
-									"pitchcorrection" : [ 0 ]
+									"timestretch" : [ 0 ],
+									"followglobaltempo" : [ 0 ],
+									"originallengthms" : [ 0.0 ]
 								}
 
 							}
 , 							{
 								"filename" : "/Users/Dylan/Documents/Projects/tony-jobfair/public/media/pumpup/pumpup3.wav",
 								"filekind" : "audiofile",
-								"loop" : 0,
+								"loop" : 1,
 								"content_state" : 								{
-									"timestretch" : [ 0 ],
-									"slurtime" : [ 0.0 ],
-									"pitchshiftcent" : [ 0 ],
-									"speed" : [ 1.0 ],
-									"originallengthms" : [ 0.0 ],
-									"originallength" : [ 0.0, "ticks" ],
-									"mode" : [ "basic" ],
-									"play" : [ 0 ],
-									"pitchshift" : [ 1.0 ],
-									"originaltempo" : [ 120.0 ],
-									"formant" : [ 1.0 ],
-									"followglobaltempo" : [ 0 ],
-									"quality" : [ "basic" ],
 									"basictuning" : [ 440 ],
+									"play" : [ 0 ],
+									"pitchshiftcent" : [ 0 ],
+									"slurtime" : [ 0.0 ],
+									"formant" : [ 1.0 ],
+									"originaltempo" : [ 120.0 ],
+									"mode" : [ "basic" ],
+									"originallength" : [ 0.0, "ticks" ],
+									"pitchcorrection" : [ 0 ],
+									"speed" : [ 1.0 ],
+									"pitchshift" : [ 1.0 ],
+									"quality" : [ "basic" ],
 									"formantcorrection" : [ 0 ],
-									"pitchcorrection" : [ 0 ]
+									"timestretch" : [ 0 ],
+									"followglobaltempo" : [ 0 ],
+									"originallengthms" : [ 0.0 ]
 								}
 
 							}
 , 							{
 								"filename" : "/Users/Dylan/Documents/Projects/tony-jobfair/public/media/pumpup/pumpup4.wav",
 								"filekind" : "audiofile",
-								"loop" : 0,
+								"loop" : 1,
 								"content_state" : 								{
-									"timestretch" : [ 0 ],
-									"slurtime" : [ 0.0 ],
-									"pitchshiftcent" : [ 0 ],
-									"speed" : [ 1.0 ],
-									"originallengthms" : [ 0.0 ],
-									"originallength" : [ 0.0, "ticks" ],
-									"mode" : [ "basic" ],
-									"play" : [ 0 ],
-									"pitchshift" : [ 1.0 ],
-									"originaltempo" : [ 120.0 ],
-									"formant" : [ 1.0 ],
-									"followglobaltempo" : [ 0 ],
-									"quality" : [ "basic" ],
 									"basictuning" : [ 440 ],
+									"play" : [ 0 ],
+									"pitchshiftcent" : [ 0 ],
+									"slurtime" : [ 0.0 ],
+									"formant" : [ 1.0 ],
+									"originaltempo" : [ 120.0 ],
+									"mode" : [ "basic" ],
+									"originallength" : [ 0.0, "ticks" ],
+									"pitchcorrection" : [ 0 ],
+									"speed" : [ 1.0 ],
+									"pitchshift" : [ 1.0 ],
+									"quality" : [ "basic" ],
 									"formantcorrection" : [ 0 ],
-									"pitchcorrection" : [ 0 ]
+									"timestretch" : [ 0 ],
+									"followglobaltempo" : [ 0 ],
+									"originallengthms" : [ 0.0 ]
 								}
 
 							}
 , 							{
 								"filename" : "/Users/Dylan/Documents/Projects/tony-jobfair/public/media/pumpup/pumpup5.wav",
 								"filekind" : "audiofile",
-								"loop" : 0,
+								"loop" : 1,
 								"content_state" : 								{
-									"timestretch" : [ 0 ],
-									"slurtime" : [ 0.0 ],
-									"pitchshiftcent" : [ 0 ],
-									"speed" : [ 1.0 ],
-									"originallengthms" : [ 0.0 ],
-									"originallength" : [ 0.0, "ticks" ],
-									"mode" : [ "basic" ],
-									"play" : [ 0 ],
-									"pitchshift" : [ 1.0 ],
-									"originaltempo" : [ 120.0 ],
-									"formant" : [ 1.0 ],
-									"followglobaltempo" : [ 0 ],
-									"quality" : [ "basic" ],
 									"basictuning" : [ 440 ],
+									"play" : [ 0 ],
+									"pitchshiftcent" : [ 0 ],
+									"slurtime" : [ 0.0 ],
+									"formant" : [ 1.0 ],
+									"originaltempo" : [ 120.0 ],
+									"mode" : [ "basic" ],
+									"originallength" : [ 0.0, "ticks" ],
+									"pitchcorrection" : [ 0 ],
+									"speed" : [ 1.0 ],
+									"pitchshift" : [ 1.0 ],
+									"quality" : [ "basic" ],
 									"formantcorrection" : [ 0 ],
-									"pitchcorrection" : [ 0 ]
+									"timestretch" : [ 0 ],
+									"followglobaltempo" : [ 0 ],
+									"originallengthms" : [ 0.0 ]
 								}
 
 							}
 , 							{
 								"filename" : "/Users/Dylan/Documents/Projects/tony-jobfair/public/media/pumpup/pumpup6.wav",
 								"filekind" : "audiofile",
-								"loop" : 0,
+								"loop" : 1,
 								"content_state" : 								{
-									"timestretch" : [ 0 ],
-									"slurtime" : [ 0.0 ],
-									"pitchshiftcent" : [ 0 ],
-									"speed" : [ 1.0 ],
-									"originallengthms" : [ 0.0 ],
-									"originallength" : [ 0.0, "ticks" ],
-									"mode" : [ "basic" ],
-									"play" : [ 0 ],
-									"pitchshift" : [ 1.0 ],
-									"originaltempo" : [ 120.0 ],
-									"formant" : [ 1.0 ],
-									"followglobaltempo" : [ 0 ],
-									"quality" : [ "basic" ],
 									"basictuning" : [ 440 ],
+									"play" : [ 0 ],
+									"pitchshiftcent" : [ 0 ],
+									"slurtime" : [ 0.0 ],
+									"formant" : [ 1.0 ],
+									"originaltempo" : [ 120.0 ],
+									"mode" : [ "basic" ],
+									"originallength" : [ 0.0, "ticks" ],
+									"pitchcorrection" : [ 0 ],
+									"speed" : [ 1.0 ],
+									"pitchshift" : [ 1.0 ],
+									"quality" : [ "basic" ],
 									"formantcorrection" : [ 0 ],
-									"pitchcorrection" : [ 0 ]
+									"timestretch" : [ 0 ],
+									"followglobaltempo" : [ 0 ],
+									"originallengthms" : [ 0.0 ]
 								}
 
 							}
 , 							{
 								"filename" : "/Users/Dylan/Documents/Projects/tony-jobfair/public/media/pumpup/pumpup7.wav",
 								"filekind" : "audiofile",
-								"loop" : 0,
+								"loop" : 1,
 								"content_state" : 								{
-									"timestretch" : [ 0 ],
-									"slurtime" : [ 0.0 ],
-									"pitchshiftcent" : [ 0 ],
-									"speed" : [ 1.0 ],
-									"originallengthms" : [ 0.0 ],
-									"originallength" : [ 0.0, "ticks" ],
-									"mode" : [ "basic" ],
-									"play" : [ 0 ],
-									"pitchshift" : [ 1.0 ],
-									"originaltempo" : [ 120.0 ],
-									"formant" : [ 1.0 ],
-									"followglobaltempo" : [ 0 ],
-									"quality" : [ "basic" ],
 									"basictuning" : [ 440 ],
+									"play" : [ 0 ],
+									"pitchshiftcent" : [ 0 ],
+									"slurtime" : [ 0.0 ],
+									"formant" : [ 1.0 ],
+									"originaltempo" : [ 120.0 ],
+									"mode" : [ "basic" ],
+									"originallength" : [ 0.0, "ticks" ],
+									"pitchcorrection" : [ 0 ],
+									"speed" : [ 1.0 ],
+									"pitchshift" : [ 1.0 ],
+									"quality" : [ "basic" ],
 									"formantcorrection" : [ 0 ],
-									"pitchcorrection" : [ 0 ]
+									"timestretch" : [ 0 ],
+									"followglobaltempo" : [ 0 ],
+									"originallengthms" : [ 0.0 ]
 								}
 
 							}
@@ -662,15 +739,6 @@
 			}
 , 			{
 				"patchline" : 				{
-					"destination" : [ "obj-15", 0 ],
-					"disabled" : 0,
-					"hidden" : 0,
-					"source" : [ "obj-11", 3 ]
-				}
-
-			}
-, 			{
-				"patchline" : 				{
 					"destination" : [ "obj-23", 0 ],
 					"disabled" : 0,
 					"hidden" : 0,
@@ -695,6 +763,15 @@
 					"disabled" : 0,
 					"hidden" : 0,
 					"source" : [ "obj-12", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-56", 0 ],
+					"disabled" : 0,
+					"hidden" : 0,
+					"source" : [ "obj-14", 0 ]
 				}
 
 			}
@@ -756,6 +833,24 @@
 			}
 , 			{
 				"patchline" : 				{
+					"destination" : [ "obj-11", 0 ],
+					"disabled" : 0,
+					"hidden" : 0,
+					"source" : [ "obj-20", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-20", 0 ],
+					"disabled" : 0,
+					"hidden" : 0,
+					"source" : [ "obj-21", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
 					"destination" : [ "obj-3", 0 ],
 					"disabled" : 0,
 					"hidden" : 0,
@@ -766,20 +861,18 @@
 			}
 , 			{
 				"patchline" : 				{
-					"destination" : [ "obj-14", 1 ],
+					"destination" : [ "obj-13", 0 ],
 					"disabled" : 0,
 					"hidden" : 0,
-					"midpoints" : [ 231.166672, 549.0, 181.5, 549.0 ],
 					"source" : [ "obj-23", 0 ]
 				}
 
 			}
 , 			{
 				"patchline" : 				{
-					"destination" : [ "obj-14", 0 ],
+					"destination" : [ "obj-7", 0 ],
 					"disabled" : 0,
 					"hidden" : 0,
-					"midpoints" : [ 158.5, 558.0, 155.5, 558.0 ],
 					"source" : [ "obj-24", 0 ]
 				}
 
@@ -873,6 +966,15 @@
 			}
 , 			{
 				"patchline" : 				{
+					"destination" : [ "obj-25", 0 ],
+					"disabled" : 0,
+					"hidden" : 0,
+					"source" : [ "obj-4", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
 					"destination" : [ "obj-22", 0 ],
 					"disabled" : 0,
 					"hidden" : 0,
@@ -903,10 +1005,28 @@
 			}
 , 			{
 				"patchline" : 				{
+					"destination" : [ "obj-26", 0 ],
+					"disabled" : 0,
+					"hidden" : 0,
+					"source" : [ "obj-5", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
 					"destination" : [ "obj-19", 0 ],
 					"disabled" : 0,
 					"hidden" : 0,
 					"source" : [ "obj-50", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-21", 0 ],
+					"disabled" : 0,
+					"hidden" : 0,
+					"source" : [ "obj-56", 0 ]
 				}
 
 			}
