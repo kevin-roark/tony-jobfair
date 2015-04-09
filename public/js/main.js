@@ -150,16 +150,7 @@ $(function() {
         weighingState.ronaldPerformedThrow('kevin', 'right');
       }
       else if (ev.which === 113) { // q
-        moveMesh(camera, 0, 1, 0);
-        if (cameraFollowState.offset) {
-          cameraFollowState.offset.z += 1;
-        }
-      }
-      else if (ev.which === 101) { // e
-        moveMesh(camera, 0, -1, 0);
-        if (cameraFollowState.offset) {
-          cameraFollowState.offset.z += -1;
-        }
+        jobfairState.finishedPerformingPitch();
       }
     });
   }
@@ -265,6 +256,7 @@ $(function() {
       jobfairState.currentBooth = index;
       io.mode = io.INTERVIEW;
       jobfairState.waitingForAction = true;
+      jobfairState.finishedPerformingPitch = false;
       ronaldUI.flash(recruiterManager.companies[index], 1000);
     }
 
@@ -315,10 +307,14 @@ $(function() {
       }, 5000);
     }
 
+    jobfairState.finishedPerformingPitch = function() {
+      jobfairState.finishedPerformingPitch = true;
+    };
+
     jobfairState.ronaldPerformedAction = function(action) {
       console.log('ronald performed: ' + action);
 
-      if (!this.waitingForAction|| this.hasPerformedActionForCurrentBooth) {
+      if (!this.finishedPerformingPitch || !this.waitingForAction|| this.hasPerformedActionForCurrentBooth) {
         return;
       }
       this.hasPerformedActionForCurrentBooth = true;

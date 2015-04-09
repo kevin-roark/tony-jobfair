@@ -24,8 +24,7 @@ var previousPositionDeltas = {};
 var eventsWithRapidHeadVelocity = {one: 0, two: 0};
 var eventsWithRapidRightArmVelocity = {one: 0, two: 0};
 var eventsWithKneelingKnees = {one: 0, two: 0};
-
-var startDate = new Date();
+var eventsWithFlexingArms = {one: 0, two: 0};
 
 var elbowHistory = {one: {rotUp: false, rotDown: false}, two: {rotUp: false, rotDown: false}};
 
@@ -41,6 +40,8 @@ var KNEEL_GESTURE_CONSECUTIVE_EVENTS = 15;
 
 var FAR_ELBOW_MAG = 300;
 
+var FLEXING_HANDS_X_MAG = 15;
+var FLEX_GESTURE_CONSECUTIVE_EVENTS = 20;
 var CLOSE_HANDS_MAG = 100;
 
 var TORSO_MOVEMENT_MAG_MULT = 0.21;
@@ -469,9 +470,26 @@ function hand2DeltaAction(positionDelta) {
 }
 
 function handDeltaActionBehavior(positionDelta, handNumber) {
-  var mag = totalMagnitude(positionDelta);
-  var date = new Date();
+  var eventsKey = handNumber === 1 ? 'one' : 'two';
+  var rightHandKey = handNumber === 1 ? 'rightHand1' : 'rightHand2';
+  var rightElbowKey = handNumber === 1 ? 'rightElbow1' : 'rightElbow2';
 
+  if (module.exports.mode === module.exports.INTERVIEW) {
+    var xMag = Math.abs(positionDelta.x);
+    if (xMag >= FLEXING_HANDS_X_MAG && previousPositions[rightHandKey].y > previousPositions[rightElbow2]) {
+      // hands are far apart and above elbows u feel
+      eventsWithFlexingArms[eventsKey] += 1;
+    } else if (eventsWithFlexingArms[eventsKey] > 0) {
+      eventsWithFlexingArms[eventsKey] -= 1;
+    }
+
+    if (eventsWithFlexingArms[eventsKey] >= FLEX_GESTURE_CONSECUTIVE_EVENTS) {
+      module.exports.eventHandler('bribe', {});
+      eventsWithFlexingArms[eventsKey] = 0;
+    }
+  }
+
+  var mag = totalMagnitude(positionDelta);
   if (mag < CLOSE_HANDS_MAG) {
 
   } else {

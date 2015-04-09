@@ -944,8 +944,7 @@ var previousPositionDeltas = {};
 var eventsWithRapidHeadVelocity = {one: 0, two: 0};
 var eventsWithRapidRightArmVelocity = {one: 0, two: 0};
 var eventsWithKneelingKnees = {one: 0, two: 0};
-
-var startDate = new Date();
+var eventsWithFlexingArms = {one: 0, two: 0};
 
 var elbowHistory = {one: {rotUp: false, rotDown: false}, two: {rotUp: false, rotDown: false}};
 
@@ -961,6 +960,8 @@ var KNEEL_GESTURE_CONSECUTIVE_EVENTS = 15;
 
 var FAR_ELBOW_MAG = 300;
 
+var FLEXING_HANDS_X_MAG = 15;
+var FLEX_GESTURE_CONSECUTIVE_EVENTS = 20;
 var CLOSE_HANDS_MAG = 100;
 
 var TORSO_MOVEMENT_MAG_MULT = 0.21;
@@ -1389,9 +1390,23 @@ function hand2DeltaAction(positionDelta) {
 }
 
 function handDeltaActionBehavior(positionDelta, handNumber) {
-  var mag = totalMagnitude(positionDelta);
-  var date = new Date();
+  var eventsKey = handNumber === 1 ? 'one' : 'two';
 
+  if (module.exports.mode === module.exports.INTERVIEW) {
+    var xMag = Math.abs(positionDelta.x);
+    if (xMag >= FLEXING_HANDS_X_MAG) {
+      eventsWithFlexingArms[eventsKey] += 1;
+    } else if (eventsWithFlexingArms[eventsKey] > 0) {
+      eventsWithFlexingArms[eventsKey] -= 1;
+    }
+
+    if (eventsWithFlexingArms[eventsKey] >= FLEX_GESTURE_CONSECUTIVE_EVENTS) {
+      module.exports.eventHandler('bribe', {});
+      eventsWithFlexingArms[eventsKey] = 0;
+    }
+  }
+
+  var mag = totalMagnitude(positionDelta);
   if (mag < CLOSE_HANDS_MAG) {
 
   } else {
@@ -2303,16 +2318,7 @@ $(function() {
         weighingState.ronaldPerformedThrow('kevin', 'right');
       }
       else if (ev.which === 113) { // q
-        moveMesh(camera, 0, 1, 0);
-        if (cameraFollowState.offset) {
-          cameraFollowState.offset.z += 1;
-        }
-      }
-      else if (ev.which === 101) { // e
-        moveMesh(camera, 0, -1, 0);
-        if (cameraFollowState.offset) {
-          cameraFollowState.offset.z += -1;
-        }
+        jobfairState.finishedPerformingPitch();
       }
     });
   }
@@ -2418,6 +2424,7 @@ $(function() {
       jobfairState.currentBooth = index;
       io.mode = io.INTERVIEW;
       jobfairState.waitingForAction = true;
+      jobfairState.finishedPerformingPitch = false;
       ronaldUI.flash(recruiterManager.companies[index], 1000);
     }
 
@@ -2468,10 +2475,14 @@ $(function() {
       }, 5000);
     }
 
+    jobfairState.finishedPerformingPitch = function() {
+      jobfairState.finishedPerformingPitch = true;
+    };
+
     jobfairState.ronaldPerformedAction = function(action) {
       console.log('ronald performed: ' + action);
 
-      if (!this.waitingForAction|| this.hasPerformedActionForCurrentBooth) {
+      if (!this.finishedPerformingPitch || !this.waitingForAction|| this.hasPerformedActionForCurrentBooth) {
         return;
       }
       this.hasPerformedActionForCurrentBooth = true;
