@@ -23,10 +23,9 @@ var previousPositionDeltas = {};
 
 var eventsWithRapidHeadVelocity = {one: 0, two: 0};
 var eventsWithRapidRightArmVelocity = {one: 0, two: 0};
+var eventsWithKneelingKnees = {one: 0, two: 0};
 
 var startDate = new Date();
-
-var kneeHistory = {one: {rotating: false}, two: {rotating: false}};
 
 var elbowHistory = {one: {rotUp: false, rotDown: false}, two: {rotUp: false, rotDown: false}};
 
@@ -37,7 +36,9 @@ var TORSO_CLOSE_MAG = 11;
 var BIG_ARMDELTA_MAG = 10;
 var HANDSHAKE_ARMDELTA_FRAMES = 15;
 
-var CLOSE_KNEE_MAG = 60;
+var KNEELING_KNEE_Y_MAG = 15;
+var KNEEL_GESTURE_CONSECUTIVE_EVENTS = 15;
+
 var FAR_ELBOW_MAG = 300;
 
 var CLOSE_HANDS_MAG = 100;
@@ -375,14 +376,14 @@ function torsoBehavior(position, torsoNumber) {
 /*** KNEES ***/
 
 function leftKnee1(position) {
-  leftKneeBehavior(position, 1);
+  leftKneeBehavior(position, 1, knee1DeltaAction);
 }
 
 function leftKnee2(position) {
-  leftKneeBehavior(position, 2);
+  leftKneeBehavior(position, 2, knee2DeltaAction);
 }
 
-function leftKneeBehavior(position, kneeNumber) {
+function leftKneeBehavior(position, kneeNumber, deltaAction) {
   var leftKneeKey = 'leftKnee' + kneeNumber;
   var rightKneeKey = 'rightKnee' + kneeNumber;
   var kneeDeltaKey = 'knee' + kneeNumber;
@@ -391,7 +392,7 @@ function leftKneeBehavior(position, kneeNumber) {
   if (previousPositions[rightKneeKey]) {
     var rh = previousPositions[rightKneeKey];
     positionDeltas[kneeDeltaKey] = {x: position.x - rh.x, y: position.y - rh.y, z: position.z - rh.z};
-    knee2DeltaAction(positionDeltas[kneeDeltaKey]);
+    deltaAction(positionDeltas[kneeDeltaKey]);
   }
 
   if (previousPositions[leftKneeKey]) {
@@ -487,12 +488,20 @@ function knee2DeltaAction(positionDelta) {
 }
 
 function kneeDeltaActionBehavior(positionDelta, kneeNumber) {
-  var mag = totalMagnitude(positionDelta);
+  var eventsKey = kneeNumber === 1 ? 'one' : 'two';
 
-  if (mag < CLOSE_KNEE_MAG) {
+  if (module.exports.mode === module.exports.INTERVIEW) {
+    var yMag = Math.abs(positionDelta.y);
+    if (yMag >= KNEELING_KNEE_Y_MAG) {
+      eventsWithKneelingKnees[eventsKey] += 1;
+    } else if (eventsWithKneelingKnees[eventsKey] > 0) {
+      eventsWithKneelingKnees[eventsKey] -= 1;
+    }
 
-  } else {
-
+    if (eventsWithKneelingKnees[eventsKey] >= KNEEL_GESTURE_CONSECUTIVE_EVENTS) {
+      module.exports.eventHandler('kneel', {});
+      eventsWithKneelingKnees[eventsKey] = 0;
+    }
   }
 }
 
