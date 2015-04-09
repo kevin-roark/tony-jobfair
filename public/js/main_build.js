@@ -944,7 +944,6 @@ var previousPositionDeltas = {};
 var eventsWithRapidHeadVelocity = {one: 0, two: 0};
 
 var startDate = new Date();
-var meltingHistory = {one: {meltEndTime: startDate, meltStartTime: startDate}, two: {meltEndTime: startDate, meltStartTime: startDate}};
 
 var kneeHistory = {one: {rotating: false}, two: {rotating: false}};
 
@@ -1153,6 +1152,9 @@ function rightHandBehavior(position, handNumber) {
       var directions = {x: true, y: true, z: true};
       moveDelta(wrestler.rightArm, position, previousPositions[rightHandKey], denom, directions);
     }
+    else if (module.exports.mode === module.exports.WEIGHING) {
+      moveDelta(wrestler, position, previousPositions[rightHandKey], 2);
+    }
   }
 
   previousPositions[rightHandKey] = position;
@@ -1227,9 +1229,12 @@ function headBehavior(position, headNumber) {
         eventsWithRapidHeadVelocity[headVelocityKey] = Math.max(eventsWithRapidHeadVelocity[headVelocityKey] - 1, 0);
       }
 
-      if (module.exports.mode === module.exports.INTERVIEW) {
-        if (eventsWithRapidHeadVelocity[headVelocityKey] >= MAX_HEAD_SWELL) {
+      if (eventsWithRapidHeadVelocity[headVelocityKey] >= MAX_HEAD_SWELL) {
+        if (module.exports.mode === module.exports.INTERVIEW) {
           module.exports.eventHandler('spit', {});
+        }
+        else if (module.exports.mode === module.exports.WEIGHING) {
+          module.exports.eventHandler('throw', {ronaldNumber: headNumber});
         }
       }
     }
@@ -2179,6 +2184,11 @@ $(function() {
   io.eventHandler = function(event, data) {
     if (['spit', 'handshake', 'kneel', 'bribe'].indexOf(event) !== -1) {
       jobfairState.ronaldPerformedAction(event);
+    }
+
+    if (event === 'throw') {
+      var name = data.ronaldNumber === 1 ? 'kevin' : 'dylan';
+      weighingState.ronaldPerformedThrow(name, 'left');
     }
   };
 

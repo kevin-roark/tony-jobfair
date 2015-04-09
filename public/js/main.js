@@ -57,6 +57,11 @@ $(function() {
     if (['spit', 'handshake', 'kneel', 'bribe'].indexOf(event) !== -1) {
       jobfairState.ronaldPerformedAction(event);
     }
+
+    if (event === 'throw') {
+      var name = data.ronaldNumber === 1 ? 'kevin' : 'dylan';
+      weighingState.ronaldPerformedThrow(name, 'left');
+    }
   };
 
   /*
