@@ -33,8 +33,8 @@ var BIG_HEAD_MAG = 12;
 var MAX_HEAD_SWELL = 13;
 var TORSO_CLOSE_MAG = 11;
 
-var BIG_ARMDELTA_MAG = 10;
-var HANDSHAKE_ARMDELTA_FRAMES = 15;
+var HANDSHAKE_ARMDELTA_MAG = 25;
+var HANDSHAKE_ARMDELTA_FRAMES = 27;
 
 var KNEELING_KNEE_Y_MAG = 15;
 var KNEEL_GESTURE_CONSECUTIVE_EVENTS = 15;
@@ -222,21 +222,19 @@ function rightHandBehavior(position, handNumber) {
 
   if (previousPositions[rightHandKey]) {
     if (module.exports.mode === module.exports.INTERVIEW) {
-      if (positionDeltas[rightHandKey] && totalMagnitude(positionDeltas[rightHandKey]) < BIG_ARMDELTA_MAG) {
-        var positionChange = delta(position, previousPositions[rightHandKey]);
-        var mag = totalMagnitude(positionChange);
-        //console.log('total arm mag: ' + mag);
+      var positionChange = delta(position, previousPositions[rightHandKey]);
+      var mag = totalMagnitude(positionChange);
+      //console.log('total arm mag: ' + mag);
 
-        if (mag > BIG_ARMDELTA_MAG) {
-          eventsWithRapidRightArmVelocity[armVelocityKey] += 1;
-        } else {
-          eventsWithRapidRightArmVelocity[armVelocityKey] = Math.max(eventsWithRapidRightArmVelocity[armVelocityKey] - 1, 0);
-        }
+      if (mag > HANDSHAKE_ARMDELTA_MAG) {
+        eventsWithRapidRightArmVelocity[armVelocityKey] += 1;
+      } else {
+        eventsWithRapidRightArmVelocity[armVelocityKey] = Math.max(eventsWithRapidRightArmVelocity[armVelocityKey] - 1, 0);
+      }
 
-        if (eventsWithRapidRightArmVelocity[armVelocityKey] >= HANDSHAKE_ARMDELTA_FRAMES) {
-          module.exports.eventHandler('handshake', {});
-          eventsWithRapidRightArmVelocity[armVelocityKey] = 0;
-        }
+      if (eventsWithRapidRightArmVelocity[armVelocityKey] >= HANDSHAKE_ARMDELTA_FRAMES) {
+        module.exports.eventHandler('handshake', {});
+        eventsWithRapidRightArmVelocity[armVelocityKey] = 0;
       }
     }
     // else if (module.exports.mode === module.exports.JOBFAIR) {
