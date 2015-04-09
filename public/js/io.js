@@ -176,7 +176,7 @@ function moveDelta(bodypart, position, lastPos, divisor, directions) {
   }
 
   if (directions.z) {
-    deltaZ = (position.z - lastPos.z) / -divisor;
+    deltaZ = (position.z - lastPos.z) / divisor;
   }
 
   if (bodypart.mesh) {
@@ -245,7 +245,7 @@ function rightHandBehavior(position, handNumber) {
     //   moveDelta(wrestler.rightArm, position, previousPositions[rightHandKey], denom, directions);
     // }
     else if (module.exports.mode === module.exports.WEIGHING) {
-      moveDelta(wrestler, position, previousPositions[rightHandKey], 2);
+      moveDelta(wrestler, position, previousPositions[rightHandKey], 0.75);
     }
   }
 
@@ -408,9 +408,9 @@ function rightKneeBehavior(position, kneeNumber) {
   var wrestler = kneeNumber === 1 ? wrestler1 : wrestler2;
 
   if (previousPositions[rightKneeKey]) {
-    if (module.exports.mode === module.exports.JOBFAIR) {
-      moveDelta(wrestler.rightLeg, position, previousPositions[rightKneeKey], 20, {x: true, y: true, z: true});
-    }
+    // if (module.exports.mode === module.exports.JOBFAIR) {
+    //   moveDelta(wrestler.rightLeg, position, previousPositions[rightKneeKey], 20, {x: true, y: true, z: true});
+    // }
   }
 
   previousPositions[rightKneeKey] = position;
@@ -467,7 +467,7 @@ function handDeltaActionBehavior(positionDelta, handNumber) {
   if (module.exports.mode === module.exports.INTERVIEW) {
     var xMag = Math.abs(positionDelta.x);
     console.log('total flex mag: ' + xMag);
-    if (xMag >= FLEXING_HANDS_X_MAG && previousPositions[rightHandKey].y > previousPositions[rightElbow2]) {
+    if (xMag >= FLEXING_HANDS_X_MAG && previousPositions[rightHandKey].y > previousPositions[rightElbowKey]) {
       // hands are far apart and above elbows u feel
       eventsWithFlexingArms[eventsKey] += 1;
     } else if (eventsWithFlexingArms[eventsKey] > 0) {
@@ -479,12 +479,11 @@ function handDeltaActionBehavior(positionDelta, handNumber) {
       eventsWithFlexingArms[eventsKey] = 0;
     }
   }
-
-  var mag = totalMagnitude(positionDelta);
-  if (mag < CLOSE_HANDS_MAG) {
-
-  } else {
-
+  else if (module.exports.mode === module.exports.WEIGHING) {
+    var mag = totalMagnitude(positionDelta);
+    if (mag < CLOSE_HANDS_MAG) {
+      module.exports.eventHandler('throw', {ronaldNumber: handNumber});
+    }
   }
 }
 

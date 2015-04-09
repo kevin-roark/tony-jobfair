@@ -22,7 +22,7 @@ $(function() {
   var recruiterManager = require('./recruiter-manager');
 
   var TEST_MODE = false;
-  var START_WITH_SCALE = false;
+  var START_WITH_SCALE = true;
   var SPEED_TO_TRASH = false;
 
   /*
@@ -538,7 +538,7 @@ $(function() {
             side: THREE.DoubleSide
           });
           var truck = new THREE.Mesh(geometry, material);
-          truck.position.set(0, 100, -300);
+          truck.position.set(0, 150, -300);
           scene.add(truck);
           var truckInterval = setInterval(function() {
             if (truck.position.y > 4) truck.position.y -= 0.5;
