@@ -40,7 +40,7 @@ Arm.prototype.collisonHandle = function() {
   if (this.collisionHandler) this.collisionHandler();
 }
 
-},{"./bodypart":3,"./lib/kutility":15,"./model_names":18}],2:[function(require,module,exports){
+},{"./bodypart":3,"./lib/kutility":16,"./model_names":19}],2:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 
@@ -72,7 +72,7 @@ Body.prototype.additionalInit = function() {
   }
 };
 
-},{"./bodypart":3,"./lib/kutility":15,"./model_names":18}],3:[function(require,module,exports){
+},{"./bodypart":3,"./lib/kutility":16,"./model_names":19}],3:[function(require,module,exports){
 var kt = require('./lib/kutility');
 
 var modelNames = require('./model_names');
@@ -350,7 +350,63 @@ BodyPart.prototype.additionalInit = function() {};
 BodyPart.prototype.additionalRender = function() {};
 BodyPart.prototype.collisonHandle = function() {}
 
-},{"./lib/kutility":15,"./model_names":18}],4:[function(require,module,exports){
+},{"./lib/kutility":16,"./model_names":19}],4:[function(require,module,exports){
+
+var geometryUtil = require('./geometry-util');
+
+module.exports.wall = function(side) {
+  var wallGeometry = side? new THREE.PlaneGeometry(6000, 100) : new THREE.PlaneGeometry(160, 100);
+  var wallTexture = THREE.ImageUtils.loadTexture('/media/textures/wood.jpg');
+  wallTexture.wrapS = wallTexture.wrapT = THREE.RepeatWrapping;
+  wallTexture.repeat.set(8, 8);
+  var wallMaterial = new THREE.MeshBasicMaterial({
+    map: wallTexture,
+    side: THREE.DoubleSide
+  });
+  var wallMesh = new THREE.Mesh(wallGeometry, wallMaterial);
+  if (side) {
+    wallMesh.rotation.y = Math.PI / 2;
+  }
+  return wallMesh;
+};
+
+module.exports.ground = function() {
+  var groundTexture = THREE.ImageUtils.loadTexture('/media/textures/marble.jpg');
+  groundTexture.wrapS = groundTexture.wrapT = THREE.RepeatWrapping;
+  groundTexture.repeat.set(4, 75);
+  var groundMaterial = new THREE.MeshBasicMaterial({
+    map: groundTexture,
+    side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 0.3
+  });
+
+  var groundGeometry = new THREE.PlaneGeometry(160, 6000);
+  geometryUtil.calculateGeometryThings(groundGeometry);
+
+  var ground = new THREE.Mesh(groundGeometry, groundMaterial);
+  ground.rotation.x = -Math.PI / 2;
+  return ground;
+};
+
+module.exports.ceiling = function() {
+  var ceilingTexture = THREE.ImageUtils.loadTexture('/media/textures/chapel.jpg');
+  ceilingTexture.wrapS = ceilingTexture.wrapT = THREE.RepeatWrapping;
+  ceilingTexture.repeat.set(1, 16);
+  var ceilingMaterial = new THREE.MeshBasicMaterial({
+    map: ceilingTexture,
+    side: THREE.DoubleSide
+  });
+
+  var ceilingGeometry = new THREE.PlaneGeometry(160, 6000);
+  geometryUtil.calculateGeometryThings(ceilingGeometry);
+
+  var ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial, 0);
+  ceiling.rotation.x = -Math.PI / 2;
+  return ceiling;
+}
+
+},{"./geometry-util":10}],5:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 var modelNames = require('./model_names');
@@ -396,7 +452,7 @@ Phone.prototype.move = function(dx, dy, dz) {
   this.screenMesh.position.set(this.mesh.position.x - 34, this.mesh.position.y - 17.5, this.mesh.position.z - 20);
 };
 
-},{"./bodypart":3,"./lib/kutility":15,"./model_names":18}],5:[function(require,module,exports){
+},{"./bodypart":3,"./lib/kutility":16,"./model_names":19}],6:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 
@@ -601,7 +657,7 @@ function posNegRandom() {
   return (Math.random() - 0.5) * 2;
 }
 
-},{"./arm":1,"./body":2,"./hand":10,"./head":11,"./leg":14,"./lib/kutility":15,"./model_names":18}],6:[function(require,module,exports){
+},{"./arm":1,"./body":2,"./hand":11,"./head":12,"./leg":15,"./lib/kutility":16,"./model_names":19}],7:[function(require,module,exports){
 
 var BodyPart = require('./bodypart');
 
@@ -685,7 +741,7 @@ Computer.prototype.shatter = function() {
   this.mesh.setAngularVelocity({x: negrand(36, 15), y: Math.random() * 36, z: negrand(36, 15)});
 };
 
-},{"./bodypart":3}],7:[function(require,module,exports){
+},{"./bodypart":3}],8:[function(require,module,exports){
 
 
 module.exports.nearest = function(object, targetObjects) {
@@ -740,7 +796,7 @@ module.exports.positionDeltaIncrement = function(pos1, pos2, steps) {
   };
 };
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 
 var modelNames = require('./model_names');
 
@@ -787,7 +843,7 @@ Garbage.prototype.createMesh = function(callback) {
   });
 };
 
-},{"./bodypart":3,"./model_names":18}],9:[function(require,module,exports){
+},{"./bodypart":3,"./model_names":19}],10:[function(require,module,exports){
 
 
 module.exports.calculateGeometryThings = function(geometry) {
@@ -795,7 +851,7 @@ module.exports.calculateGeometryThings = function(geometry) {
   geometry.computeVertexNormals();
 };
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 
@@ -872,7 +928,7 @@ Hand.prototype.collisonHandle = function() {
   }
 };
 
-},{"./bodypart":3,"./lib/kutility":15,"./model_names":18}],11:[function(require,module,exports){
+},{"./bodypart":3,"./lib/kutility":16,"./model_names":19}],12:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 
@@ -917,7 +973,7 @@ Head.prototype.render = function() {
   }
 }
 
-},{"./bodypart":3,"./lib/kutility":15}],12:[function(require,module,exports){
+},{"./bodypart":3,"./lib/kutility":16}],13:[function(require,module,exports){
 
 // CONTROLS::::
 
@@ -1391,10 +1447,13 @@ function hand2DeltaAction(positionDelta) {
 
 function handDeltaActionBehavior(positionDelta, handNumber) {
   var eventsKey = handNumber === 1 ? 'one' : 'two';
+  var rightHandKey = handNumber === 1 ? 'rightHand1' : 'rightHand2';
+  var rightElbowKey = handNumber === 1 ? 'rightElbow1' : 'rightElbow2';
 
   if (module.exports.mode === module.exports.INTERVIEW) {
     var xMag = Math.abs(positionDelta.x);
-    if (xMag >= FLEXING_HANDS_X_MAG) {
+    if (xMag >= FLEXING_HANDS_X_MAG && previousPositions[rightHandKey].y > previousPositions[rightElbow2]) {
+      // hands are far apart and above elbows u feel
       eventsWithFlexingArms[eventsKey] += 1;
     } else if (eventsWithFlexingArms[eventsKey] > 0) {
       eventsWithFlexingArms[eventsKey] -= 1;
@@ -1516,7 +1575,7 @@ function handsBetweenElbows(playerNum) {
   return (leftHand.x > leftElbow.x) && (rightHand.x < rightElbow.x);
 }
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 
 var Recruiter = require('./recruiter');
 
@@ -1533,7 +1592,7 @@ function JobBooth(recruiterOptions, posterURL, side) {
   this.poster = makePoster(posterURL);
 }
 
-JobBooth.prototype.addTo = function(scene) {
+JobBooth.prototype.addTo = function(scene, deskOffset) {
   var self = this;
   this.recruiter.addTo(scene, function() {
     var rotation = self.side === 'left' ? Math.PI / 6 : - Math.PI / 6;
@@ -1541,8 +1600,12 @@ JobBooth.prototype.addTo = function(scene) {
 
     var recruiterPos = self.recruiter.skinnedMesh.position;
 
+    if (!deskOffset) {
+      deskOffset = self.recruiterScale * 4;
+    }
+
     scene.add(self.desk);
-    self.desk.position.set(recruiterPos.x + (self.side === 'left' ? -17.5 : 17.5), 2, recruiterPos.z + self.recruiterScale * 3);
+    self.desk.position.set(recruiterPos.x + (self.side === 'left' ? -17.5 : 17.5), 3, recruiterPos.z + deskOffset);
     self.desk.rotation.y = rotation / 1.75;
 
     self.desk.add(self.poster);
@@ -1568,7 +1631,7 @@ function makePoster(imageURL) {
   return poster;
 }
 
-},{"./recruiter":21}],14:[function(require,module,exports){
+},{"./recruiter":22}],15:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 
@@ -1600,7 +1663,7 @@ Leg.prototype.additionalInit = function() {
   }
 };
 
-},{"./bodypart":3,"./lib/kutility":15,"./model_names":18}],15:[function(require,module,exports){
+},{"./bodypart":3,"./lib/kutility":16,"./model_names":19}],16:[function(require,module,exports){
 /* export something */
 module.exports = new Kutility;
 
@@ -2165,7 +2228,7 @@ Kutility.prototype.blur = function(el, x) {
   this.setFilter(el, cf + f);
 }
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 
 $(function() {
 
@@ -2173,6 +2236,7 @@ $(function() {
   var distanceUtil = require('./distance-util');
   var geometryUtil = require('./geometry-util');
   var sceneUtil = require('./scene-util');
+  var buildingUtil = require('./building-util');
   var ronaldUI = require('./ronald-ui');
 
   var ronaldGestures = require('./ronald-gestures');
@@ -2221,6 +2285,8 @@ $(function() {
   mainLight.castShadow = true;
   scene.add(mainLight);
 
+  scene.fog = new THREE.Fog(0xeeeeee, 100, 1000);
+
   io.eventHandler = function(event, data) {
     if (['spit', 'handshake', 'kneel', 'bribe'].indexOf(event) !== -1) {
       jobfairState.ronaldPerformedAction(event);
@@ -2251,10 +2317,10 @@ $(function() {
     offset: {x: 0, y: 0, z: 0}
   };
 
-  var kevinRonald = new Character({x: 0, y: -10, z: 100}, 20);
+  var kevinRonald = new Character({x: 0, y: -10, z: 800}, 20);
   kevinRonald.addTo(scene);
 
-  var dylanRonald = new Character({x: 30, y: -10, z: 100}, 20);
+  var dylanRonald = new Character({x: 30, y: -10, z: 800}, 20);
   dylanRonald.addTo(scene);
   var ronalds = [kevinRonald, dylanRonald];
 
@@ -2318,7 +2384,7 @@ $(function() {
         weighingState.ronaldPerformedThrow('kevin', 'right');
       }
       else if (ev.which === 113) { // q
-        jobfairState.finishedPerformingPitch();
+        jobfairState.didFinishPerformingPitch();
       }
     });
   }
@@ -2362,47 +2428,25 @@ $(function() {
     active.jobfair = true;
     io.mode = io.JOBFAIR;
 
-    jobfairState.ground_material = Physijs.createMaterial(
-      new THREE.MeshBasicMaterial({color: 0x111111, side: THREE.DoubleSide, transparent: true, opacity: 0.2}),
-      0.8, // high friction
-      0.4 // low restitution
-    );
+    ronaldUI.flash('WELCOME TO THE FAIR', 1200);
 
-    jobfairState.ground_geometry = new THREE.PlaneGeometry(160, 6000);
-    geometryUtil.calculateGeometryThings(jobfairState.ground_geometry);
-
-    jobfairState.ground = new Physijs.BoxMesh(jobfairState.ground_geometry, jobfairState.ground_material, 0);
-    jobfairState.ground.rotation.x = -Math.PI / 2;
-    jobfairState.ground.position.z = -3000;
-    jobfairState.ground.position.y = 0;
-    jobfairState.ground.__dirtyPosition = true;
+    jobfairState.ground = buildingUtil.ground();
+    jobfairState.ground.position.z = -2995;
     scene.add(jobfairState.ground);
 
-    function makeWall(side) {
-      var wallGeometry = side? new THREE.PlaneGeometry(6000, 100) : new THREE.PlaneGeometry(160, 100);
-      var wallTexture = THREE.ImageUtils.loadTexture('/media/textures/wood.jpg');
-      wallTexture.wrapS = wallTexture.wrapT = THREE.RepeatWrapping;
-      wallTexture.repeat.set(8, 8);
-      var wallMaterial = new THREE.MeshBasicMaterial({
-        map: wallTexture,
-        side: THREE.DoubleSide
-      });
-      var wallMesh = new THREE.Mesh(wallGeometry, wallMaterial);
-      if (side) {
-        wallMesh.rotation.y = Math.PI / 2;
-      }
-      return wallMesh;
-    }
+    jobfairState.ceiling = buildingUtil.ceiling();
+    jobfairState.ceiling.position.set(0, 100, -2995);
+    scene.add(jobfairState.ceiling);
 
-    jobfairState.leftWall = makeWall(true);
+    jobfairState.leftWall = buildingUtil.wall(true);
     jobfairState.leftWall.position.set(-80, 50, -3000);
     scene.add(jobfairState.leftWall);
 
-    jobfairState.rightWall = makeWall(true);
-    jobfairState.rightWall.position.set(82, 50, -3000);
+    jobfairState.rightWall = buildingUtil.wall(true);
+    jobfairState.rightWall.position.set(80, 50, -3000);
     scene.add(jobfairState.rightWall);
 
-    jobfairState.backWall = makeWall(false);
+    jobfairState.backWall = buildingUtil.wall(false);
     jobfairState.backWall.position.set(0, 50, -6000);
 
     cameraFollowState.target = kevinRonald.torso.mesh.position;
@@ -2462,7 +2506,7 @@ $(function() {
 
     function showFailedResponse(z) {
       jobfairState.responseText = new RonaldText({
-        phrase: 'NO!!!',
+        phrase: 'NO!!!!!!!',
         position: {x: jobfairState.currentBooth % 2 === 0 ? 20 : -20, y: 25, z: z},
         color: 0xff0000
       });
@@ -2475,7 +2519,7 @@ $(function() {
       }, 5000);
     }
 
-    jobfairState.finishedPerformingPitch = function() {
+    jobfairState.didFinishPerformingPitch = function() {
       jobfairState.finishedPerformingPitch = true;
     };
 
@@ -2537,11 +2581,13 @@ $(function() {
         if (kevinRonald.position.z <= -recruiterManager.closeToRecruiterDistance) {
           hasReachedBooths = true;
           setCurrentBooth(0);
+          console.log('reached the first booth!');
         }
       }
       else if (waitingForNextBooth) {
         var currentBooth = recruiterManager.boothIndexForZ(kevinRonald.position.z);
         if (currentBooth > this.currentBooth) {
+          console.log('changed current booth to: ' + currentBooth);
           setCurrentBooth(currentBooth);
         }
       }
@@ -2554,7 +2600,7 @@ $(function() {
     jobfairState.endScene = function() {
       var self = this;
       ronaldUI.fadeOverlay(true, function() {
-        var meshes = [jobfairState.ground, jobfairState.leftWall, jobfairState.rightWall];
+        var meshes = [jobfairState.ground, jobfairState.leftWall, jobfairState.rightWall, jobfairState.ceiling, jobfairState.backWall];
         jobfairState.booths.forEach(function(booth) {
           booth.meshes.forEach(function(mesh) {
             meshes.push(mesh);
@@ -2919,7 +2965,7 @@ $(function() {
 
 });
 
-},{"./character":5,"./computer":6,"./distance-util":7,"./garbage":8,"./geometry-util":9,"./io":12,"./lib/kutility":15,"./mesh-gestures":17,"./recruiter-manager":20,"./ronald-gestures":22,"./ronald-text":23,"./ronald-ui":24,"./scale":25,"./scene-util":26,"./skybox":27,"./tshirt":29}],17:[function(require,module,exports){
+},{"./building-util":4,"./character":6,"./computer":7,"./distance-util":8,"./garbage":9,"./geometry-util":10,"./io":13,"./lib/kutility":16,"./mesh-gestures":18,"./recruiter-manager":21,"./ronald-gestures":23,"./ronald-text":24,"./ronald-ui":25,"./scale":26,"./scene-util":27,"./skybox":28,"./tshirt":30}],18:[function(require,module,exports){
 
 
 module.exports.sendFlying = function(mesh, options, callback) {
@@ -2945,7 +2991,7 @@ module.exports.sendFlying = function(mesh, options, callback) {
   }, 25);
 };
 
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 
 var prefix = '/js/models/';
 
@@ -3025,7 +3071,7 @@ module.exports.loadModel = function(modelName, callback) {
   });
 };
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 
 module.exports.create = function() {
   var geometry = new THREE.BoxGeometry(8, 3.5, 0.8);
@@ -3035,7 +3081,7 @@ module.exports.create = function() {
   return new THREE.Mesh(geometry, material);
 };
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 
 var JobBooth = require('./job-booth');
 
@@ -3101,9 +3147,11 @@ module.exports.createBooths = function(scene) {
   for (var i = 0; i < module.exports.recruiterCount; i++) {
     var company = companies[i];
     var side = i % 2 === 0 ? 'left' : 'right';
+
+    var z = (i === 0 ? 45 : (-i * module.exports.distanceBetweenBooths) - i * 9.5 );
     var booth = new JobBooth(
       {
-        position: {x: (side === 'left' ? -12 : 12), y: 10, z: (-i * module.exports.distanceBetweenBooths) - i * 9.5},
+        position: {x: (side === 'left' ? -12 : 12), y: 10, z: z},
         scale: 1.5 + 1.75 * i,
         riddle: riddles[company],
         faceImageUrl: module.exports.getRecruiterImage(company)
@@ -3112,7 +3160,7 @@ module.exports.createBooths = function(scene) {
       side
     );
 
-    booth.addTo(scene);
+    booth.addTo(scene, (i === 0 ? -50 : null));
     booths.push(booth);
   }
 
@@ -3124,7 +3172,7 @@ module.exports.boothIndexForZ = function(z) {
   return Math.floor(Math.max(pos - module.exports.closeToRecruiterDistance, 0) / module.exports.distanceBetweenBooths);
 };
 
-},{"./job-booth":13}],21:[function(require,module,exports){
+},{"./job-booth":14}],22:[function(require,module,exports){
 
 // requirements
 var mn = require('./model_names');
@@ -3280,7 +3328,7 @@ Recruiter.prototype.updateFaceImage = function(image) {
   this.faceMaterial.needsUpdate = true;
 };
 
-},{"./model_names":18}],22:[function(require,module,exports){
+},{"./model_names":19}],23:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 var distanceUtil = require('./distance-util');
@@ -3475,7 +3523,7 @@ module.exports.bribeRecruiter = function(scene, booths, currentBooth, kevinRonal
   }
 };
 
-},{"./cellphone":4,"./distance-util":7,"./lib/kutility":15,"./money":19,"./spit":28}],23:[function(require,module,exports){
+},{"./cellphone":5,"./distance-util":8,"./lib/kutility":16,"./money":20,"./spit":29}],24:[function(require,module,exports){
 var kt = require('./lib/kutility');
 
 module.exports = RonaldText;
@@ -3573,7 +3621,7 @@ RonaldText.prototype.addTo = function(scene, addCallback, decayCallback) {
   }, this.decay);
 };
 
-},{"./lib/kutility":15}],24:[function(require,module,exports){
+},{"./lib/kutility":16}],25:[function(require,module,exports){
 
 module.exports.flash = function(text, timeout) {
   if (!text) return;
@@ -3603,7 +3651,7 @@ module.exports.fadeOverlay = function(fadein, callback, color, time) {
   }
 };
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 
 module.exports = Scale;
 
@@ -3779,7 +3827,7 @@ Scale.prototype.rotateAnimated = function(rz, steps) {
   }
 };
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 
 module.exports.clearScene = function(scene, meshes, exemptions) {
   if (!meshes) meshes = scene.children;
@@ -3792,7 +3840,7 @@ module.exports.clearScene = function(scene, meshes, exemptions) {
   }
 };
 
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 
 var kt = require('./lib/kutility');
 
@@ -3860,7 +3908,7 @@ module.exports.blocker = function(size) {
   return new THREE.Mesh(geometry, material);
 };
 
-},{"./lib/kutility":15}],28:[function(require,module,exports){
+},{"./lib/kutility":16}],29:[function(require,module,exports){
 
 module.exports = Spit;
 
@@ -3889,7 +3937,7 @@ Spit.prototype.addTo = function(scene) {
   scene.add(this.mesh);
 };
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 
 var BodyPart = require('./bodypart');
 var recruiterManager = require('./recruiter-manager');
@@ -3929,4 +3977,4 @@ Shirt.prototype.createMesh = function(callback) {
   callback();
 };
 
-},{"./bodypart":3,"./recruiter-manager":20}]},{},[16]);
+},{"./bodypart":3,"./recruiter-manager":21}]},{},[17]);

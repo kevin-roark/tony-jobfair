@@ -63,9 +63,11 @@ module.exports.createBooths = function(scene) {
   for (var i = 0; i < module.exports.recruiterCount; i++) {
     var company = companies[i];
     var side = i % 2 === 0 ? 'left' : 'right';
+
+    var z = (i === 0 ? 45 : (-i * module.exports.distanceBetweenBooths) - i * 9.5 );
     var booth = new JobBooth(
       {
-        position: {x: (side === 'left' ? -12 : 12), y: 10, z: (-i * module.exports.distanceBetweenBooths) - i * 9.5},
+        position: {x: (side === 'left' ? -12 : 12), y: 10, z: z},
         scale: 1.5 + 1.75 * i,
         riddle: riddles[company],
         faceImageUrl: module.exports.getRecruiterImage(company)
@@ -74,7 +76,7 @@ module.exports.createBooths = function(scene) {
       side
     );
 
-    booth.addTo(scene);
+    booth.addTo(scene, (i === 0 ? -50 : null));
     booths.push(booth);
   }
 

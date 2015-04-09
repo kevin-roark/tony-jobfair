@@ -5,6 +5,7 @@ $(function() {
   var distanceUtil = require('./distance-util');
   var geometryUtil = require('./geometry-util');
   var sceneUtil = require('./scene-util');
+  var buildingUtil = require('./building-util');
   var ronaldUI = require('./ronald-ui');
 
   var ronaldGestures = require('./ronald-gestures');
@@ -53,6 +54,8 @@ $(function() {
   mainLight.castShadow = true;
   scene.add(mainLight);
 
+  scene.fog = new THREE.Fog(0xeeeeee, 100, 1000);
+
   io.eventHandler = function(event, data) {
     if (['spit', 'handshake', 'kneel', 'bribe'].indexOf(event) !== -1) {
       jobfairState.ronaldPerformedAction(event);
@@ -83,10 +86,10 @@ $(function() {
     offset: {x: 0, y: 0, z: 0}
   };
 
-  var kevinRonald = new Character({x: 0, y: -10, z: 100}, 20);
+  var kevinRonald = new Character({x: 0, y: -10, z: 800}, 20);
   kevinRonald.addTo(scene);
 
-  var dylanRonald = new Character({x: 30, y: -10, z: 100}, 20);
+  var dylanRonald = new Character({x: 30, y: -10, z: 800}, 20);
   dylanRonald.addTo(scene);
   var ronalds = [kevinRonald, dylanRonald];
 
@@ -150,7 +153,7 @@ $(function() {
         weighingState.ronaldPerformedThrow('kevin', 'right');
       }
       else if (ev.which === 113) { // q
-        jobfairState.finishedPerformingPitch();
+        jobfairState.didFinishPerformingPitch();
       }
     });
   }
@@ -194,47 +197,25 @@ $(function() {
     active.jobfair = true;
     io.mode = io.JOBFAIR;
 
-    jobfairState.ground_material = Physijs.createMaterial(
-      new THREE.MeshBasicMaterial({color: 0x111111, side: THREE.DoubleSide, transparent: true, opacity: 0.2}),
-      0.8, // high friction
-      0.4 // low restitution
-    );
+    ronaldUI.flash('WELCOME TO THE FAIR', 1200);
 
-    jobfairState.ground_geometry = new THREE.PlaneGeometry(160, 6000);
-    geometryUtil.calculateGeometryThings(jobfairState.ground_geometry);
-
-    jobfairState.ground = new Physijs.BoxMesh(jobfairState.ground_geometry, jobfairState.ground_material, 0);
-    jobfairState.ground.rotation.x = -Math.PI / 2;
-    jobfairState.ground.position.z = -3000;
-    jobfairState.ground.position.y = 0;
-    jobfairState.ground.__dirtyPosition = true;
+    jobfairState.ground = buildingUtil.ground();
+    jobfairState.ground.position.z = -2995;
     scene.add(jobfairState.ground);
 
-    function makeWall(side) {
-      var wallGeometry = side? new THREE.PlaneGeometry(6000, 100) : new THREE.PlaneGeometry(160, 100);
-      var wallTexture = THREE.ImageUtils.loadTexture('/media/textures/wood.jpg');
-      wallTexture.wrapS = wallTexture.wrapT = THREE.RepeatWrapping;
-      wallTexture.repeat.set(8, 8);
-      var wallMaterial = new THREE.MeshBasicMaterial({
-        map: wallTexture,
-        side: THREE.DoubleSide
-      });
-      var wallMesh = new THREE.Mesh(wallGeometry, wallMaterial);
-      if (side) {
-        wallMesh.rotation.y = Math.PI / 2;
-      }
-      return wallMesh;
-    }
+    jobfairState.ceiling = buildingUtil.ceiling();
+    jobfairState.ceiling.position.set(0, 100, -2995);
+    scene.add(jobfairState.ceiling);
 
-    jobfairState.leftWall = makeWall(true);
+    jobfairState.leftWall = buildingUtil.wall(true);
     jobfairState.leftWall.position.set(-80, 50, -3000);
     scene.add(jobfairState.leftWall);
 
-    jobfairState.rightWall = makeWall(true);
-    jobfairState.rightWall.position.set(82, 50, -3000);
+    jobfairState.rightWall = buildingUtil.wall(true);
+    jobfairState.rightWall.position.set(80, 50, -3000);
     scene.add(jobfairState.rightWall);
 
-    jobfairState.backWall = makeWall(false);
+    jobfairState.backWall = buildingUtil.wall(false);
     jobfairState.backWall.position.set(0, 50, -6000);
 
     cameraFollowState.target = kevinRonald.torso.mesh.position;
@@ -294,7 +275,7 @@ $(function() {
 
     function showFailedResponse(z) {
       jobfairState.responseText = new RonaldText({
-        phrase: 'NO!!!',
+        phrase: 'NO!!!!!!!',
         position: {x: jobfairState.currentBooth % 2 === 0 ? 20 : -20, y: 25, z: z},
         color: 0xff0000
       });
@@ -307,7 +288,7 @@ $(function() {
       }, 5000);
     }
 
-    jobfairState.finishedPerformingPitch = function() {
+    jobfairState.didFinishPerformingPitch = function() {
       jobfairState.finishedPerformingPitch = true;
     };
 
@@ -369,11 +350,13 @@ $(function() {
         if (kevinRonald.position.z <= -recruiterManager.closeToRecruiterDistance) {
           hasReachedBooths = true;
           setCurrentBooth(0);
+          console.log('reached the first booth!');
         }
       }
       else if (waitingForNextBooth) {
         var currentBooth = recruiterManager.boothIndexForZ(kevinRonald.position.z);
         if (currentBooth > this.currentBooth) {
+          console.log('changed current booth to: ' + currentBooth);
           setCurrentBooth(currentBooth);
         }
       }
@@ -386,7 +369,7 @@ $(function() {
     jobfairState.endScene = function() {
       var self = this;
       ronaldUI.fadeOverlay(true, function() {
-        var meshes = [jobfairState.ground, jobfairState.leftWall, jobfairState.rightWall];
+        var meshes = [jobfairState.ground, jobfairState.leftWall, jobfairState.rightWall, jobfairState.ceiling, jobfairState.backWall];
         jobfairState.booths.forEach(function(booth) {
           booth.meshes.forEach(function(mesh) {
             meshes.push(mesh);

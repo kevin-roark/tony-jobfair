@@ -14,7 +14,7 @@ function JobBooth(recruiterOptions, posterURL, side) {
   this.poster = makePoster(posterURL);
 }
 
-JobBooth.prototype.addTo = function(scene) {
+JobBooth.prototype.addTo = function(scene, deskOffset) {
   var self = this;
   this.recruiter.addTo(scene, function() {
     var rotation = self.side === 'left' ? Math.PI / 6 : - Math.PI / 6;
@@ -22,8 +22,12 @@ JobBooth.prototype.addTo = function(scene) {
 
     var recruiterPos = self.recruiter.skinnedMesh.position;
 
+    if (!deskOffset) {
+      deskOffset = self.recruiterScale * 4;
+    }
+
     scene.add(self.desk);
-    self.desk.position.set(recruiterPos.x + (self.side === 'left' ? -17.5 : 17.5), 2, recruiterPos.z + self.recruiterScale * 3);
+    self.desk.position.set(recruiterPos.x + (self.side === 'left' ? -17.5 : 17.5), 3, recruiterPos.z + deskOffset);
     self.desk.rotation.y = rotation / 1.75;
 
     self.desk.add(self.poster);

@@ -44,7 +44,7 @@ canvas {
   height: 100%;
 
   background-image: url('/media/faces/congratulations.jpg');
-  background-size: cover;
+  background-size: 100%;
 }
 
 #tony-ronald, #chatroom {
