@@ -22,7 +22,7 @@ $(function() {
   var recruiterManager = require('./recruiter-manager');
 
   var TEST_MODE = true;
-  var START_WITH_SCALE = true;
+  var START_WITH_SCALE = false;
   var SPEED_TO_TRASH = false;
 
   /*
@@ -115,16 +115,16 @@ $(function() {
         resetRonaldPositions();
       }
       else if (ev.which === 97)  { // a
-        kevinRonald.move(-1, 0, 0);
+        if (io.mode !== io.INTERVIEW || TEST_MODE) kevinRonald.move(-2, 0, 0);
       }
       else if (ev.which === 119)  { // w
-        kevinRonald.move(0, 0, -1);
+        if (io.mode !== io.INTERVIEW || TEST_MODE) kevinRonald.move(0, 0, -2);
       }
       else if (ev.which === 100)  { // d
-        kevinRonald.move(1, 0, 0);
+        if (io.mode !== io.INTERVIEW || TEST_MODE) kevinRonald.move(2, 0, 0);
       }
       else if (ev.which === 115)  { // s
-        kevinRonald.move(0, 0, 1);
+        if (io.mode !== io.INTERVIEW || TEST_MODE) kevinRonald.move(0, 0, 2);
       }
       else if (ev.which === 122) { // z
         jobfairState.ronaldPerformedAction('spit');
@@ -204,15 +204,37 @@ $(function() {
       0.4 // low restitution
     );
 
-    jobfairState.ground_geometry = new THREE.PlaneGeometry(140, 2000);
+    jobfairState.ground_geometry = new THREE.PlaneGeometry(160, 6000);
     geometryUtil.calculateGeometryThings(jobfairState.ground_geometry);
 
     jobfairState.ground = new Physijs.BoxMesh(jobfairState.ground_geometry, jobfairState.ground_material, 0);
     jobfairState.ground.rotation.x = -Math.PI / 2;
-    jobfairState.ground.position.z = -1000;
+    jobfairState.ground.position.z = -3000;
     jobfairState.ground.position.y = 0;
     jobfairState.ground.__dirtyPosition = true;
     scene.add(jobfairState.ground);
+
+    function makeWall() {
+      var wallGeometry = new THREE.PlaneGeometry(6000, 100);
+      var wallTexture = THREE.ImageUtils.loadTexture('/media/textures/wood.jpg');
+      wallTexture.wrapS = wallTexture.wrapT = THREE.RepeatWrapping;
+      wallTexture.repeat.set(8, 8);
+      var wallMaterial = new THREE.MeshBasicMaterial({
+        map: wallTexture,
+        side: THREE.DoubleSide
+      });
+      var wallMesh = new THREE.Mesh(wallGeometry, wallMaterial);
+      wallMesh.rotation.y = Math.PI / 2;
+      return wallMesh;
+    }
+
+    jobfairState.leftWall = makeWall();
+    jobfairState.leftWall.position.set(-80, 50, -3000);
+    scene.add(jobfairState.leftWall);
+
+    jobfairState.rightWall = makeWall();
+    jobfairState.rightWall.position.set(90, 50, -3000);
+    scene.add(jobfairState.rightWall);
 
     cameraFollowState.target = kevinRonald.torso.mesh.position;
     cameraFollowState.offset = {x: 0, y: 40, z: 150};
@@ -220,6 +242,8 @@ $(function() {
     jobfairState.booths = recruiterManager.createBooths(scene);
 
     jobfairState.collectedTokens = [];
+    jobfairState.hasPerformedActionForCurrentBooth = false;
+    jobfairState.waitingForAction = false;
 
     var hasReachedBooths = false;
     var waitingForNextBooth = false;
@@ -230,13 +254,17 @@ $(function() {
       console.log('current booth: ' + index);
       jobfairState.currentBooth = index;
       io.mode = io.INTERVIEW;
-      ronaldUI.flash(recruiterManager.companies[index]);
+      jobfairState.waitingForAction = true;
+      ronaldUI.flash(recruiterManager.companies[index], 1000);
     }
 
     function flashOverlay(color) {
       overlay.css('background-color', color);
 
       var hidden = true;
+      if (interviewOverlayInterval) {
+        clearInterval(interviewOverlayInterval);
+      }
       interviewOverlayInterval = setInterval(function() {
         if (hidden) {
           overlay.show();
@@ -254,11 +282,12 @@ $(function() {
         color: 0x00ff00
       });
       flashOverlay('rgb(0, 255, 0)');
-      jobfairState.responseText.addTo(scene, null, function() {
+      jobfairState.responseText.addTo(scene, null);
+      setTimeout(function() {
         clearInterval(interviewOverlayInterval);
         overlay.hide();
         jobfairState.responseText = null;
-      });
+      }, 5000);
     }
 
     function showFailedResponse(z) {
@@ -268,16 +297,23 @@ $(function() {
         color: 0xff0000
       });
       flashOverlay('rgb(255, 0, 0)');
-      jobfairState.responseText.addTo(scene, null, function() {
+      jobfairState.responseText.addTo(scene, null);
+      setTimeout(function() {
         clearInterval(interviewOverlayInterval);
         overlay.hide();
         jobfairState.responseText = null;
-      });
+      }, 5000);
     }
 
     jobfairState.ronaldPerformedAction = function(action) {
-      // here would want to do UI and shit yum
       console.log('ronald performed: ' + action);
+
+      if (!this.waitingForAction|| this.hasPerformedActionForCurrentBooth) {
+        return;
+      }
+      this.hasPerformedActionForCurrentBooth = true;
+
+      var self = this;
       var behaviorMap = {
         spit: ronaldGestures.spitToRecruiter,
         handshake: ronaldGestures.shakeHandsWithRecruiter,
@@ -286,7 +322,6 @@ $(function() {
       };
 
       if (behaviorMap[action]) {
-        console.log('bribing');
         behaviorMap[action](scene, this.booths, this.currentBooth, kevinRonald, showResults);
       } else {
         showResults();
@@ -305,23 +340,22 @@ $(function() {
           showFailedResponse(kevinRonald.position.z + 72);
         }
 
-        goToNextBooth();
+        setTimeout(function() {
+          goToNextBooth();
+        }, 3000);
       }
 
       function goToNextBooth() {
-        if (this.currentBooth !== recruiterManager.recruiterCount - 1) {
+        if (self.currentBooth < recruiterManager.recruiterCount - 1) {
           io.mode = io.JOBFAIR;
           waitingForNextBooth = true;
+          jobfairState.hasPerformedActionForCurrentBooth = false;
+          jobfairState.waitingForAction = false;
         }
         else {
-          this.transitionToWeighing();
+          self.endScene();
         }
       }
-    };
-
-    jobfairState.transitionToWeighing = function() {
-      active.jobfair = false;
-      enterWeighingState(this.collectedTokens);
     };
 
     jobfairState.render = function() {
@@ -345,16 +379,17 @@ $(function() {
 
     jobfairState.endScene = function() {
       ronaldUI.fadeOverlay(true, function() {
-        var meshes = [jobfairState.ground];
+        var meshes = [jobfairState.ground, jobfairState.leftWall, jobfairState.rightWall];
         jobfairState.booths.forEach(function(booth) {
           booth.meshes.forEach(function(mesh) {
             meshes.push(mesh);
           });
         });
         sceneUtil.clearScene(scene, meshes, [camera, mainLight]);
+        scene.remove(jobfairState.ground);
 
         active.jobfair = false;
-        enterWeighingState();
+        enterWeighingState(this.collectedTokens);
         ronaldUI.fadeOverlay(false);
       });
     };
@@ -397,13 +432,14 @@ $(function() {
     tokens.forEach(function(token) {
       token.addTo(scene, function() {
         token.moveTo((Math.random() - 0.5) * 360, Math.random() * 10 + 8, -kt.randInt(250, 160));
+        token.mesh.__company = token.company;
         tokenMeshes.push(token.mesh);
       });
     });
 
     var scale = new Scale();
     scale.addTo(scene);
-    scale.mesh.position.set(0, 45, -300);
+    scale.mesh.position.set(0, 45, -325);
 
     var scaleWidth = 210; // messy
     var leftScaleTarget = {x: scale.mesh.position.x - scaleWidth / 2, y: scale.mesh.position.y + 4, z: scale.mesh.position.z};
@@ -422,6 +458,7 @@ $(function() {
     weighingState.dylanRenderer = new WeighingStateRonaldRenderer('dylan');
     weighingState.tokensDestroyed = 0;
     weighingState.scale = scale;
+    weighingState.tokensThrown = {};
 
     weighingState.render = function() {
       var ronPos = kevinRonald.torso.mesh.position;
@@ -570,7 +607,7 @@ $(function() {
           console.log('ended throw: ' + weighingState.tokensDestroyed);
 
           // if scale is filled with last two things
-          if (weighingState.tokensDestroyed === tokens.length - 1 && scale.numberOfObjects() == 2) {
+          if (weighingState.tokensDestroyed === tokens.length - 1 && scale.numberOfObjects() === 2) {
             self.mode = 'waitingForGarbage';
             setTimeout(function() {
               weighingState.beginGarbageTransition();
@@ -583,7 +620,10 @@ $(function() {
             scale.clearLightestObject(function(lightestObject) {
               meshGestures.sendFlying(lightestObject, {steps: 100}, function() {
                 self.mode = 'seeking';
-                weighingState.tokensDestroyed += 1;
+                if (!weighingState.tokensThrown[lightestObject.company]) {
+                  weighingState.tokensDestroyed += 1;
+                  weighingState.tokensThrown[lightestObject.company] = true;
+                }
               });
             });
           }, 500);

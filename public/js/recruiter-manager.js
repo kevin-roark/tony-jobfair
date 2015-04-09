@@ -2,21 +2,21 @@
 var JobBooth = require('./job-booth');
 
 var companies = module.exports.companies = [
-  'linkedin',
-  'buzzfeed',
-  'jpmorgan',
+  'addthis',
   'vsco',
   'venmo',
-  'addthis',
-  'google',
-  'millersfantasy',
-  'facebook',
   'uber',
   'spotify',
-  'apple',
-  'microsoft',
+  'buzzfeed',
   'nestle',
-  'forbes'
+  'jpmorgan',
+  'linkedin',
+  'forbes',
+  'microsoft',
+  'apple',
+  'facebook',
+  'google',
+  'millersfantasy'
 ];
 
 module.exports.recruiterCount = companies.length;
@@ -39,8 +39,8 @@ module.exports.actionIsSuccessful = function(action, boothIndex) {
   return Math.random() < 0.5;
 };
 
-module.exports.distanceBetweenBooths = 400;
-module.exports.closeToRecruiterDistance = 95;
+module.exports.distanceBetweenBooths = 350;
+module.exports.closeToRecruiterDistance = 70;
 
 module.exports.createBooths = function(scene) {
   var booths = [];
@@ -50,8 +50,8 @@ module.exports.createBooths = function(scene) {
     var side = i % 2 === 0 ? 'left' : 'right';
     var booth = new JobBooth(
       {
-        position: {x: (side === 'left' ? -12 : 12), y: 10, z: -i * module.exports.distanceBetweenBooths},
-        scale: 1.5 + 2.5 * i,
+        position: {x: (side === 'left' ? -12 : 12), y: 10, z: (-i * module.exports.distanceBetweenBooths) - i * 11},
+        scale: 1.5 + 1.75 * i,
         riddle: riddles[company],
         faceImageUrl: module.exports.getRecruiterImage(company)
       },
