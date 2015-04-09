@@ -22,7 +22,7 @@ $(function() {
   var recruiterManager = require('./recruiter-manager');
 
   var TEST_MODE = false;
-  var START_WITH_SCALE = true;
+  var START_WITH_SCALE = false;
   var SPEED_TO_TRASH = false;
 
   /*

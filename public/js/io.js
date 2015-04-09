@@ -41,8 +41,8 @@ var KNEEL_GESTURE_CONSECUTIVE_EVENTS = 15;
 
 var FAR_ELBOW_MAG = 300;
 
-var FLEXING_HANDS_X_MAG = 15;
-var FLEX_GESTURE_CONSECUTIVE_EVENTS = 20;
+var FLEXING_HANDS_X_MAG = 330;
+var FLEX_GESTURE_CONSECUTIVE_EVENTS = 60;
 var CLOSE_HANDS_MAG = 100;
 
 var TORSO_MOVEMENT_MAG_MULT = -0.05;
@@ -225,7 +225,7 @@ function rightHandBehavior(position, handNumber) {
       if (positionDeltas[rightHandKey] && totalMagnitude(positionDeltas[rightHandKey]) < BIG_ARMDELTA_MAG) {
         var positionChange = delta(position, previousPositions[rightHandKey]);
         var mag = totalMagnitude(positionChange);
-        console.log('total arm mag: ' + mag);
+        //console.log('total arm mag: ' + mag);
 
         if (mag > BIG_ARMDELTA_MAG) {
           eventsWithRapidRightArmVelocity[armVelocityKey] += 1;
@@ -245,7 +245,7 @@ function rightHandBehavior(position, handNumber) {
     //   moveDelta(wrestler.rightArm, position, previousPositions[rightHandKey], denom, directions);
     // }
     else if (module.exports.mode === module.exports.WEIGHING) {
-      moveDelta(wrestler, position, previousPositions[rightHandKey], 0.75);
+      moveDelta(wrestler, position, previousPositions[rightHandKey], 1.2, {x: true, y: false, z: true});
     }
   }
 
@@ -354,7 +354,6 @@ function torsoBehavior(position, torsoNumber) {
       var d = delta(position, previousPositions[torsoKey]);
       var mag = totalMagnitude(d);
       var dist = TORSO_MOVEMENT_MAG_MULT * mag;
-      console.log(dist);
       wrestler.move(d.x / 50, 0, dist);
     }
 
@@ -461,17 +460,20 @@ function hand2DeltaAction(positionDelta) {
 
 function handDeltaActionBehavior(positionDelta, handNumber) {
   var eventsKey = handNumber === 1 ? 'one' : 'two';
-  var rightHandKey = handNumber === 1 ? 'rightHand1' : 'rightHand2';
-  var rightElbowKey = handNumber === 1 ? 'rightElbow1' : 'rightElbow2';
+  var rightHandKey = 'rightHand' + handNumber;
+  var rightElbowKey = 'rightElbow' + handNumber;
+  var leftHandKey = 'leftHand' + handNumber;
+  var leftElbowKey = 'leftElbow' + handNumber;
 
   if (module.exports.mode === module.exports.INTERVIEW) {
     var xMag = Math.abs(positionDelta.x);
-    console.log('total flex mag: ' + xMag);
-    if (xMag >= FLEXING_HANDS_X_MAG && previousPositions[rightHandKey].y > previousPositions[rightElbowKey]) {
+    if (xMag >= FLEXING_HANDS_X_MAG &&
+        previousPositions[rightHandKey] && previousPositions[rightElbowKey] && previousPositions[rightHandKey].y < previousPositions[rightElbowKey].y &&
+        previousPositions[leftHandKey] && previousPositions[leftElbowKey] && previousPositions[leftHandKey].y < previousPositions[leftElbowKey].y) {
       // hands are far apart and above elbows u feel
       eventsWithFlexingArms[eventsKey] += 1;
-    } else if (eventsWithFlexingArms[eventsKey] > 0) {
-      eventsWithFlexingArms[eventsKey] -= 1;
+    } else if (eventsWithFlexingArms[eventsKey] > 1) {
+      eventsWithFlexingArms[eventsKey] -= 2;
     }
 
     if (eventsWithFlexingArms[eventsKey] >= FLEX_GESTURE_CONSECUTIVE_EVENTS) {
@@ -500,7 +502,7 @@ function kneeDeltaActionBehavior(positionDelta, kneeNumber) {
 
   if (module.exports.mode === module.exports.INTERVIEW) {
     var yMag = Math.abs(positionDelta.y);
-    console.log('knee delta mag: ' + yMag);
+    //console.log('knee delta mag: ' + yMag);
     if (yMag >= KNEELING_KNEE_Y_MAG) {
       eventsWithKneelingKnees[eventsKey] += 1;
     } else if (eventsWithKneelingKnees[eventsKey] > 0) {
