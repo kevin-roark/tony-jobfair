@@ -1497,12 +1497,11 @@ JobBooth.prototype.addTo = function(scene) {
     var recruiterPos = self.recruiter.skinnedMesh.position;
 
     scene.add(self.desk);
-    self.desk.position.set(recruiterPos.x + (self.side === 'left' ? -15 : 15), 5, recruiterPos.z + self.recruiterScale * 3);
-    self.desk.rotation.y = rotation;
+    self.desk.position.set(recruiterPos.x + (self.side === 'left' ? -17.5 : 17.5), 2, recruiterPos.z + self.recruiterScale * 3);
+    self.desk.rotation.y = rotation / 1.75;
 
     self.desk.add(self.poster);
-    self.poster.position.set(0, 15, 0);
-    self.poster.rotation.y = rotation;
+    self.poster.position.set(0, 18, 0);
 
     self.meshes = [self.desk, self.recruiter.skinnedMesh, self.recruiter.faceMesh];
   });
@@ -1519,7 +1518,7 @@ function makePoster(imageURL) {
   var material = new THREE.MeshBasicMaterial({
     map: THREE.ImageUtils.loadTexture(imageURL)
   });
-  var geometry = new THREE.BoxGeometry(25, 25, 1);
+  var geometry = new THREE.BoxGeometry(30, 30, 1);
   var poster = new THREE.Mesh(geometry, material);
   return poster;
 }
@@ -2146,7 +2145,7 @@ $(function() {
   var recruiterManager = require('./recruiter-manager');
 
   var TEST_MODE = true;
-  var START_WITH_SCALE = true;
+  var START_WITH_SCALE = false;
   var SPEED_TO_TRASH = false;
 
   /*
@@ -2338,8 +2337,8 @@ $(function() {
     jobfairState.ground.__dirtyPosition = true;
     scene.add(jobfairState.ground);
 
-    function makeWall() {
-      var wallGeometry = new THREE.PlaneGeometry(6000, 100);
+    function makeWall(side) {
+      var wallGeometry = side? new THREE.PlaneGeometry(6000, 100) : new THREE.PlaneGeometry(160, 100);
       var wallTexture = THREE.ImageUtils.loadTexture('/media/textures/wood.jpg');
       wallTexture.wrapS = wallTexture.wrapT = THREE.RepeatWrapping;
       wallTexture.repeat.set(8, 8);
@@ -2348,17 +2347,22 @@ $(function() {
         side: THREE.DoubleSide
       });
       var wallMesh = new THREE.Mesh(wallGeometry, wallMaterial);
-      wallMesh.rotation.y = Math.PI / 2;
+      if (side) {
+        wallMesh.rotation.y = Math.PI / 2;
+      }
       return wallMesh;
     }
 
-    jobfairState.leftWall = makeWall();
+    jobfairState.leftWall = makeWall(true);
     jobfairState.leftWall.position.set(-80, 50, -3000);
     scene.add(jobfairState.leftWall);
 
-    jobfairState.rightWall = makeWall();
-    jobfairState.rightWall.position.set(90, 50, -3000);
+    jobfairState.rightWall = makeWall(true);
+    jobfairState.rightWall.position.set(82, 50, -3000);
     scene.add(jobfairState.rightWall);
+
+    jobfairState.backWall = makeWall(false);
+    jobfairState.backWall.position.set(0, 50, -6000);
 
     cameraFollowState.target = kevinRonald.torso.mesh.position;
     cameraFollowState.offset = {x: 0, y: 40, z: 150};
@@ -2402,7 +2406,7 @@ $(function() {
     function showSuccessfulResponse(z) {
       jobfairState.responseText = new RonaldText({
         phrase: 'SUCCESS',
-        position: {x: 20, y: 25, z: z},
+        position: {x: jobfairState.currentBooth % 2 === 0 ? 20 : -20, y: 25, z: z},
         color: 0x00ff00
       });
       flashOverlay('rgb(0, 255, 0)');
@@ -2417,7 +2421,7 @@ $(function() {
     function showFailedResponse(z) {
       jobfairState.responseText = new RonaldText({
         phrase: 'NO!!!',
-        position: {x: 20, y: 25, z: z},
+        position: {x: jobfairState.currentBooth % 2 === 0 ? 20 : -20, y: 25, z: z},
         color: 0xff0000
       });
       flashOverlay('rgb(255, 0, 0)');

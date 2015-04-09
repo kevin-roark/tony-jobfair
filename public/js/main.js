@@ -22,7 +22,7 @@ $(function() {
   var recruiterManager = require('./recruiter-manager');
 
   var TEST_MODE = true;
-  var START_WITH_SCALE = true;
+  var START_WITH_SCALE = false;
   var SPEED_TO_TRASH = false;
 
   /*
@@ -214,8 +214,8 @@ $(function() {
     jobfairState.ground.__dirtyPosition = true;
     scene.add(jobfairState.ground);
 
-    function makeWall() {
-      var wallGeometry = new THREE.PlaneGeometry(6000, 100);
+    function makeWall(side) {
+      var wallGeometry = side? new THREE.PlaneGeometry(6000, 100) : new THREE.PlaneGeometry(160, 100);
       var wallTexture = THREE.ImageUtils.loadTexture('/media/textures/wood.jpg');
       wallTexture.wrapS = wallTexture.wrapT = THREE.RepeatWrapping;
       wallTexture.repeat.set(8, 8);
@@ -224,17 +224,22 @@ $(function() {
         side: THREE.DoubleSide
       });
       var wallMesh = new THREE.Mesh(wallGeometry, wallMaterial);
-      wallMesh.rotation.y = Math.PI / 2;
+      if (side) {
+        wallMesh.rotation.y = Math.PI / 2;
+      }
       return wallMesh;
     }
 
-    jobfairState.leftWall = makeWall();
+    jobfairState.leftWall = makeWall(true);
     jobfairState.leftWall.position.set(-80, 50, -3000);
     scene.add(jobfairState.leftWall);
 
-    jobfairState.rightWall = makeWall();
-    jobfairState.rightWall.position.set(90, 50, -3000);
+    jobfairState.rightWall = makeWall(true);
+    jobfairState.rightWall.position.set(82, 50, -3000);
     scene.add(jobfairState.rightWall);
+
+    jobfairState.backWall = makeWall(false);
+    jobfairState.backWall.position.set(0, 50, -6000);
 
     cameraFollowState.target = kevinRonald.torso.mesh.position;
     cameraFollowState.offset = {x: 0, y: 40, z: 150};
@@ -278,7 +283,7 @@ $(function() {
     function showSuccessfulResponse(z) {
       jobfairState.responseText = new RonaldText({
         phrase: 'SUCCESS',
-        position: {x: 20, y: 25, z: z},
+        position: {x: jobfairState.currentBooth % 2 === 0 ? 20 : -20, y: 25, z: z},
         color: 0x00ff00
       });
       flashOverlay('rgb(0, 255, 0)');
@@ -293,7 +298,7 @@ $(function() {
     function showFailedResponse(z) {
       jobfairState.responseText = new RonaldText({
         phrase: 'NO!!!',
-        position: {x: 20, y: 25, z: z},
+        position: {x: jobfairState.currentBooth % 2 === 0 ? 20 : -20, y: 25, z: z},
         color: 0xff0000
       });
       flashOverlay('rgb(255, 0, 0)');

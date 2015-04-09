@@ -23,12 +23,11 @@ JobBooth.prototype.addTo = function(scene) {
     var recruiterPos = self.recruiter.skinnedMesh.position;
 
     scene.add(self.desk);
-    self.desk.position.set(recruiterPos.x + (self.side === 'left' ? -15 : 15), 5, recruiterPos.z + self.recruiterScale * 3);
-    self.desk.rotation.y = rotation;
+    self.desk.position.set(recruiterPos.x + (self.side === 'left' ? -17.5 : 17.5), 2, recruiterPos.z + self.recruiterScale * 3);
+    self.desk.rotation.y = rotation / 1.75;
 
     self.desk.add(self.poster);
-    self.poster.position.set(0, 15, 0);
-    self.poster.rotation.y = rotation;
+    self.poster.position.set(0, 18, 0);
 
     self.meshes = [self.desk, self.recruiter.skinnedMesh, self.recruiter.faceMesh];
   });
@@ -45,7 +44,7 @@ function makePoster(imageURL) {
   var material = new THREE.MeshBasicMaterial({
     map: THREE.ImageUtils.loadTexture(imageURL)
   });
-  var geometry = new THREE.BoxGeometry(25, 25, 1);
+  var geometry = new THREE.BoxGeometry(30, 30, 1);
   var poster = new THREE.Mesh(geometry, material);
   return poster;
 }
