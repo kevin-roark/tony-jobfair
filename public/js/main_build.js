@@ -942,6 +942,7 @@ var positionDeltas = {};
 var previousPositionDeltas = {};
 
 var eventsWithRapidHeadVelocity = {one: 0, two: 0};
+var eventsWithRapidRightArmVelocity = {one: 0, two: 0};
 
 var startDate = new Date();
 
@@ -953,13 +954,15 @@ var BIG_HEAD_MAG = 15;
 var MAX_HEAD_SWELL = 30;
 var TORSO_CLOSE_MAG = 11;
 
+var BIG_ARMDELTA_MAG = 10;
+var HANDSHAKE_ARMDELTA_FRAMES = 15;
+
 var CLOSE_KNEE_MAG = 60;
 var FAR_ELBOW_MAG = 300;
 
 var CLOSE_HANDS_MAG = 100;
 
 var TORSO_MOVEMENT_MAG_MULT = 0.21;
-var MIN_DISTANCE_BETWEEN_WRESTLERS = 30;
 
 module.exports.JOBFAIR = 1;
 module.exports.WEIGHING = 2;
@@ -1144,10 +1147,28 @@ function rightHand2(position)  {
 
 function rightHandBehavior(position, handNumber) {
   var rightHandKey = 'rightHand' + handNumber;
+  var armVelocityKey = handNumber === 1 ? 'one' : 'two';
   var wrestler = handNumber === 1 ? wrestler1 : wrestler2;
 
   if (previousPositions[rightHandKey]) {
-    if (module.exports.mode === module.exports.JOBFAIR) {
+    if (module.exports.mode === module.exports.INTERVIEW) {
+      if (positionDeltas[rightHandKey] && totalMagnitude(positionDeltas[rightHandKey]) < BIG_ARMDELTA_MAG) {
+        var positionChange = delta(position, previousPositions[rightHandKey]);
+        var mag = totalMagnitude(positionChange);
+
+        if (mag > BIG_ARMDELTA_MAG) {
+          eventsWithRapidRightArmVelocity[armVelocityKey] += 1;
+        } else {
+          eventsWithRapidRightArmVelocity[armVelocityKey] = Math.max(eventsWithRapidRightArmVelocity[armVelocityKey] - 1, 0);
+        }
+
+        if (eventsWithRapidRightArmVelocity[armVelocityKey] >= HANDSHAKE_ARMDELTA_FRAMES) {
+          module.exports.eventHandler('handshake', {});
+          eventsWithRapidRightArmVelocity[armVelocityKey] = 0;
+        }
+      }
+    }
+    else if (module.exports.mode === module.exports.JOBFAIR) {
       var denom = 7;
       var directions = {x: true, y: true, z: true};
       moveDelta(wrestler.rightArm, position, previousPositions[rightHandKey], denom, directions);
@@ -1256,18 +1277,13 @@ function torso2(position) {
 function torsoBehavior(position, torsoNumber) {
   var torsoKey = 'torso' + torsoNumber;
   var wrestler = torsoNumber === 1 ? wrestler1 : wrestler2;
-  var alternateWrestler = torsoNumber === 1 ? wrestler2: wrestler1;
 
   if (previousPositions[torsoKey]) {
     if (module.exports.mode === module.exports.JOBFAIR) {
       var d = delta(position, previousPositions[torsoKey]);
       var mag = totalMagnitude(d);
       var dist = TORSO_MOVEMENT_MAG_MULT * mag;
-      wrestler.move(d.x / 30, 0, dist);
-
-      if (wrestler.position.z - alternateWrestler.position.z > MIN_DISTANCE_BETWEEN_WRESTLERS) {
-        alternateWrestler.move(0, 0, wrestler.position.z - MIN_DISTANCE_BETWEEN_WRESTLERS);
-      }
+      wrestler.move(d.x / 50, 0, dist);
     }
 
     positionDeltas[torsoKey] = delta(position, previousPositions[torsoKey]);
