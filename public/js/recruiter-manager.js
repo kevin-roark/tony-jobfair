@@ -50,7 +50,7 @@ module.exports.createBooths = function(scene) {
     var side = i % 2 === 0 ? 'left' : 'right';
     var booth = new JobBooth(
       {
-        position: {x: (side === 'left' ? -12 : 12), y: 10, z: (-i * module.exports.distanceBetweenBooths) - i * 11},
+        position: {x: (side === 'left' ? -12 : 12), y: 10, z: (-i * module.exports.distanceBetweenBooths) - i * 9.5},
         scale: 1.5 + 1.75 * i,
         riddle: riddles[company],
         faceImageUrl: module.exports.getRecruiterImage(company)

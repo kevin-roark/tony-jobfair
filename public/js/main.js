@@ -22,7 +22,7 @@ $(function() {
   var recruiterManager = require('./recruiter-manager');
 
   var TEST_MODE = true;
-  var START_WITH_SCALE = false;
+  var START_WITH_SCALE = true;
   var SPEED_TO_TRASH = false;
 
   /*
@@ -378,6 +378,7 @@ $(function() {
     };
 
     jobfairState.endScene = function() {
+      var self = this;
       ronaldUI.fadeOverlay(true, function() {
         var meshes = [jobfairState.ground, jobfairState.leftWall, jobfairState.rightWall];
         jobfairState.booths.forEach(function(booth) {
@@ -389,7 +390,7 @@ $(function() {
         scene.remove(jobfairState.ground);
 
         active.jobfair = false;
-        enterWeighingState(this.collectedTokens);
+        enterWeighingState(self.collectedTokens);
         ronaldUI.fadeOverlay(false);
       });
     };
@@ -605,6 +606,7 @@ $(function() {
           scaleSetter(this.activeTokenMesh);
 
           console.log('ended throw: ' + weighingState.tokensDestroyed);
+          console.log('tokens lengtH: ' + tokens.length);
 
           // if scale is filled with last two things
           if (weighingState.tokensDestroyed === tokens.length - 1 && scale.numberOfObjects() === 2) {
@@ -620,9 +622,14 @@ $(function() {
             scale.clearLightestObject(function(lightestObject) {
               meshGestures.sendFlying(lightestObject, {steps: 100}, function() {
                 self.mode = 'seeking';
-                if (!weighingState.tokensThrown[lightestObject.company]) {
+                if (!lightestObject || !weighingState.tokensThrown[lightestObject.__company]) {
+                  console.log('destroyed a fresh token');
                   weighingState.tokensDestroyed += 1;
-                  weighingState.tokensThrown[lightestObject.company] = true;
+
+                  if (lightestObject) {
+                    console.log('cleared: ' + lightestObject.__company);
+                    weighingState.tokensThrown[lightestObject.__company] = true;
+                  }
                 }
               });
             });
