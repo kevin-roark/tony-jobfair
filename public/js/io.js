@@ -41,11 +41,11 @@ var KNEEL_GESTURE_CONSECUTIVE_EVENTS = 30;
 
 var FAR_ELBOW_MAG = 300;
 
-var FLEXING_HANDS_X_MAG = 330;
+var FLEXING_HANDS_X_MAG = 300;
 var FLEX_GESTURE_CONSECUTIVE_EVENTS = 60;
 var CLOSE_HANDS_MAG = 100;
 
-var TORSO_MOVEMENT_MAG_MULT = -0.05;
+var TORSO_MOVEMENT_MAG_MULT = -0.7;
 
 module.exports.JOBFAIR = 1;
 module.exports.WEIGHING = 2;
@@ -243,7 +243,7 @@ function rightHandBehavior(position, handNumber) {
     //   moveDelta(wrestler.rightArm, position, previousPositions[rightHandKey], denom, directions);
     // }
     else if (module.exports.mode === module.exports.WEIGHING) {
-      moveDelta(wrestler, position, previousPositions[rightHandKey], 1.2, {x: true, y: false, z: true});
+      moveDelta(wrestler, position, previousPositions[rightHandKey], 1.6, {x: true, y: false, z: true});
     }
   }
 

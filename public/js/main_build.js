@@ -1017,11 +1017,11 @@ var KNEEL_GESTURE_CONSECUTIVE_EVENTS = 30;
 
 var FAR_ELBOW_MAG = 300;
 
-var FLEXING_HANDS_X_MAG = 330;
+var FLEXING_HANDS_X_MAG = 300;
 var FLEX_GESTURE_CONSECUTIVE_EVENTS = 60;
 var CLOSE_HANDS_MAG = 100;
 
-var TORSO_MOVEMENT_MAG_MULT = -0.05;
+var TORSO_MOVEMENT_MAG_MULT = -0.7;
 
 module.exports.JOBFAIR = 1;
 module.exports.WEIGHING = 2;
@@ -1219,7 +1219,7 @@ function rightHandBehavior(position, handNumber) {
     //   moveDelta(wrestler.rightArm, position, previousPositions[rightHandKey], denom, directions);
     // }
     else if (module.exports.mode === module.exports.WEIGHING) {
-      moveDelta(wrestler, position, previousPositions[rightHandKey], 1.2, {x: true, y: false, z: true});
+      moveDelta(wrestler, position, previousPositions[rightHandKey], 1.6, {x: true, y: false, z: true});
     }
   }
 
@@ -2242,7 +2242,7 @@ $(function() {
   var recruiterManager = require('./recruiter-manager');
 
   var TEST_MODE = false;
-  var START_WITH_SCALE = false;
+  var START_WITH_SCALE = true;
   var SPEED_TO_TRASH = false;
 
   /*
@@ -2377,6 +2377,12 @@ $(function() {
       else if (ev.which === 113) { // q
         jobfairState.didFinishPerformingPitch();
       }
+      else if (ev.which === 111) { // o
+        weighingState;
+      }
+      else if (ev.which === 112) { // p
+        weighingState.beginGarbageTransition();
+      }
     });
   }
 
@@ -2460,7 +2466,7 @@ $(function() {
       io.mode = io.INTERVIEW;
 
       if (!TEST_MODE) {
-        io.socket.emit('boothIndex', index);
+        io.socket.emit('boothIndex', index + 1);
       }
 
       jobfairState.waitingForAction = true;
@@ -2528,7 +2534,7 @@ $(function() {
 
     jobfairState.didFinishPerformingPitch = function() {
       if (!TEST_MODE) {
-        io.socket.emit('finishedPitch');
+        io.socket.emit('stoppedPitch');
       }
       jobfairState.finishedPerformingPitch = true;
     };
@@ -2632,7 +2638,7 @@ $(function() {
         scene.remove(jobfairState.ground);
 
         if (!TEST_MODE) {
-          io.socket.emit('boothIndex', 15);
+          io.socket.emit('boothIndex', 16);
         }
 
         active.jobfair = false;
@@ -2726,7 +2732,11 @@ $(function() {
     weighingState.render = function() {
       var ronPos = kevinRonald.torso.mesh.position;
       var dylPos = dylanRonald.torso.mesh.position;
-      cameraFollowState.target = {x: (ronPos.x + dylPos.x) / 2, y: 0, z: (ronPos.z + dylPos.z) / 2};
+      var x = (ronPos.x + dylPos.x) / 2;
+      x = Math.min(90, Math.max(x, -90));
+      var z = (ronPos.z + dylPos.z) / 2;
+      z = Math.min(-50, Math.max(z, -300));
+      cameraFollowState.target = {x: x, y: 0, z: z};
       cameraFollowState.offset = {x: 0, y: 80, z: 150};
 
       justice.position.z += (justice.__movingForward? -Math.random() * 2.5 : Math.random() * 2.5);
@@ -2742,6 +2752,7 @@ $(function() {
       this.dylanRenderer.render();
     };
 
+    var throwing = false;
     weighingState.ronaldPerformedThrow = function(ronaldName, direction) {
       if (!ronaldName) ronaldName = 'kevin';
       if (!direction) direction = 'left';
@@ -2839,10 +2850,29 @@ $(function() {
                 }
               }, 900);
             }, 3000);
-          }, SPEED_TO_TRASH? 500 : 33333);
+          }, SPEED_TO_TRASH? 500 : 3333);
         }, SPEED_TO_TRASH? 500 : 6666);
 
       }, 2500);
+    };
+
+    weighingState.clearLightestObject = function() {
+      scale.clearLightestObject(function(lightestObject) {
+        meshGestures.sendFlying(lightestObject, {steps: 100}, function() {
+          weighingState.kevinRenderer.mode = 'seeking';
+          weighingState.dylanRenderer.mode = 'seeking';
+          throwing = false;
+          if (!lightestObject || !weighingState.tokensThrown[lightestObject.__company]) {
+            console.log('destroyed a fresh token');
+            weighingState.tokensDestroyed += 1;
+
+            if (lightestObject) {
+              console.log('cleared: ' + lightestObject.__company);
+              weighingState.tokensThrown[lightestObject.__company] = true;
+            }
+          }
+        });
+      });
     };
 
     function WeighingStateRonaldRenderer(name) {
@@ -2892,28 +2922,17 @@ $(function() {
 
           self.mode = 'waiting';
           setTimeout(function() {
-            scale.clearLightestObject(function(lightestObject) {
-              meshGestures.sendFlying(lightestObject, {steps: 100}, function() {
-                self.mode = 'seeking';
-                if (!lightestObject || !weighingState.tokensThrown[lightestObject.__company]) {
-                  console.log('destroyed a fresh token');
-                  weighingState.tokensDestroyed += 1;
-
-                  if (lightestObject) {
-                    console.log('cleared: ' + lightestObject.__company);
-                    weighingState.tokensThrown[lightestObject.__company] = true;
-                  }
-                }
-              });
-            });
+            weighingState.clearLightestObject();
           }, 500);
         }
       }
     };
     WeighingStateRonaldRenderer.prototype.performedThrow = function(direction) {
-      if (this.mode !== 'placing') {
+      if (this.mode !== 'placing' || throwing) {
         return;
       }
+
+      throwing = true;
 
       var missingObject = scale.missingObject();
       if (missingObject === 'left' || missingObject === 'right') {
@@ -3974,19 +3993,19 @@ module.exports = Spit;
 
 function Spit() {
   this.mesh = new THREE.Mesh(
-    new THREE.SphereGeometry(1.5),
+    new THREE.SphereGeometry(4),
     new THREE.MeshBasicMaterial({color: 0x8888ff})
   );
 
   var leftSpit = new THREE.Mesh(
-    new THREE.SphereGeometry(1),
+    new THREE.SphereGeometry(3),
     new THREE.MeshBasicMaterial({color: 0x00bbff})
   );
   this.mesh.add(leftSpit);
   leftSpit.position.set(-5, 1, 0);
 
   var rightSpit = new THREE.Mesh(
-    new THREE.SphereGeometry(0.75),
+    new THREE.SphereGeometry(2),
     new THREE.MeshBasicMaterial({color: 0x0000ff})
   );
   this.mesh.add(rightSpit);
